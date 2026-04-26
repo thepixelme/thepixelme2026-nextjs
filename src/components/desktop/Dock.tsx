@@ -16,6 +16,7 @@ export default function Dock() {
           return (
             <DockIcon
               key={app.id}
+              appId={app.id}
               icon={app.icon}
               label={app.title}
               open={isOpen}

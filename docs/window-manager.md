@@ -124,9 +124,18 @@ Behavior:
 - `handleMaximize` reads live `window.innerWidth/innerHeight` to construct the MAXIMIZE viewport payload.
 - Resize handles are not rendered when `win.maximized` is true.
 
+Animation (see [STYLEGUIDE.md §6](../STYLEGUIDE.md)):
+
+- Root is a `motion.div`. Inline `style` still drives the layout box (`left/top/width/height/zIndex`) so drag and resize stay 60fps.
+- `initial` / `animate` / `exit` drive `opacity`, `scale`, and a translate offset (`x`, `y`) toward the owning dock icon. The dock-icon rect is read on demand via `useDockIconRect` from [dock-positions.tsx](../src/components/window/dock-positions.tsx). The initial offset is captured once at mount so the open animation always flies out from the icon, even if the window has since moved.
+- Maximize/restore animates the layout box itself via a transient `transition-[left,top,width,height] duration-[220ms] ease-out` class — added when `win.maximized` flips, cleared after 220ms.
+- All durations clamp to 0 when `useReducedMotion()` returns true.
+
 ### [WindowManager.tsx](../src/components/window/WindowManager.tsx)
 
-Reads `windows` from the store, filters out `minimized`, and for each one looks up its `AppDef` in [APPS](../src/components/apps/registry.ts) and renders `<Window key=id win={w}><App.Component windowId={w.id} /></Window>`. Apps with no matching registry entry are silently skipped.
+Reads `windows` from the store and for each one looks up its `AppDef` in [APPS](../src/components/apps/registry.ts) and renders `<Window key=id win={w}><App.Component windowId={w.id} /></Window>`. Apps with no matching registry entry are silently skipped. The list is wrapped in `<AnimatePresence>` so a removed window plays its `exit` animation before unmount.
+
+Minimized windows are **not** filtered here — `Window` renders them with `pointer-events: none` while their motion `animate` plays the shrink-to-dock animation. This is the only way to animate minimize/unminimize, since they don't unmount.
 
 It does not sort by `z` — DOM order is insertion order, and the `zIndex` style on each `<Window>` controls actual stacking.
 

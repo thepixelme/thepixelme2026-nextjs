@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DockIconPositionsProvider } from "@/components/window/dock-positions";
 import WindowManager from "@/components/window/WindowManager";
 import { WindowsProvider } from "@/lib/windows-store";
 import DesktopContextMenu from "./DesktopContextMenu";
@@ -14,16 +15,18 @@ export default function Desktop() {
 
   return (
     <WindowsProvider>
-      <div className="relative h-full w-full overflow-hidden">
-        <Wallpaper />
-        <MenuBar onOpenSpotlight={() => setSpotlightOpen(true)} />
-        <DesktopContextMenu>
-          <span className="sr-only">Desktop</span>
-        </DesktopContextMenu>
-        <WindowManager />
-        <Dock />
-        <Spotlight open={spotlightOpen} onOpenChange={setSpotlightOpen} />
-      </div>
+      <DockIconPositionsProvider>
+        <div className="relative h-full w-full overflow-hidden">
+          <Wallpaper />
+          <MenuBar onOpenSpotlight={() => setSpotlightOpen(true)} />
+          <DesktopContextMenu>
+            <span className="sr-only">Desktop</span>
+          </DesktopContextMenu>
+          <WindowManager />
+          <Dock />
+          <Spotlight open={spotlightOpen} onOpenChange={setSpotlightOpen} />
+        </div>
+      </DockIconPositionsProvider>
     </WindowsProvider>
   );
 }

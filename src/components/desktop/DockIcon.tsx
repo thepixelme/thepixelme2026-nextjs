@@ -1,17 +1,28 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
+import { useRegisterDockIcon } from "@/components/window/dock-positions";
+import type { AppId } from "@/types/window";
 
 interface Props {
+  appId: AppId;
   icon: LucideIcon;
   label: string;
   open: boolean;
   onClick: () => void;
 }
 
-export default function DockIcon({ icon: Icon, label, open, onClick }: Props) {
+export default function DockIcon({
+  appId,
+  icon: Icon,
+  label,
+  open,
+  onClick,
+}: Props) {
+  const ref = useRegisterDockIcon(appId);
   return (
     <button
+      ref={ref}
       type="button"
       aria-label={label}
       onClick={onClick}
