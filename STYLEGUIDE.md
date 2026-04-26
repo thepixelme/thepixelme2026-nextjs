@@ -105,7 +105,7 @@ Antialiasing: `antialiased` is set on `<html>` in layout. Don't override.
 
 | App / Element       | Lucide icon     |
 | ------------------- | --------------- |
-| Apple logo          | `Apple`         |
+| About menu (menu bar) | `User`        |
 | Finder              | `FolderOpen`    |
 | About Me            | `User`          |
 | Resume              | `FileText`      |
@@ -246,7 +246,7 @@ Never write multi-paragraph docstrings.
 
 ### 9.2 Menu bar
 
-- Apple logo → menu with "About This Mac" (opens AboutApp), divider, "System Settings…" (opens SettingsApp).
+- User icon (left-most) → opens AboutApp directly. No dropdown menu — clicking dispatches `OPEN { appId: "about" }`. The portfolio is about Nhat, not Apple, so the canonical Apple-logo affordance is intentionally replaced.
 - Following menus belong to the "active app" (frontmost window). For MVP, show static "File / Edit / View / Window / Help" with dummy items.
 - Right side, in order, with `gap-3`: `Battery`, `Wifi`, `Search` (opens Spotlight on click), clock.
 - Clock format: `EEE h:mm a` (e.g. "Sat 3:42 PM"). Updates every minute (don't poll faster).

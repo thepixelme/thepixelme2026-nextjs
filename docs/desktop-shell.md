@@ -46,12 +46,12 @@ Props: `{ onOpenSpotlight: () => void }`.
 Layout:
 
 ```
-[Apple ⌘button]  Portfolio   File  Edit  View  Window  Help          Battery  Wifi  Search  Mon 3:42 PM
+[User button]    Portfolio   File  Edit  View  Window  Help          Battery  Wifi  Search  Mon 3:42 PM
 ```
 
 Left side (`<nav>`):
 
-- Apple button — `<button aria-label="Apple menu">` rendering `<Apple size={14} fill-current>`. On click, dispatches `OPEN { appId: "about" }`. There is no actual dropdown menu.
+- About button — `<button aria-label="About menu">` rendering `<User size={14}>`. On click, dispatches `OPEN { appId: "about" }`. There is no actual dropdown menu. (Replaces the canonical macOS Apple logo — this portfolio is about Nhat, not Apple.)
 - "Portfolio" — static `<span>`, semibold.
 - "File" / "Edit" / "View" / "Window" / "Help" — static `<span>`s with `cursor-default`. Visual decoration only; not interactive.
 

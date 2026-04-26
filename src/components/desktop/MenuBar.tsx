@@ -1,6 +1,6 @@
 "use client";
 
-import { Apple, Battery, Search, Wifi } from "lucide-react";
+import { Battery, Search, User, Wifi } from "lucide-react";
 import { useClock } from "@/lib/clock";
 import { useWindowsDispatch } from "@/lib/windows-store";
 
@@ -17,11 +17,11 @@ export default function MenuBar({ onOpenSpotlight }: Props) {
       <nav className="flex items-center gap-4">
         <button
           type="button"
-          aria-label="Apple menu"
+          aria-label="About menu"
           className="flex h-5 w-5 items-center justify-center rounded hover:bg-default"
           onClick={() => dispatch({ type: "OPEN", appId: "about" })}
         >
-          <Apple size={14} className="fill-current" />
+          <User size={14} />
         </button>
         <span className="font-semibold">Portfolio</span>
         <span className="text-foreground/70 hover:text-foreground cursor-default">
