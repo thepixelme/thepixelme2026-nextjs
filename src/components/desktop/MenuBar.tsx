@@ -18,12 +18,12 @@ export default function MenuBar({ onOpenSpotlight }: Props) {
         <button
           type="button"
           aria-label="About menu"
-          className="flex h-5 w-5 items-center justify-center rounded hover:bg-default"
+          className="flex h-5 items-center gap-1.5 rounded px-1 hover:bg-default"
           onClick={() => dispatch({ type: "OPEN", appId: "about" })}
         >
           <User size={14} />
+          <span className="font-semibold">Nhat Nguyen</span>
         </button>
-        <span className="font-semibold">Portfolio</span>
         <span className="text-foreground/70 hover:text-foreground cursor-default">
           File
         </span>
