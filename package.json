@@ -10,9 +10,25 @@
     "format": "biome format --write"
   },
   "dependencies": {
+    "@heroui-pro/react": "^1.0.0-beta.2",
+    "@heroui/react": "^3.0.3",
+    "@heroui/styles": "^3.0.3",
+    "@number-flow/react": "^0.6.0",
+    "embla-carousel": "^8.6.0",
+    "embla-carousel-react": "^8.6.0",
+    "heroui-native": "^1.0.2",
+    "heroui-native-pro": "^1.0.0-beta.1",
+    "lucide-react": "^1.11.0",
+    "motion": "^12.38.0",
     "next": "16.2.4",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-aria-components": "^1.17.0",
+    "react-dom": "19.2.4",
+    "react-resizable-panels": "^4.10.0",
+    "recharts": "^3.8.1",
+    "simple-icons": "^16.18.0",
+    "tailwind-merge": "^3.5.0",
+    "tailwind-variants": "^3.2.2"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",

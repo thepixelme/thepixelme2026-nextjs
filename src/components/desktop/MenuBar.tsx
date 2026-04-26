@@ -1,0 +1,58 @@
+"use client";
+
+import { Apple, Battery, Search, Wifi } from "lucide-react";
+import { useClock } from "@/lib/clock";
+import { useWindowsDispatch } from "@/lib/windows-store";
+
+interface Props {
+  onOpenSpotlight: () => void;
+}
+
+export default function MenuBar({ onOpenSpotlight }: Props) {
+  const time = useClock();
+  const dispatch = useWindowsDispatch();
+
+  return (
+    <header className="fixed inset-x-0 top-0 z-50 flex h-7 items-center justify-between border-b border-separator bg-surface px-3 text-xs font-medium backdrop-blur-(--glass-blur)">
+      <nav className="flex items-center gap-4">
+        <button
+          type="button"
+          aria-label="Apple menu"
+          className="flex h-5 w-5 items-center justify-center rounded hover:bg-default"
+          onClick={() => dispatch({ type: "OPEN", appId: "about" })}
+        >
+          <Apple size={14} className="fill-current" />
+        </button>
+        <span className="font-semibold">Portfolio</span>
+        <span className="text-foreground/70 hover:text-foreground cursor-default">
+          File
+        </span>
+        <span className="text-foreground/70 hover:text-foreground cursor-default">
+          Edit
+        </span>
+        <span className="text-foreground/70 hover:text-foreground cursor-default">
+          View
+        </span>
+        <span className="text-foreground/70 hover:text-foreground cursor-default">
+          Window
+        </span>
+        <span className="text-foreground/70 hover:text-foreground cursor-default">
+          Help
+        </span>
+      </nav>
+      <div className="flex items-center gap-3">
+        <Battery size={16} />
+        <Wifi size={14} />
+        <button
+          type="button"
+          aria-label="Open Spotlight"
+          onClick={onOpenSpotlight}
+          className="flex items-center hover:text-foreground"
+        >
+          <Search size={14} />
+        </button>
+        <span className="tabular-nums">{time}</span>
+      </div>
+    </header>
+  );
+}
