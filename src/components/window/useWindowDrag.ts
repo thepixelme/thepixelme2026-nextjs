@@ -12,6 +12,7 @@ export function useWindowDrag(win: WindowState) {
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (win.maximized) return;
       if (e.button !== 0) return;
+      if (e.target instanceof Element && e.target.closest("button")) return;
       const target = e.currentTarget;
       target.setPointerCapture(e.pointerId);
       offset.current = { dx: e.clientX - win.x, dy: e.clientY - win.y };

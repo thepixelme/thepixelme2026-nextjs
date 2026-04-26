@@ -165,7 +165,7 @@ Handles have `z-10` relative to the window so they sit above body content. They 
 
 `useWindowDrag(win)` returns `{ onPointerDown, onPointerMove, onPointerUp }` for the titlebar.
 
-- `onPointerDown` — early-returns if `win.maximized` or `e.button !== 0`. Otherwise calls `setPointerCapture(e.pointerId)` and stashes `{ dx: e.clientX - win.x, dy: e.clientY - win.y }` in a ref. Also dispatches `FOCUS`.
+- `onPointerDown` — early-returns if `win.maximized`, `e.button !== 0`, or the event originated on a `<button>` (so traffic-light clicks aren't swallowed by pointer capture). Otherwise calls `setPointerCapture(e.pointerId)` and stashes `{ dx: e.clientX - win.x, dy: e.clientY - win.y }` in a ref. Also dispatches `FOCUS`.
 - `onPointerMove` — if a drag is in progress, computes `x = clamp(-w + 80, vw - 80, e.clientX - dx)` and `y = clamp(28, vh - 40, e.clientY - dy)`, dispatches `MOVE`. Clamping rules: a window may go far left/right (titlebar minimum 80px stays on screen), but the titlebar can never go above the menu bar (`y ≥ 28`) or below `vh - 40`.
 - `onPointerUp` — clears the ref, releases pointer capture.
 
