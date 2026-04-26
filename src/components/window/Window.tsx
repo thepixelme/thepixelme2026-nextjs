@@ -66,27 +66,28 @@ export default function Window({ win, children }: Props) {
     return { duration: 0.25, ease: "easeOut" as const };
   }, [reduceMotion, win.minimized]);
 
-  const prevMaximized = useRef(win.maximized);
+  const [prevMaximized, setPrevMaximized] = useState(win.maximized);
   const [boundsTransitioning, setBoundsTransitioning] = useState(false);
+  if (prevMaximized !== win.maximized) {
+    setPrevMaximized(win.maximized);
+    if (!reduceMotion) setBoundsTransitioning(true);
+  }
   useEffect(() => {
-    if (prevMaximized.current === win.maximized) return;
-    prevMaximized.current = win.maximized;
-    if (reduceMotion) return;
-    setBoundsTransitioning(true);
+    if (!boundsTransitioning) return;
     const t = setTimeout(
       () => setBoundsTransitioning(false),
       BOUNDS_TRANSITION_MS,
     );
     return () => clearTimeout(t);
-  }, [win.maximized, reduceMotion]);
+  }, [boundsTransitioning]);
 
-  const boundsClass = boundsTransitioning
-    ? "transition-[left,top,width,height] duration-[220ms] ease-out"
-    : "";
+  const boundsTransition = boundsTransitioning
+    ? "left 220ms ease-out, top 220ms ease-out, width 220ms ease-out, height 220ms ease-out"
+    : undefined;
 
   return (
     <motion.div
-      className={`absolute flex flex-col rounded-xl border border-field-border bg-surface shadow-overlay backdrop-blur-(--glass-blur) overflow-hidden ${boundsClass}`}
+      className="absolute flex flex-col rounded-xl border border-field-border bg-surface shadow-overlay backdrop-blur-(--glass-blur) overflow-hidden"
       style={{
         left: win.x,
         top: win.y,
@@ -94,6 +95,7 @@ export default function Window({ win, children }: Props) {
         height: win.h,
         zIndex: win.z,
         pointerEvents: win.minimized ? "none" : "auto",
+        transition: boundsTransition,
       }}
       initial={{
         opacity: 0,
