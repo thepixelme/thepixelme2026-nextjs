@@ -24,21 +24,27 @@ export default function MenuBar({ onOpenSpotlight }: Props) {
           <User size={14} />
           <span className="font-semibold">Nhat Nguyen</span>
         </button>
-        <span className="text-foreground/70 hover:text-foreground cursor-default">
-          File
-        </span>
-        <span className="text-foreground/70 hover:text-foreground cursor-default">
-          Edit
-        </span>
-        <span className="text-foreground/70 hover:text-foreground cursor-default">
-          View
-        </span>
-        <span className="text-foreground/70 hover:text-foreground cursor-default">
-          Window
-        </span>
-        <span className="text-foreground/70 hover:text-foreground cursor-default">
-          Help
-        </span>
+        <button
+          type="button"
+          className="text-foreground/70 hover:text-foreground rounded px-1 hover:bg-default"
+          onClick={() => dispatch({ type: "OPEN", appId: "finder" })}
+        >
+          Portfolio
+        </button>
+        <button
+          type="button"
+          className="text-foreground/70 hover:text-foreground rounded px-1 hover:bg-default"
+          onClick={() => dispatch({ type: "OPEN", appId: "resume" })}
+        >
+          Resume
+        </button>
+        <button
+          type="button"
+          className="text-foreground/70 hover:text-foreground rounded px-1 hover:bg-default"
+          onClick={() => dispatch({ type: "OPEN", appId: "contact" })}
+        >
+          Contact
+        </button>
       </nav>
       <div className="flex items-center gap-3">
         <Battery size={16} />

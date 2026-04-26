@@ -46,14 +46,13 @@ Props: `{ onOpenSpotlight: () => void }`.
 Layout:
 
 ```
-[User button]    Portfolio   File  Edit  View  Window  Help          Battery  Wifi  Search  Mon 3:42 PM
+[User · Nhat Nguyen]   Portfolio   Resume   Contact          Battery  Wifi  Search  Mon 3:42 PM
 ```
 
-Left side (`<nav>`):
+Left side (`<nav>`, `gap-4`):
 
-- About button — `<button aria-label="About menu">` rendering `<User size={14}>`. On click, dispatches `OPEN { appId: "about" }`. There is no actual dropdown menu. (Replaces the canonical macOS Apple logo — this portfolio is about Nhat, not Apple.)
-- "Portfolio" — static `<span>`, semibold.
-- "File" / "Edit" / "View" / "Window" / "Help" — static `<span>`s with `cursor-default`. Visual decoration only; not interactive.
+- About button — single `<button aria-label="About menu">` containing `<User size={14}>` plus a semibold `<span>` with the site owner's name ("Nhat Nguyen"). On click, dispatches `OPEN { appId: "about" }`. There is no actual dropdown menu. (Replaces the canonical macOS Apple logo + active-app name — this portfolio is about Nhat, not Apple, and there is no concept of an "active app" in the macOS sense.)
+- Nav buttons — three `<button>`s for top-level portfolio navigation, each dispatching `OPEN` against the [APPS](../src/components/apps/registry.ts) registry: `Portfolio` → `finder`, `Resume` → `resume`, `Contact` → `contact`. They replace the canonical "File / Edit / View / Window / Help" menus, which would otherwise be inert decoration in a single-purpose portfolio site.
 
 Right side:
 
