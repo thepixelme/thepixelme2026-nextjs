@@ -113,9 +113,6 @@ export default function Window({ win, children }: Props) {
       }
       exit={{
         opacity: 0,
-        scale: 0.6,
-        x: dockOffset.tx,
-        y: dockOffset.ty,
         transition: reduceMotion
           ? { duration: 0 }
           : { duration: 0.18, ease: "easeIn" },

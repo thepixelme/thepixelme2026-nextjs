@@ -162,7 +162,7 @@ Use these named layers. Do not improvise z values.
 
 - **Library**: `motion/react` (Framer Motion under the new name; HeroUI Pro peer dep). Do not pull in another animation lib.
 - **Window open**: scale `0.6 → 1`, opacity `0 → 1`, origin = position of the dock icon that opened it. ~250ms, `ease-out`.
-- **Window close**: reverse, ~180ms, `ease-in`.
+- **Window close**: opacity `1 → 0`, ~180ms, `ease-in`. No scale or translate.
 - **Window minimize**: animate to dock icon position, scale `1 → 0.1`, opacity `1 → 0`. ~300ms `ease-in-out`. Unminimize is the reverse, ~300ms `ease-out`.
 - **Window maximize / restore**: bounds (`left/top/width/height`) interpolated via a transient CSS transition. ~220ms `ease-out`. The transition is only applied while toggling so drag/resize stay instant.
 - **Dock magnify**: pure CSS `transition-transform duration-150 ease-out`. No JS — keep it cheap.
