@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# thepixelme 2026 — Portfolio
 
-## Getting Started
+A personal portfolio for [thepixelme.com](https://thepixelme.com), built as an interactive macOS-style desktop. Visitors land on a glass-themed desktop, click around the dock, drag windows, hit ⌘K for Spotlight, right-click the desktop — the portfolio content lives inside the "apps" they open.
 
-First, run the development server:
+## Highlights
+
+- **Seven apps** in the dock — Finder (project browser), About Me, Resume, Contact, Terminal, Photos, System Settings.
+- **Real window manager** — drag by titlebar, resize from any edge or corner, traffic-light close/minimize/maximize, click-to-focus stacking.
+- **Spotlight (⌘K)** — fuzzy-find any app and open it with ↵.
+- **Right-click desktop menu** — change wallpaper, open About, jump to GitHub.
+- **Glass theme, light + dark** — toggleable in System Settings, remembered across visits.
+- **Wallpaper picker** — gradient default plus three Big Sur / Monterey / Sequoia presets.
+- **Live menu bar** — Apple logo, app menus, battery/wifi placeholders, ticking clock.
+- **Fake terminal** — try `whoami`, `ls projects`, `cat about.md`, `help`, `clear`.
+
+## Tech stack
+
+| Layer            | Choice                                                 |
+| ---------------- | ------------------------------------------------------ |
+| Framework        | Next.js 16.2.4 (App Router, Turbopack)                 |
+| Runtime          | React 19.2                                             |
+| Styling          | Tailwind CSS v4 via `@tailwindcss/postcss`             |
+| Component library | HeroUI v3 — `@heroui/react` (OSS) + `@heroui-pro/react` (Pro), glass theme |
+| Animation peer   | `motion` (Framer Motion under new name)                |
+| Icons            | `lucide-react` for UI icons, `simple-icons` for brand logos via a small `<BrandIcon>` wrapper |
+| Tooling          | Biome 2.2 for lint + format                            |
+
+There is no backend. Contact form opens the user's mail client; everything else is static.
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Production build:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+npm run start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Lint and format:
 
-## Learn More
+```bash
+npm run lint
+npm run format
+```
 
-To learn more about Next.js, take a look at the following resources:
+HeroUI Pro requires a license — `npx heroui-pro@latest status` to check, `npx heroui-pro login` to authenticate. The first `npm install` after cloning expects either an interactive session or a `HEROUI_AUTH_TOKEN` env var.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project layout
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+  app/         # Next.js App Router (layout, page, globals.css)
+  components/
+    desktop/   # Wallpaper, MenuBar, Dock, Spotlight, DesktopContextMenu
+    window/    # Window, WindowManager, TrafficLights, drag/resize hooks
+    apps/      # The seven app components + registry.ts
+    BrandIcon.tsx
+  lib/         # windows-store (reducer), theme, clock, portfolio-data
+  types/       # AppId, AppDef, WindowState, WindowBounds
+public/        # static assets (wallpapers/ is empty; Settings uses Unsplash URLs)
+```
 
-## Deploy on Vercel
+Editorial content lives in [src/lib/portfolio-data.ts](../src/lib/portfolio-data.ts) — bio, projects, resume entries, photos, social links.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Reference docs
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The rest of this folder describes the codebase in detail:
+
+- [architecture.md](architecture.md) — render tree, data flow, z-index layering, lifecycle.
+- [window-manager.md](window-manager.md) — window state machine, `<Window>`, drag/resize hooks.
+- [desktop-shell.md](desktop-shell.md) — wallpaper, menu bar, dock, Spotlight, context menu, plus `useClock` and `useTheme`.
+- [apps.md](apps.md) — the `AppDef` contract and a section per app.
+- [styling-and-icons.md](styling-and-icons.md) — glass theme tokens, Tailwind v4 patterns, lucide and simple-icons usage.
+- [data.md](data.md) — `portfolio-data.ts` types and current values.
+
+Project-wide design conventions and macOS UI patterns are in [STYLEGUIDE.md](../STYLEGUIDE.md) at the repo root.
