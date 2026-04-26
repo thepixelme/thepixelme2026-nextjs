@@ -127,7 +127,8 @@ Behavior:
 Animation (see [STYLEGUIDE.md §6](../STYLEGUIDE.md)):
 
 - Root is a `motion.div`. Inline `style` still drives the layout box (`left/top/width/height/zIndex`) so drag and resize stay 60fps.
-- `initial` / `animate` / `exit` drive `opacity`, `scale`, and a translate offset (`x`, `y`) toward the owning dock icon. The dock-icon rect is read on demand via `useDockIconRect` from [dock-positions.tsx](../src/components/window/dock-positions.tsx). The initial offset is captured once at mount so the open animation always flies out from the icon, even if the window has since moved.
+- `initial` and `animate` drive `opacity`, `scale`, and a translate offset (`x`, `y`) toward the owning dock icon — open scales out from the icon, minimize shrinks into it. The dock-icon rect is read on demand via `useDockIconRect` from [dock-positions.tsx](../src/components/window/dock-positions.tsx). The initial offset is captured once at mount so the open animation always flies out from the icon, even if the window has since moved.
+- `exit` is a plain opacity fade (180ms ease-in) — close does **not** scale or translate to the dock.
 - Maximize/restore animates the layout box itself via a transient `transition-[left,top,width,height] duration-[220ms] ease-out` class — added when `win.maximized` flips, cleared after 220ms.
 - All durations clamp to 0 when `useReducedMotion()` returns true.
 
