@@ -6,8 +6,20 @@ import { useTheme } from "@/lib/theme";
 
 const WALLPAPER_KEY = "portfolio:wallpaper";
 
-const WALLPAPERS = [
-  { id: "gradient", label: "Gradient (default)", src: null },
+type WallpaperOption = {
+  id: string;
+  label: string;
+  src: string | null;
+  preview?: string;
+};
+
+const WALLPAPERS: WallpaperOption[] = [
+  {
+    id: "default",
+    label: "Default",
+    src: null,
+    preview: "/wallpapers/oleg-laptev-7jQh3EiS8Bs-unsplash-1980x1320.jpg",
+  },
   {
     id: "bigsur",
     label: "Big Sur",
@@ -96,9 +108,9 @@ export default function SettingsApp() {
                   aria-pressed={isActive}
                 >
                   <div className="aspect-video bg-linear-to-br from-[oklch(0.78_0.13_240)] to-[oklch(0.65_0.18_310)]">
-                    {w.src && (
+                    {(w.src ?? w.preview) && (
                       <img
-                        src={w.src}
+                        src={w.src ?? w.preview}
                         alt=""
                         className="h-full w-full object-cover"
                       />

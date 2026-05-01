@@ -21,21 +21,24 @@ The only state Desktop owns is `spotlightOpen: boolean`.
 
 ## Wallpaper ([Wallpaper.tsx](../src/components/desktop/Wallpaper.tsx))
 
-A fixed `inset-0 -z-10 bg-cover bg-center` div sitting behind everything.
+Sits behind everything as a fixed, full-viewport background.
 
-State: a single `src: string | null`, initialized to `null` (so the SSR pass uses the gradient fallback).
+State: a single `src: string | null`, initialized to `null` (so the SSR pass renders the default).
 
 Effects:
 
 - On mount, reads `localStorage["portfolio:wallpaper"]` into `src`.
 - Adds a `window` listener for the custom `portfolio:wallpaper-change` event and re-reads `localStorage` whenever it fires. The listener is removed on unmount.
 
-Background:
+Render:
 
-- When `src` is `null` → inline `background: <FALLBACK_GRADIENT>`. The gradient is `radial-gradient(ellipse at top, oklch(0.85 0.08 240) 0%, oklch(0.92 0.03 250) 45%, oklch(0.97 0.0029 264.54) 100%)`.
-- When `src` is a string → inline `backgroundImage: url(<src>)`.
+- When `src` is `null` (default) → a `<picture>` with two art-direction sources for the bundled Oleg Laptev wallpaper:
+  - `<source media="(orientation: portrait)" srcSet="/wallpapers/oleg-laptev-7jQh3EiS8Bs-unsplash-768x1280.jpg" />` (768×1280 portrait crop, ~46KB)
+  - `<img src="/wallpapers/oleg-laptev-7jQh3EiS8Bs-unsplash-1980x1320.jpg" />` (1980×1320 landscape crop, ~187KB) as the default
+  - The `<img>` carries `alt=""` + `aria-hidden="true"` (decorative) and `fixed inset-0 -z-10 h-full w-full object-cover` for the full-bleed backdrop.
+- When `src` is a string (custom wallpaper) → a `fixed inset-0 -z-10 bg-cover bg-center` div with inline `backgroundImage: url(<src>)`.
 
-The writer is [SettingsApp](../src/components/apps/SettingsApp.tsx), which sets the localStorage key and dispatches the custom event.
+The writer is [SettingsApp](../src/components/apps/SettingsApp.tsx), which sets the localStorage key and dispatches the custom event. Picking the "Default" tile in Settings removes the key so the responsive `<picture>` takes over.
 
 ## MenuBar ([MenuBar.tsx](../src/components/desktop/MenuBar.tsx))
 
