@@ -1,7 +1,6 @@
 export interface Project {
   id: string;
   title: string;
-  year: number;
   tags: string[];
   summary: string;
   description: string;
@@ -74,9 +73,17 @@ export const SOCIALS: Social[] = [
 
 export const PROJECTS: Project[] = [
   {
+    id: "apipeek",
+    title: "APIPeek — JSON viewer & API sandbox",
+    tags: ["Browser extension", "TypeScript", "React"],
+    summary:
+      "Chrome/Firefox extension that turns the browser's JSON viewer into a developer-friendly API sandbox.",
+    description:
+      "A Chrome and Firefox MV3 extension that wraps raw JSON responses in a collapsible tree with search, JSONPath filtering (jsonpath-plus), schema generation (quicktype-core, lazy-loaded out of the content bundle), and a request panel for re-firing calls with edited method/headers/body without leaving the tab. Built with React 19, Zustand, and WXT; the UI mounts into a shadow DOM for CSS isolation, and a typed message bridge to the MV3 service worker handles cross-realm fetches and schema generation.",
+  },
+  {
     id: "atlas",
     title: "Atlas — design system",
-    year: 2025,
     tags: ["Design system", "React", "TypeScript"],
     summary: "120-component design system shipped across 4 product surfaces.",
     description:
@@ -86,7 +93,6 @@ export const PROJECTS: Project[] = [
   {
     id: "harbor",
     title: "Harbor — finance dashboard",
-    year: 2025,
     tags: ["Product design", "Data viz"],
     summary: "Real-time analytics for a fintech with 200k MAU.",
     description:
@@ -95,7 +101,6 @@ export const PROJECTS: Project[] = [
   {
     id: "fern",
     title: "Fern — note taking",
-    year: 2024,
     tags: ["Product design", "Native"],
     summary: "Calm, plaintext-first note-taking app for macOS.",
     description:
@@ -104,7 +109,6 @@ export const PROJECTS: Project[] = [
   {
     id: "ortus",
     title: "Ortus — booking flow",
-    year: 2024,
     tags: ["Conversion", "Front-end"],
     summary: "Rebuilt a hotel chain's booking flow; +18% conversion.",
     description:
@@ -113,7 +117,6 @@ export const PROJECTS: Project[] = [
   {
     id: "voya",
     title: "Voya — travel guide",
-    year: 2023,
     tags: ["Editorial", "CMS"],
     summary: "Editorial travel site with a custom CMS.",
     description:
@@ -122,7 +125,6 @@ export const PROJECTS: Project[] = [
   {
     id: "circuit",
     title: "Circuit — runner watch face",
-    year: 2023,
     tags: ["Wearable", "Motion"],
     summary: "Watch face for Wear OS runners. 200k installs.",
     description:

@@ -10,7 +10,6 @@ All static portfolio content lives in [src/lib/portfolio-data.ts](../src/lib/por
 interface Project {
   id: string;
   title: string;
-  year: number;
   tags: string[];
   summary: string;
   description: string;
@@ -93,20 +92,21 @@ Order matters — it determines the rendered order in About → Find me.
 
 ## `PROJECTS: Project[]`
 
-Six entries, ordered as shown:
+Seven entries, ordered as shown:
 
-| `id`     | `title`                       | `year` | `tags`                                | `link`                  |
-| -------- | ----------------------------- | ------ | ------------------------------------- | ----------------------- |
-| `atlas`  | Atlas — design system         | 2025   | Design system · React · TypeScript    | `https://example.com/atlas` |
-| `harbor` | Harbor — finance dashboard    | 2025   | Product design · Data viz             | —                       |
-| `fern`   | Fern — note taking            | 2024   | Product design · Native               | —                       |
-| `ortus`  | Ortus — booking flow          | 2024   | Conversion · Front-end                | —                       |
-| `voya`   | Voya — travel guide           | 2023   | Editorial · CMS                       | —                       |
-| `circuit`| Circuit — runner watch face   | 2023   | Wearable · Motion                     | —                       |
+| `id`      | `title`                              | `tags`                                | `link`                  |
+| --------- | ------------------------------------ | ------------------------------------- | ----------------------- |
+| `apipeek` | APIPeek — JSON viewer & API sandbox  | Browser extension · TypeScript · React | —                      |
+| `atlas`   | Atlas — design system                | Design system · React · TypeScript    | `https://example.com/atlas` |
+| `harbor`  | Harbor — finance dashboard           | Product design · Data viz             | —                       |
+| `fern`    | Fern — note taking                   | Product design · Native               | —                       |
+| `ortus`   | Ortus — booking flow                 | Conversion · Front-end                | —                       |
+| `voya`    | Voya — travel guide                  | Editorial · CMS                       | —                       |
+| `circuit` | Circuit — runner watch face          | Wearable · Motion                     | —                       |
 
 Each has a `summary` (1 sentence, shown in cards) and `description` (1–2 sentences, shown in detail view).
 
-[FinderApp](../src/components/apps/FinderApp.tsx) derives its sidebar `Year` and `Tags` filters by uniquing across this array. Adding/removing entries rebuilds the sidebar automatically.
+[FinderApp](../src/components/apps/FinderApp.tsx) derives its sidebar `Tags` filter by uniquing across this array. Adding/removing entries rebuilds the sidebar automatically.
 
 ## `RESUME: ResumeEntry[]`
 

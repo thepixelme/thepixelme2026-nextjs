@@ -55,8 +55,7 @@ export default function TerminalApp() {
     if (cmd === "help") next.push(...HELP);
     else if (cmd === "whoami") next.push(`${ABOUT.handle} — ${ABOUT.title}`);
     else if (cmd === "ls projects") {
-      for (const p of PROJECTS)
-        next.push(`${p.year}  ${p.id.padEnd(10)} ${p.title}`);
+      for (const p of PROJECTS) next.push(`${p.id.padEnd(10)} ${p.title}`);
     } else if (cmd === "cat about.md") next.push(ABOUT.bio);
     else if (cmd === "clear") {
       setLines([]);

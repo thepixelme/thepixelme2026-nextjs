@@ -52,23 +52,21 @@ Two-pane layout: a sidebar of saved filters on the left, a project grid on the r
 
 ### State
 
-- `filter: { kind: "all" } | { kind: "year"; year: number } | { kind: "tag"; tag: string }` — initial `{ kind: "all" }`.
+- `filter: { kind: "all" } | { kind: "tag"; tag: string }` — initial `{ kind: "all" }`.
 - `selected: Project | null` — initial `null`. When non-null, the component returns `<ProjectDetail>` and skips the grid layout entirely.
 
 ### Derived data (memoized)
 
-- `years` — descending unique list of `PROJECTS[*].year`.
 - `tags` — alphabetical unique list of all tags across projects.
 - `visible` — `PROJECTS` filtered by the current `filter`.
 
 ### Sidebar
 
-Three sections via the local `<SidebarSection>` helper:
+Two sections via the local `<SidebarSection>` helper:
 
 | Section     | Items                                                |
 | ----------- | ---------------------------------------------------- |
 | Favorites   | `All Projects` (Star icon, sets `filter.kind = "all"`) |
-| Year        | One row per `years[i]` (FolderOpen icon)             |
 | Tags        | One row per `tags[i]` (Tag icon)                     |
 
 Each row is a `<SidebarItem>` `<button>` with active state `bg-default font-medium` when its kind+key matches the current `filter`.
@@ -92,7 +90,7 @@ Click → `setSelected(project)`.
 
 - A toolbar with a back button (`<ArrowLeft size={14}>`, `aria-label="Back to projects"`) calling `onBack`, plus the project title.
 - The same gradient placeholder (now `aspect-video`, larger letter).
-- Year + tag list (`uppercase tracking-wide`).
+- Tag list (`uppercase tracking-wide`).
 - Full `description`.
 - A "Visit project" link (`<ExternalLink size={12}>`) when `project.link` is defined; opens in a new tab.
 
@@ -193,7 +191,7 @@ Re-mounts (e.g. closing and reopening the window) reset state and re-print the g
 | Command         | Output                                                                            |
 | --------------- | --------------------------------------------------------------------------------- |
 | `whoami`        | `${ABOUT.handle} — ${ABOUT.title}`                                                |
-| `ls projects`   | One line per `PROJECTS` entry: `${year}  ${id padded to 10}  ${title}`            |
+| `ls projects`   | One line per `PROJECTS` entry: `${id padded to 10}  ${title}`                     |
 | `cat about.md`  | `ABOUT.bio` as a single line                                                      |
 | `clear`         | Clears `lines`. No echo.                                                          |
 | `help`          | The static `HELP` array (6 lines).                                                |

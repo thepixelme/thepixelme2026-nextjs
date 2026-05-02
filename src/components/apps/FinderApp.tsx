@@ -1,23 +1,15 @@
 "use client";
 
-import { ArrowLeft, ExternalLink, FolderOpen, Star, Tag } from "lucide-react";
+import { ArrowLeft, ExternalLink, Star, Tag } from "lucide-react";
 import { useMemo, useState } from "react";
 import { PROJECTS, type Project } from "@/lib/portfolio-data";
 
-type Filter =
-  | { kind: "all" }
-  | { kind: "year"; year: number }
-  | { kind: "tag"; tag: string };
+type Filter = { kind: "all" } | { kind: "tag"; tag: string };
 
 export default function FinderApp() {
   const [filter, setFilter] = useState<Filter>({ kind: "all" });
   const [selected, setSelected] = useState<Project | null>(null);
 
-  const years = useMemo(
-    () =>
-      Array.from(new Set(PROJECTS.map((p) => p.year))).sort((a, b) => b - a),
-    [],
-  );
   const tags = useMemo(
     () => Array.from(new Set(PROJECTS.flatMap((p) => p.tags))).sort(),
     [],
@@ -25,8 +17,6 @@ export default function FinderApp() {
 
   const visible = useMemo(() => {
     if (filter.kind === "all") return PROJECTS;
-    if (filter.kind === "year")
-      return PROJECTS.filter((p) => p.year === filter.year);
     return PROJECTS.filter((p) => p.tags.includes(filter.tag));
   }, [filter]);
 
@@ -46,17 +36,6 @@ export default function FinderApp() {
             active={filter.kind === "all"}
             onClick={() => setFilter({ kind: "all" })}
           />
-        </SidebarSection>
-        <SidebarSection label="Year">
-          {years.map((y) => (
-            <SidebarItem
-              key={y}
-              icon={<FolderOpen size={14} />}
-              label={String(y)}
-              active={filter.kind === "year" && filter.year === y}
-              onClick={() => setFilter({ kind: "year", year: y })}
-            />
-          ))}
         </SidebarSection>
         <SidebarSection label="Tags">
           {tags.map((t) => (
@@ -172,7 +151,7 @@ function ProjectDetail({
           {project.title.slice(0, 1)}
         </div>
         <p className="mt-2 text-xs uppercase tracking-wide text-foreground/60">
-          {project.year} · {project.tags.join(" · ")}
+          {project.tags.join(" · ")}
         </p>
         <p className="mt-4 text-sm leading-relaxed text-foreground/80">
           {project.description}
