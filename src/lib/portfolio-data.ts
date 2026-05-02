@@ -49,8 +49,7 @@ export const ABOUT = {
     {
       category: "Business & Product",
       items: [
-        "Product Strategy",
-        "Technical ROI Analysis",
+        "Product Strategy & Roadmapping",
         "Agile Leadership",
         "User-Centric Design",
       ],

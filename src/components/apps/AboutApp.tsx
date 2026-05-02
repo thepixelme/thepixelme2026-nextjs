@@ -1,7 +1,7 @@
 "use client";
 
 import { Chip } from "@heroui/react";
-import { MapPin } from "lucide-react";
+import { Link2, MapPin, Wrench } from "lucide-react";
 import { siDribbble, siGithub, siInstagram, siX } from "simple-icons";
 import BrandIcon from "@/components/BrandIcon";
 import { ABOUT, SOCIALS } from "@/lib/portfolio-data";
@@ -16,18 +16,21 @@ const BRANDS = {
 export default function AboutApp() {
   return (
     <div className="flex flex-col gap-6 p-8">
-      <div>
-        <h1 className="text-xl font-semibold">{ABOUT.name}</h1>
-        <p className="text-sm text-foreground/70">{ABOUT.title}</p>
+      <header className="flex flex-col gap-1">
+        <h1 className="text-3xl font-semibold tracking-tight">{ABOUT.name}</h1>
+        <p className="text-sm leading-relaxed text-foreground/70">
+          {ABOUT.title}
+        </p>
         <p className="mt-1 flex items-center gap-1 text-xs text-foreground/60">
           <MapPin size={12} /> {ABOUT.location}
         </p>
-      </div>
+      </header>
 
       <p className="text-sm leading-relaxed text-foreground/80">{ABOUT.bio}</p>
 
-      <div>
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-foreground/60">
+      <section className="border-t border-separator pt-6">
+        <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-foreground/60">
+          <Wrench size={14} />
           Skills
         </h2>
         <div className="flex flex-col gap-3">
@@ -46,10 +49,11 @@ export default function AboutApp() {
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      <div>
-        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-foreground/60">
+      <section className="border-t border-separator pt-6">
+        <h2 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-foreground/60">
+          <Link2 size={14} />
           Find me
         </h2>
         <div className="flex flex-wrap gap-2">
@@ -66,7 +70,7 @@ export default function AboutApp() {
             </a>
           ))}
         </div>
-      </div>
+      </section>
     </div>
   );
 }
