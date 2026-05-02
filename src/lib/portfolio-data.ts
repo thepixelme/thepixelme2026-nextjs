@@ -33,19 +33,28 @@ export interface Social {
 export const ABOUT = {
   name: "Nhat Nguyen",
   handle: "thepixelme",
-  title: "Designer & Front-end Engineer",
-  location: "Brisbane, Australia",
+  title: "Bridging the Gap Between Business Vision and Technical Reality",
+  location: "USA, Earth",
   email: "nhat@thepixelme.com",
-  bio: "I design and build interfaces that feel as good as they look. I obsess over typography, motion, and the small details — the kind of stuff most people never notice but everyone feels.",
+  bio: "I am a Full-Stack Engineer and Product Strategist who builds with a commercial mindset. I specialize in architecting systems where technical decisions drive business growth, transforming abstract requirements into robust, high-performance digital ecosystems.",
   skills: [
-    "TypeScript",
-    "React",
-    "Next.js",
-    "Tailwind CSS",
-    "Figma",
-    "Motion design",
-    "Design systems",
-    "Accessibility",
+    {
+      category: "Core Tech",
+      items: ["JavaScript", "TypeScript", "React", "React Native", "Node.js", "PostgreSQL"],
+    },
+    {
+      category: "Cloud & Scaling",
+      items: ["AWS/DevOps", "CI/CD Pipeline", "System Architecture"],
+    },
+    {
+      category: "Business & Product",
+      items: [
+        "Product Strategy",
+        "Technical ROI Analysis",
+        "Agile Leadership",
+        "User-Centric Design",
+      ],
+    },
   ],
 };
 

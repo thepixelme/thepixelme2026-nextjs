@@ -76,7 +76,7 @@ A plain object (not an interface'd type) with the operator's identity:
 | `location` | `string`   | `"Brisbane, Australia"`                                                                        |
 | `email`    | `string`   | `"nhat@thepixelme.com"`                                                                        |
 | `bio`      | `string`   | `"I design and build interfaces that feel as good as they look. I obsess over typography, motion, and the small details — the kind of stuff most people never notice but everyone feels."` |
-| `skills`   | `string[]` | 8 entries: TypeScript, React, Next.js, Tailwind CSS, Figma, Motion design, Design systems, Accessibility |
+| `skills`   | `{ category: string; items: string[] }[]` | 3 groups, 11 entries total: **Core Tech** (TypeScript, React/Next.js, Node.js, PostgreSQL), **Cloud & Scaling** (AWS/DevOps, System Architecture, Scalable Infrastructure), **Business & Product** (Product Strategy, Technical ROI Analysis, Agile Leadership, User-Centric Design) |
 
 Read by: [AboutApp](../src/components/apps/AboutApp.tsx) (full object), [ResumeApp](../src/components/apps/ResumeApp.tsx) (name, title, location, email), [ContactApp](../src/components/apps/ContactApp.tsx) (email), [TerminalApp](../src/components/apps/TerminalApp.tsx) (handle, title, bio).
 
