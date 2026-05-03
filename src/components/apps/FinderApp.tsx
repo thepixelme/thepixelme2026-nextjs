@@ -2,7 +2,7 @@
 
 import { Star, Tag } from "lucide-react";
 import { useMemo, useState } from "react";
-import { PROJECTS, type Project } from "@/lib/portfolio-data";
+import { PROJECTS, type Project } from "@/lib/projects";
 import { ProjectDetail } from "./ProjectDetail";
 
 type Filter = { kind: "all" } | { kind: "tag"; tag: string };

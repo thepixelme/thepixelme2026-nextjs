@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ABOUT, PROJECTS } from "@/lib/portfolio-data";
+import { ABOUT } from "@/lib/portfolio-data";
+import { PROJECTS } from "@/lib/projects";
 
 interface Line {
   kind: "out" | "in";

@@ -91,7 +91,7 @@ Click → `setSelected(project)`.
 1. **Toolbar** — back button (`<ArrowLeft size={14}>`, `aria-label="Back to projects"`) + project title.
 2. **Hero** — `aspect-video` gradient placeholder with the project's first letter (`text-5xl`, white).
 3. **Title block** — `<h1 className="text-2xl font-semibold tracking-tight">`, then `summary` as a `text-base text-foreground/75` tagline, then tag chips.
-4. **Meta strip** (`<MetaStrip>`, only when at least one of `role`/`stack`/`period`/`status` is set) — a `grid grid-cols-[72px_1fr]` definition list inside `rounded-xl border border-field-border bg-surface-secondary/40 p-5`. Stack entries render as mono-font pills.
+4. **Meta strip** (`<MetaStrip>`, only when at least one of `role`/`stack`/`status` is set) — a `grid grid-cols-[72px_1fr]` definition list inside `rounded-xl border border-field-border bg-surface-secondary/40 p-5`. Stack entries render as mono-font pills.
 5. **Description** — `description` as a body paragraph (with inline-formatting support; see below).
 6. **The problem** (only when `problem` is set) — section heading + `<Prose>`.
 7. **Engineering highlights** (only when `highlights` is non-empty) — section heading + a vertical stack of `<HighlightCard>`s. Each card has a numbered circle, a title, prose body, and an optional `code` snippet rendered in a `<pre>` on `bg-surface-tertiary/60`.

@@ -1,10 +1,15 @@
 # Data
 
-All static portfolio content lives in [src/lib/portfolio-data.ts](../src/lib/portfolio-data.ts). The file exports four typed constants and four interfaces. Apps import directly — there is no API layer, no CMS, no fetch.
+Static portfolio content is split across two locations:
+
+- **[src/lib/portfolio-data.ts](../src/lib/portfolio-data.ts)** — `ABOUT`, `SOCIALS`, `RESUME`, `PHOTOS` and their interfaces.
+- **[src/lib/projects/](../src/lib/projects/)** — one file per project (`apipeek.ts`, etc.), the `Project` / `Highlight` / `Learning` types in [types.ts](../src/lib/projects/types.ts), and an [index.ts](../src/lib/projects/index.ts) that aggregates the per-project exports into `PROJECTS: Project[]`.
+
+Apps import directly from these — there is no API layer, no CMS, no fetch.
 
 ## Types
 
-### `Project`
+### `Project` ([src/lib/projects/types.ts](../src/lib/projects/types.ts))
 
 ```ts
 interface Highlight {
@@ -27,12 +32,11 @@ interface Project {
   link?: string;          // optional "Visit project" link
   image?: string;         // declared but not read by any current app
 
-  // Optional case-study fields. Render only when present; placeholder
-  // projects can omit them and fall back to the title + description layout.
+  // Optional case-study fields. Render only when present; light projects
+  // can omit them and fall back to the title + description layout.
   role?: string;          // e.g. "Sole engineer and designer"
   stack?: string[];       // tech list rendered as mono pills in the meta strip
   status?: string;        // e.g. "v0.0.1, prepared for Chrome Web Store submission"
-  period?: string;        // e.g. "Late 2025 — early 2026"
   problem?: string;       // long prose; supports \n\n + inline formatting
   highlights?: Highlight[];
   designNotes?: string;   // long prose
@@ -112,23 +116,17 @@ Read by: [AboutApp](../src/components/apps/AboutApp.tsx) (full object), [ResumeA
 
 Order matters — it determines the rendered order in About → Find me.
 
-## `PROJECTS: Project[]`
+## `PROJECTS: Project[]` ([src/lib/projects/index.ts](../src/lib/projects/index.ts))
 
-Seven entries, ordered as shown:
+| `id`      | file                                                       | `title`                              | `tags`                                 | rich case-study? |
+| --------- | ---------------------------------------------------------- | ------------------------------------ | -------------------------------------- | ---------------- |
+| `apipeek` | [apipeek.ts](../src/lib/projects/apipeek.ts)               | APIPeek — JSON viewer & API sandbox  | Browser extension · TypeScript · React | yes (full)       |
 
-| `id`      | `title`                              | `tags`                                 | rich case-study?        |
-| --------- | ------------------------------------ | -------------------------------------- | ----------------------- |
-| `apipeek` | APIPeek — JSON viewer & API sandbox  | Browser extension · TypeScript · React | yes (full)              |
-| `atlas`   | Atlas — design system                | Design system · React · TypeScript     | no (`link` only)        |
-| `harbor`  | Harbor — finance dashboard           | Product design · Data viz              | no                      |
-| `fern`    | Fern — note taking                   | Product design · Native                | no                      |
-| `ortus`   | Ortus — booking flow                 | Conversion · Front-end                 | no                      |
-| `voya`    | Voya — travel guide                  | Editorial · CMS                        | no                      |
-| `circuit` | Circuit — runner watch face          | Wearable · Motion                      | no                      |
+Each project lives in its own file under [src/lib/projects/](../src/lib/projects/) so that long-form copy doesn't crowd one giant module. [index.ts](../src/lib/projects/index.ts) imports each project file and exports `PROJECTS: Project[]` in the order they should appear in the Finder grid.
 
-Each has a `summary` (1 sentence, shown on cards and as the tagline in the detail view) and `description` (1–2 sentences, lede paragraph in the detail view). Projects flagged "rich case-study" also populate the optional fields (`role`, `stack`, `period`, `status`, `problem`, `highlights`, `designNotes`, `learnings`); the detail view renders only the sections that are present, so placeholder projects degrade gracefully.
+To add a new project: create `src/lib/projects/<id>.ts` with `export const <id>: Project = { ... }`, then add the import and array entry in `index.ts`.
 
-[FinderApp](../src/components/apps/FinderApp.tsx) derives its sidebar `Tags` filter by uniquing across this array. Adding/removing entries rebuilds the sidebar automatically.
+[FinderApp](../src/components/apps/FinderApp.tsx) derives its sidebar `Tags` filter by uniquing across `PROJECTS`. Adding/removing entries rebuilds the sidebar automatically.
 
 ## `RESUME: ResumeEntry[]`
 
@@ -159,6 +157,6 @@ Captions are paired by content with `PROJECTS` entries but the linkage is implic
 
 ## Notes for editing
 
-- The file has no async/server side; changes appear at the next dev-server hot reload.
-- All consumers import via the named export pattern (`import { ABOUT, PROJECTS } from "@/lib/portfolio-data"`). Renaming a constant requires updating every consumer; TypeScript will surface them.
+- No async/server side; changes appear at the next dev-server hot reload.
+- Consumers import via named exports — `ABOUT`, `SOCIALS`, `RESUME`, `PHOTOS` from `@/lib/portfolio-data`; `PROJECTS` and the project types from `@/lib/projects`. Renaming a constant requires updating every consumer; TypeScript will surface them.
 - There are no environment-specific overrides (no dev/prod data switch).

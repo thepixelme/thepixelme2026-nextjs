@@ -2,7 +2,7 @@
 
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
-import type { Highlight, Project } from "@/lib/portfolio-data";
+import type { Highlight, Project } from "@/lib/projects";
 
 export function ProjectDetail({
   project,
@@ -11,11 +11,7 @@ export function ProjectDetail({
   project: Project;
   onBack: () => void;
 }) {
-  const hasMeta =
-    !!project.role ||
-    !!project.stack?.length ||
-    !!project.period ||
-    !!project.status;
+  const hasMeta = !!project.role || !!project.stack?.length || !!project.status;
   const hasRichContent =
     !!project.problem ||
     !!project.highlights?.length ||
@@ -142,7 +138,6 @@ function MetaStrip({ project }: { project: Project }) {
       ),
     });
   }
-  if (project.period) rows.push({ label: "Period", value: project.period });
   if (project.status) rows.push({ label: "Status", value: project.status });
 
   return (
