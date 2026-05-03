@@ -1,8 +1,9 @@
 "use client";
 
-import { ArrowLeft, ExternalLink, Star, Tag } from "lucide-react";
+import { Star, Tag } from "lucide-react";
 import { useMemo, useState } from "react";
 import { PROJECTS, type Project } from "@/lib/portfolio-data";
+import { ProjectDetail } from "./ProjectDetail";
 
 type Filter = { kind: "all" } | { kind: "tag"; tag: string };
 
@@ -123,50 +124,5 @@ function SidebarItem({
       {icon}
       {label}
     </button>
-  );
-}
-
-function ProjectDetail({
-  project,
-  onBack,
-}: {
-  project: Project;
-  onBack: () => void;
-}) {
-  return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-3 border-b border-separator px-4 py-2">
-        <button
-          type="button"
-          onClick={onBack}
-          aria-label="Back to projects"
-          className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-default"
-        >
-          <ArrowLeft size={14} />
-        </button>
-        <span className="text-sm font-semibold">{project.title}</span>
-      </div>
-      <div className="overflow-auto p-6">
-        <div className="grid aspect-video place-items-center rounded-md bg-linear-to-br from-[oklch(0.78_0.13_240)] to-[oklch(0.65_0.18_310)] text-4xl font-semibold text-white">
-          {project.title.slice(0, 1)}
-        </div>
-        <p className="mt-2 text-xs uppercase tracking-wide text-foreground/60">
-          {project.tags.join(" · ")}
-        </p>
-        <p className="mt-4 text-sm leading-relaxed text-foreground/80">
-          {project.description}
-        </p>
-        {project.link && (
-          <a
-            href={project.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-6 inline-flex items-center gap-2 rounded-md border border-field-border bg-field-background px-3 py-1.5 text-xs font-medium hover:bg-default"
-          >
-            Visit project <ExternalLink size={12} />
-          </a>
-        )}
-      </div>
-    </div>
   );
 }

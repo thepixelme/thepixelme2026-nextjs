@@ -86,13 +86,32 @@ Click → `setSelected(project)`.
 
 ### Project detail
 
-`<ProjectDetail>` (local, not exported) renders:
+`<ProjectDetail>` lives in its own file ([ProjectDetail.tsx](../src/components/apps/ProjectDetail.tsx)) so the case-study layout doesn't bloat FinderApp. It renders a long-form scroll inside `mx-auto max-w-2xl px-8 pt-6 pb-12`:
 
-- A toolbar with a back button (`<ArrowLeft size={14}>`, `aria-label="Back to projects"`) calling `onBack`, plus the project title.
-- The same gradient placeholder (now `aspect-video`, larger letter).
-- Tag list (`uppercase tracking-wide`).
-- Full `description`.
-- A "Visit project" link (`<ExternalLink size={12}>`) when `project.link` is defined; opens in a new tab.
+1. **Toolbar** — back button (`<ArrowLeft size={14}>`, `aria-label="Back to projects"`) + project title.
+2. **Hero** — `aspect-video` gradient placeholder with the project's first letter (`text-5xl`, white).
+3. **Title block** — `<h1 className="text-2xl font-semibold tracking-tight">`, then `summary` as a `text-base text-foreground/75` tagline, then tag chips.
+4. **Meta strip** (`<MetaStrip>`, only when at least one of `role`/`stack`/`period`/`status` is set) — a `grid grid-cols-[72px_1fr]` definition list inside `rounded-xl border border-field-border bg-surface-secondary/40 p-5`. Stack entries render as mono-font pills.
+5. **Description** — `description` as a body paragraph (with inline-formatting support; see below).
+6. **The problem** (only when `problem` is set) — section heading + `<Prose>`.
+7. **Engineering highlights** (only when `highlights` is non-empty) — section heading + a vertical stack of `<HighlightCard>`s. Each card has a numbered circle, a title, prose body, and an optional `code` snippet rendered in a `<pre>` on `bg-surface-tertiary/60`.
+8. **Design** (only when `designNotes` is set) — section heading + `<Prose>`.
+9. **What I learned** (only when `learnings` is non-empty) — section heading + `<ul>` where each item is a bolded `lead` followed by inline-formatted `body`.
+10. **Visit project** link (when `project.link` is set) — same external-link button as before.
+
+Section headings are uniformly `text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/50` (a Resume-style secondary header).
+
+Inline formatting: a small `renderInline()` helper splits prose strings on three patterns and renders them with the matching primitives:
+
+| Marker          | Rendered as                                                                  |
+| --------------- | ---------------------------------------------------------------------------- |
+| `` `code` ``    | `<code className="rounded bg-surface-tertiary/60 px-1 font-mono text-[12px]">` |
+| `**bold**`      | `<strong className="font-semibold text-foreground">`                          |
+| `*em*`          | `<em className="italic">`                                                     |
+
+Multi-paragraph prose uses `\n\n` between paragraphs; the `<Prose>` helper splits on that and emits one `<p>` per chunk inside a `flex flex-col gap-3`.
+
+The component renders gracefully for projects without any optional fields — only the toolbar, hero, title block, and (if present) `description` + `link` show.
 
 There is no Finder toolbar (no back/forward arrows for the project history; the only "back" is the one inside ProjectDetail).
 

@@ -7,18 +7,40 @@ All static portfolio content lives in [src/lib/portfolio-data.ts](../src/lib/por
 ### `Project`
 
 ```ts
+interface Highlight {
+  title: string;
+  body: string;       // supports \n\n for paragraphs and inline `code` / **bold** / *em*
+  code?: string;      // optional code snippet rendered as a mono block
+}
+
+interface Learning {
+  lead: string;       // bolded headline of the takeaway
+  body: string;       // explanation; same inline-formatting support as Highlight.body
+}
+
 interface Project {
   id: string;
   title: string;
   tags: string[];
-  summary: string;
-  description: string;
-  link?: string;
-  image?: string;     // declared but not read by any current app
+  summary: string;        // one-liner; shown on grid card and as the tagline in detail
+  description: string;    // 1–2 sentences; lede paragraph in detail view
+  link?: string;          // optional "Visit project" link
+  image?: string;         // declared but not read by any current app
+
+  // Optional case-study fields. Render only when present; placeholder
+  // projects can omit them and fall back to the title + description layout.
+  role?: string;          // e.g. "Sole engineer and designer"
+  stack?: string[];       // tech list rendered as mono pills in the meta strip
+  status?: string;        // e.g. "v0.0.1, prepared for Chrome Web Store submission"
+  period?: string;        // e.g. "Late 2025 — early 2026"
+  problem?: string;       // long prose; supports \n\n + inline formatting
+  highlights?: Highlight[];
+  designNotes?: string;   // long prose
+  learnings?: Learning[]; // bullet list with bold leads
 }
 ```
 
-Used by: [FinderApp](../src/components/apps/FinderApp.tsx) (grid + detail view) and [TerminalApp](../src/components/apps/TerminalApp.tsx) (`ls projects`).
+Used by: [FinderApp](../src/components/apps/FinderApp.tsx) (grid card uses only `id`, `title`, `summary`, `tags`) and [ProjectDetail](../src/components/apps/ProjectDetail.tsx) (case-study layout — renders any optional fields that are present). [TerminalApp](../src/components/apps/TerminalApp.tsx) reads `id` and `title` for `ls projects`.
 
 ### `ResumeEntry`
 
@@ -94,17 +116,17 @@ Order matters — it determines the rendered order in About → Find me.
 
 Seven entries, ordered as shown:
 
-| `id`      | `title`                              | `tags`                                | `link`                  |
-| --------- | ------------------------------------ | ------------------------------------- | ----------------------- |
-| `apipeek` | APIPeek — JSON viewer & API sandbox  | Browser extension · TypeScript · React | —                      |
-| `atlas`   | Atlas — design system                | Design system · React · TypeScript    | `https://example.com/atlas` |
-| `harbor`  | Harbor — finance dashboard           | Product design · Data viz             | —                       |
-| `fern`    | Fern — note taking                   | Product design · Native               | —                       |
-| `ortus`   | Ortus — booking flow                 | Conversion · Front-end                | —                       |
-| `voya`    | Voya — travel guide                  | Editorial · CMS                       | —                       |
-| `circuit` | Circuit — runner watch face          | Wearable · Motion                     | —                       |
+| `id`      | `title`                              | `tags`                                 | rich case-study?        |
+| --------- | ------------------------------------ | -------------------------------------- | ----------------------- |
+| `apipeek` | APIPeek — JSON viewer & API sandbox  | Browser extension · TypeScript · React | yes (full)              |
+| `atlas`   | Atlas — design system                | Design system · React · TypeScript     | no (`link` only)        |
+| `harbor`  | Harbor — finance dashboard           | Product design · Data viz              | no                      |
+| `fern`    | Fern — note taking                   | Product design · Native                | no                      |
+| `ortus`   | Ortus — booking flow                 | Conversion · Front-end                 | no                      |
+| `voya`    | Voya — travel guide                  | Editorial · CMS                        | no                      |
+| `circuit` | Circuit — runner watch face          | Wearable · Motion                      | no                      |
 
-Each has a `summary` (1 sentence, shown in cards) and `description` (1–2 sentences, shown in detail view).
+Each has a `summary` (1 sentence, shown on cards and as the tagline in the detail view) and `description` (1–2 sentences, lede paragraph in the detail view). Projects flagged "rich case-study" also populate the optional fields (`role`, `stack`, `period`, `status`, `problem`, `highlights`, `designNotes`, `learnings`); the detail view renders only the sections that are present, so placeholder projects degrade gracefully.
 
 [FinderApp](../src/components/apps/FinderApp.tsx) derives its sidebar `Tags` filter by uniquing across this array. Adding/removing entries rebuilds the sidebar automatically.
 
