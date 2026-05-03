@@ -12,11 +12,7 @@ export function ProjectDetail({
   onBack: () => void;
 }) {
   const hasMeta = !!project.role || !!project.stack?.length || !!project.status;
-  const hasRichContent =
-    !!project.problem ||
-    !!project.highlights?.length ||
-    !!project.designNotes ||
-    !!project.learnings?.length;
+  const linkLabel = project.linkLabel ?? "Visit project";
 
   return (
     <div className="flex h-full flex-col">
@@ -25,11 +21,24 @@ export function ProjectDetail({
           type="button"
           onClick={onBack}
           aria-label="Back to projects"
-          className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-default"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md hover:bg-default"
         >
           <ArrowLeft size={14} />
         </button>
-        <span className="text-sm font-semibold">{project.title}</span>
+        <span className="min-w-0 flex-1 truncate text-sm font-semibold">
+          {project.title}
+        </span>
+        {project.link && (
+          <a
+            href={project.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md bg-accent px-2.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+          >
+            {linkLabel}
+            <ExternalLink size={11} />
+          </a>
+        )}
       </div>
       <div className="overflow-auto">
         <div className="mx-auto max-w-2xl px-8 pt-6 pb-12">
@@ -53,6 +62,18 @@ export function ProjectDetail({
               </span>
             ))}
           </div>
+
+          {project.link && (
+            <a
+              href={project.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            >
+              {linkLabel}
+              <ExternalLink size={14} />
+            </a>
+          )}
 
           {hasMeta && <MetaStrip project={project} />}
 
@@ -100,17 +121,6 @@ export function ProjectDetail({
                 ))}
               </ul>
             </Section>
-          )}
-
-          {project.link && (
-            <a
-              href={project.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`${hasRichContent ? "mt-10" : "mt-8"} inline-flex items-center gap-2 rounded-md border border-field-border bg-field-background px-3 py-1.5 text-xs font-medium hover:bg-default`}
-            >
-              Visit project <ExternalLink size={12} />
-            </a>
           )}
         </div>
       </div>

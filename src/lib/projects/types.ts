@@ -16,6 +16,7 @@ export interface Project {
   summary: string;
   description: string;
   link?: string;
+  linkLabel?: string;
   image?: string;
   role?: string;
   stack?: string[];

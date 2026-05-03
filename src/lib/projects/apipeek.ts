@@ -4,6 +4,8 @@ export const apipeek: Project = {
   id: "apipeek",
   title: "APIPeek — JSON viewer & API sandbox",
   tags: ["Browser extension", "TypeScript", "React"],
+  link: "https://chromewebstore.google.com/detail/apipeek/kpndkgphbnjghmaonfhhcmlnamlaegee",
+  linkLabel: "Install on Chrome Web Store",
   summary:
     "A Chrome / Firefox extension that turns the browser's built-in JSON viewer into a developer-friendly API sandbox: collapsible tree, search, JSONPath filter, schema generation, and a request panel that lets you change method, headers and body and re-fire the call without ever leaving the tab.",
   description:
