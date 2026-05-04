@@ -88,16 +88,19 @@ Click → `setSelected(project)`.
 
 `<ProjectDetail>` lives in its own file ([ProjectDetail.tsx](../src/components/apps/ProjectDetail.tsx)) so the case-study layout doesn't bloat FinderApp. It renders a long-form scroll inside `mx-auto max-w-2xl px-8 pt-6 pb-12`:
 
-1. **Toolbar** — back button (`<ArrowLeft size={14}>`, `aria-label="Back to projects"`) + project title.
+1. **Toolbar** — back button (`<ArrowLeft size={14}>`, `aria-label="Back to projects"`) + project title (truncates if narrow). When `project.link` is set, a sticky CTA `<a>` is pinned to the right (`ml-auto shrink-0`), styled via `buttonVariants({ variant: "secondary", size: "sm" })` from `@heroui/styles`. Because the toolbar is outside the scroll area, this CTA stays in view as the user reads.
 2. **Hero** — `aspect-video` gradient placeholder with the project's first letter (`text-5xl`, white).
 3. **Title block** — `<h1 className="text-2xl font-semibold tracking-tight">`, then `summary` as a `text-base text-foreground/75` tagline, then tag chips.
-4. **Meta strip** (`<MetaStrip>`, only when at least one of `role`/`stack`/`status` is set) — a `grid grid-cols-[72px_1fr]` definition list inside `rounded-xl border border-field-border bg-surface-secondary/40 p-5`. Stack entries render as mono-font pills.
-5. **Description** — `description` as a body paragraph (with inline-formatting support; see below).
-6. **The problem** (only when `problem` is set) — section heading + `<Prose>`.
-7. **Engineering highlights** (only when `highlights` is non-empty) — section heading + a vertical stack of `<HighlightCard>`s. Each card has a numbered circle, a title, prose body, and an optional `code` snippet rendered in a `<pre>` on `bg-surface-tertiary/60`.
-8. **Design** (only when `designNotes` is set) — section heading + `<Prose>`.
-9. **What I learned** (only when `learnings` is non-empty) — section heading + `<ul>` where each item is a bolded `lead` followed by inline-formatted `body`.
-10. **Visit project** link (when `project.link` is set) — same external-link button as before.
+4. **CTA row** (only when `project.link` or `project.source` is set) — a `flex flex-wrap gap-2` with up to two glass-style anchor buttons:
+   - **Primary**: `buttonVariants({ variant: "secondary" })`, label = `linkLabel ?? "Visit project"`, with a trailing `<ExternalLink size={14}>`.
+   - **Source**: `buttonVariants({ variant: "tertiary" })`, leading `<BrandIcon icon={siGithub} size={14}>`, label "View source".
+   Both use the HeroUI Pro glass theme (`button--secondary` and `button--tertiary` get `backdrop-filter: blur(var(--glass-blur))` from the glass theme automatically). Anchors carry `target="_blank" rel="noopener noreferrer"` so they open in a new tab and middle-/cmd-click work; we use `<a>` rather than HeroUI's `<Button>` because React Aria's Button explicitly omits `href`/`target`/`rel`.
+5. **Meta strip** (`<MetaStrip>`, only when at least one of `role`/`stack`/`status` is set) — a `grid grid-cols-[72px_1fr]` definition list inside `rounded-xl border border-field-border bg-surface-secondary/40 p-5`. Stack entries render as mono-font pills.
+6. **Description** — `description` as a body paragraph (with inline-formatting support; see below).
+7. **The problem** (only when `problem` is set) — section heading + `<Prose>`.
+8. **Engineering highlights** (only when `highlights` is non-empty) — section heading + a vertical stack of `<HighlightCard>`s. Each card has a numbered circle, a title, prose body, and an optional `code` snippet rendered in a `<pre>` on `bg-surface-tertiary/60`.
+9. **Design** (only when `designNotes` is set) — section heading + `<Prose>`.
+10. **What I learned** (only when `learnings` is non-empty) — section heading + `<ul>` where each item is a bolded `lead` followed by inline-formatted `body`.
 
 Section headings are uniformly `text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/50` (a Resume-style secondary header).
 
@@ -111,7 +114,7 @@ Inline formatting: a small `renderInline()` helper splits prose strings on three
 
 Multi-paragraph prose uses `\n\n` between paragraphs; the `<Prose>` helper splits on that and emits one `<p>` per chunk inside a `flex flex-col gap-3`.
 
-The component renders gracefully for projects without any optional fields — only the toolbar, hero, title block, and (if present) `description` + `link` show.
+The component renders gracefully for projects without any optional fields — only the toolbar, hero, title block, and (if present) `description` show. The CTA row, meta strip, and case-study sections all hide when their data is absent.
 
 There is no Finder toolbar (no back/forward arrows for the project history; the only "back" is the one inside ProjectDetail).
 

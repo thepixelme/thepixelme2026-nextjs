@@ -1,7 +1,10 @@
 "use client";
 
+import { buttonVariants } from "@heroui/styles";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
+import { siGithub } from "simple-icons";
+import BrandIcon from "@/components/BrandIcon";
 import type { Highlight, Project } from "@/lib/projects";
 
 export function ProjectDetail({
@@ -33,10 +36,10 @@ export function ProjectDetail({
             href={project.link}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md bg-accent px-2.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+            className={`${buttonVariants({ variant: "secondary", size: "sm" })} ml-auto shrink-0 no-underline`}
           >
             {linkLabel}
-            <ExternalLink size={11} />
+            <ExternalLink size={11} className="ml-1.5" />
           </a>
         )}
       </div>
@@ -63,16 +66,31 @@ export function ProjectDetail({
             ))}
           </div>
 
-          {project.link && (
-            <a
-              href={project.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            >
-              {linkLabel}
-              <ExternalLink size={14} />
-            </a>
+          {(project.link || project.source) && (
+            <div className="mt-6 flex flex-wrap gap-2">
+              {project.link && (
+                <a
+                  href={project.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${buttonVariants({ variant: "secondary" })} no-underline`}
+                >
+                  {linkLabel}
+                  <ExternalLink size={14} className="ml-1.5" />
+                </a>
+              )}
+              {project.source && (
+                <a
+                  href={project.source}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${buttonVariants({ variant: "tertiary" })} no-underline`}
+                >
+                  <BrandIcon icon={siGithub} size={14} className="mr-1.5" />
+                  View source
+                </a>
+              )}
+            </div>
           )}
 
           {hasMeta && <MetaStrip project={project} />}

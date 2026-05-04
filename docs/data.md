@@ -29,7 +29,9 @@ interface Project {
   tags: string[];
   summary: string;        // one-liner; shown on grid card and as the tagline in detail
   description: string;    // 1–2 sentences; lede paragraph in detail view
-  link?: string;          // optional "Visit project" link
+  link?: string;          // primary CTA href (live demo / install / canonical URL)
+  linkLabel?: string;     // primary CTA label; defaults to "Visit project"
+  source?: string;        // optional source-code URL; renders a "View source" button next to the primary CTA
   image?: string;         // declared but not read by any current app
 
   // Optional case-study fields. Render only when present; light projects
