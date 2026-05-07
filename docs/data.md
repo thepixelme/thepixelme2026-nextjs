@@ -23,6 +23,11 @@ interface Learning {
   body: string;       // explanation; same inline-formatting support as Highlight.body
 }
 
+interface Screenshot {
+  src: string;        // path under /public, e.g. "/apipeek/screenshot-1.jpg"
+  alt: string;        // descriptive alt text; also used as the lightbox aria-label
+}
+
 interface Project {
   id: string;
   title: string;
@@ -32,7 +37,7 @@ interface Project {
   link?: string;          // primary CTA href (live demo / install / canonical URL)
   linkLabel?: string;     // primary CTA label; defaults to "Visit project"
   source?: string;        // optional source-code URL; renders a "View source" button next to the primary CTA
-  image?: string;         // declared but not read by any current app
+  screenshots?: Screenshot[]; // index 0 becomes the hero; full set rendered as a gallery section in ProjectDetail with click-to-lightbox
 
   // Optional case-study fields. Render only when present; light projects
   // can omit them and fall back to the title + description layout.
@@ -46,7 +51,7 @@ interface Project {
 }
 ```
 
-Used by: [FinderApp](../src/components/apps/FinderApp.tsx) (grid card uses only `id`, `title`, `summary`, `tags`) and [ProjectDetail](../src/components/apps/ProjectDetail.tsx) (case-study layout — renders any optional fields that are present). [TerminalApp](../src/components/apps/TerminalApp.tsx) reads `id` and `title` for `ls projects`.
+Used by: [FinderApp](../src/components/apps/FinderApp.tsx) (grid card uses `id`, `title`, `summary`, `tags`, and `screenshots[0]` as the thumbnail when present, otherwise a gradient-with-initial fallback) and [ProjectDetail](../src/components/apps/ProjectDetail.tsx) (case-study layout — renders any optional fields that are present, including `screenshots` as the hero image plus a gallery section with a shared lightbox). [TerminalApp](../src/components/apps/TerminalApp.tsx) reads `id` and `title` for `ls projects`.
 
 ### `ResumeEntry`
 
@@ -120,9 +125,9 @@ Order matters — it determines the rendered order in About → Find me.
 
 ## `PROJECTS: Project[]` ([src/lib/projects/index.ts](../src/lib/projects/index.ts))
 
-| `id`      | file                                                       | `title`                              | `tags`                                 | rich case-study? |
-| --------- | ---------------------------------------------------------- | ------------------------------------ | -------------------------------------- | ---------------- |
-| `apipeek` | [apipeek.ts](../src/lib/projects/apipeek.ts)               | APIPeek — JSON viewer & API sandbox  | Browser extension · TypeScript · React | yes (full)       |
+| `id`      | file                                                       | `title`                              | `tags`                                 | rich case-study?     |
+| --------- | ---------------------------------------------------------- | ------------------------------------ | -------------------------------------- | -------------------- |
+| `apipeek` | [apipeek.ts](../src/lib/projects/apipeek.ts)               | APIPeek — JSON viewer & API sandbox  | Browser extension · TypeScript · React | yes (full + 4 shots) |
 
 Each project lives in its own file under [src/lib/projects/](../src/lib/projects/) so that long-form copy doesn't crowd one giant module. [index.ts](../src/lib/projects/index.ts) imports each project file and exports `PROJECTS: Project[]` in the order they should appear in the Finder grid.
 

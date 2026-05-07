@@ -9,6 +9,11 @@ export interface Learning {
   body: string;
 }
 
+export interface Screenshot {
+  src: string;
+  alt: string;
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -18,7 +23,7 @@ export interface Project {
   link?: string;
   linkLabel?: string;
   source?: string;
-  image?: string;
+  screenshots?: Screenshot[];
   role?: string;
   stack?: string[];
   status?: string;

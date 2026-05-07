@@ -1,11 +1,11 @@
 "use client";
 
 import { buttonVariants } from "@heroui/styles";
-import { ArrowLeft, ExternalLink } from "lucide-react";
-import { Fragment, type ReactNode } from "react";
+import { ArrowLeft, ExternalLink, X } from "lucide-react";
+import { Fragment, type ReactNode, useEffect, useState } from "react";
 import { siGithub } from "simple-icons";
 import BrandIcon from "@/components/BrandIcon";
-import type { Highlight, Project } from "@/lib/projects";
+import type { Highlight, Project, Screenshot } from "@/lib/projects";
 
 export function ProjectDetail({
   project,
@@ -16,6 +16,20 @@ export function ProjectDetail({
 }) {
   const hasMeta = !!project.role || !!project.stack?.length || !!project.status;
   const linkLabel = project.linkLabel ?? "Visit project";
+  const screenshots = project.screenshots ?? [];
+  const heroScreenshot = screenshots[0];
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const activeScreenshot =
+    lightboxIndex !== null ? screenshots[lightboxIndex] : null;
+
+  useEffect(() => {
+    if (lightboxIndex === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightboxIndex(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightboxIndex]);
 
   return (
     <div className="flex h-full flex-col">
@@ -45,9 +59,24 @@ export function ProjectDetail({
       </div>
       <div className="overflow-auto">
         <div className="mx-auto max-w-2xl px-8 pt-6 pb-12">
-          <div className="grid aspect-video place-items-center rounded-xl bg-linear-to-br from-[oklch(0.78_0.13_240)] to-[oklch(0.65_0.18_310)] text-5xl font-semibold text-white">
-            {project.title.slice(0, 1)}
-          </div>
+          {heroScreenshot ? (
+            <button
+              type="button"
+              onClick={() => setLightboxIndex(0)}
+              aria-label={`Open ${heroScreenshot.alt}`}
+              className="block w-full overflow-hidden rounded-xl border border-field-border bg-surface-secondary/40"
+            >
+              <img
+                src={heroScreenshot.src}
+                alt={heroScreenshot.alt}
+                className="aspect-video w-full object-cover"
+              />
+            </button>
+          ) : (
+            <div className="grid aspect-video place-items-center rounded-xl bg-linear-to-br from-[oklch(0.78_0.13_240)] to-[oklch(0.65_0.18_310)] text-5xl font-semibold text-white">
+              {project.title.slice(0, 1)}
+            </div>
+          )}
 
           <h1 className="mt-6 text-2xl font-semibold leading-tight tracking-tight">
             {project.title}
@@ -107,6 +136,29 @@ export function ProjectDetail({
             </Section>
           )}
 
+          {screenshots.length > 0 && (
+            <Section title="Screenshots">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {screenshots.map((s, i) => (
+                  <button
+                    key={s.src}
+                    type="button"
+                    onClick={() => setLightboxIndex(i)}
+                    aria-label={`Open ${s.alt}`}
+                    className="group relative aspect-video overflow-hidden rounded-md border border-field-border bg-surface-secondary/40"
+                  >
+                    <img
+                      src={s.src}
+                      alt={s.alt}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </button>
+                ))}
+              </div>
+            </Section>
+          )}
+
           {project.highlights && project.highlights.length > 0 && (
             <Section title="Engineering highlights">
               <div className="flex flex-col gap-4">
@@ -141,6 +193,52 @@ export function ProjectDetail({
             </Section>
           )}
         </div>
+      </div>
+      {activeScreenshot && (
+        <Lightbox
+          screenshot={activeScreenshot}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function Lightbox({
+  screenshot,
+  onClose,
+}: {
+  screenshot: Screenshot;
+  onClose: () => void;
+}) {
+  return (
+    // biome-ignore lint/a11y/useKeyWithClickEvents: Esc-to-close handled by parent useEffect
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={screenshot.alt}
+      className="fixed inset-0 z-60 grid place-items-center bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      {/** biome-ignore lint/a11y/noStaticElementInteractions: stopPropagation only; not a focus target */}
+      {/** biome-ignore lint/a11y/useKeyWithClickEvents: stopPropagation only */}
+      <div
+        className="relative max-h-[85vh] max-w-[90vw]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          aria-label="Close screenshot"
+          onClick={onClose}
+          className="absolute right-3 top-3 z-10 grid h-7 w-7 place-items-center rounded-full bg-black/40 text-white hover:bg-black/60"
+        >
+          <X size={14} />
+        </button>
+        <img
+          src={screenshot.src}
+          alt={screenshot.alt}
+          className="max-h-[85vh] max-w-[90vw] rounded-md object-contain shadow-2xl"
+        />
       </div>
     </div>
   );

@@ -7,6 +7,24 @@ export const apipeek: Project = {
   link: "https://chromewebstore.google.com/detail/apipeek/kpndkgphbnjghmaonfhhcmlnamlaegee",
   linkLabel: "Install on Chrome Web Store",
   source: "https://github.com/thepixelme/apipeek",
+  screenshots: [
+    {
+      src: "/apipeek/screenshot-0.jpg",
+      alt: "APIPeek's tabular Preview mode rendering a 10-row JSON array as a spreadsheet-style grid in dark theme",
+    },
+    {
+      src: "/apipeek/screenshot-1.jpg",
+      alt: "The collapsible JSON tree viewer in light theme with the Request drawer open on the right, showing method, URL, headers, and body",
+    },
+    {
+      src: "/apipeek/screenshot-2.jpg",
+      alt: "The JSON tree viewer in light theme showing nested keys and values for an array response",
+    },
+    {
+      src: "/apipeek/screenshot-3.jpg",
+      alt: "The APIPeek extension popup over a JSON page, showing Settings tab with theme picker (System / Light / Dark) and Force-enable URLs list",
+    },
+  ],
   summary:
     "A Chrome / Firefox extension that turns the browser's built-in JSON viewer into a developer-friendly API sandbox: collapsible tree, search, JSONPath filter, schema generation, and a request panel that lets you change method, headers and body and re-fire the call without ever leaving the tab.",
   description:
