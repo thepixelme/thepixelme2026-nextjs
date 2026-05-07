@@ -7,9 +7,16 @@ import { siGithub } from "simple-icons";
 import BrandIcon from "@/components/BrandIcon";
 import type { Highlight, Project } from "@/lib/projects";
 
-export function CaseStudy({ project }: { project: Project }) {
+export function CaseStudy({
+  project,
+  onScreenshotClick,
+}: {
+  project: Project;
+  onScreenshotClick?: (index: number) => void;
+}) {
   const hasMeta = !!project.role || !!project.stack?.length || !!project.status;
   const linkLabel = project.linkLabel ?? "Visit project";
+  const screenshots = project.screenshots ?? [];
 
   return (
     <div className="mx-auto max-w-2xl px-8 pt-6 pb-12">
@@ -29,6 +36,29 @@ export function CaseStudy({ project }: { project: Project }) {
           </span>
         ))}
       </div>
+
+      {screenshots.length > 0 && onScreenshotClick && (
+        <Section title="Screenshots">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {screenshots.map((s, i) => (
+              <button
+                key={s.src}
+                type="button"
+                onClick={() => onScreenshotClick(i)}
+                aria-label={`Open ${s.alt}`}
+                className="group relative aspect-video overflow-hidden rounded-md border border-field-border bg-surface-secondary/40"
+              >
+                <img
+                  src={s.src}
+                  alt={s.alt}
+                  loading="lazy"
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              </button>
+            ))}
+          </div>
+        </Section>
+      )}
 
       {(project.link || project.source) && (
         <div className="mt-6 flex flex-wrap gap-2">

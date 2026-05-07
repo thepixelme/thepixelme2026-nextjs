@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, Info } from "lucide-react";
+import { Eye, Info, PanelLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PROJECTS } from "@/lib/projects";
 import { useWindows } from "@/lib/windows-store";
@@ -37,7 +37,8 @@ function PreviewContent({
   project: NonNullable<ReturnType<typeof PROJECTS.find>>;
 }) {
   const screenshots = project.screenshots ?? [];
-  const [view, setView] = useState<View>(screenshots.length > 0 ? 0 : "info");
+  const [view, setView] = useState<View>("info");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     if (screenshots.length === 0) return;
@@ -64,64 +65,89 @@ function PreviewContent({
   }, [view, screenshots.length]);
 
   return (
-    <div className="grid h-full grid-cols-[176px_1fr] divide-x divide-separator">
-      <aside className="flex flex-col gap-2 overflow-y-auto bg-surface-secondary p-2">
+    <div className="flex h-full flex-col">
+      <div className="flex h-9 shrink-0 items-center border-b border-separator bg-surface px-2">
         <button
           type="button"
-          onClick={() => setView("info")}
-          aria-label="Show project info"
-          aria-current={view === "info"}
-          className={`flex aspect-video w-full flex-col items-center justify-center gap-1.5 overflow-hidden rounded-md border-2 bg-surface-tertiary text-foreground/75 transition-colors ${
-            view === "info"
-              ? "border-accent"
-              : "border-transparent hover:border-field-border"
-          }`}
+          onClick={() => setSidebarOpen((s) => !s)}
+          aria-label={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
+          aria-pressed={sidebarOpen}
+          className="grid h-7 w-7 place-items-center rounded-md text-foreground/75 hover:bg-default"
         >
-          <Info size={20} />
-          <span className="text-[10px] font-medium tracking-wide">
-            Project Info
-          </span>
+          <PanelLeft size={14} />
         </button>
+      </div>
 
-        {screenshots.length > 0 && (
-          <hr className="my-1 border-0 border-t border-separator" />
+      <div
+        className={`grid min-h-0 flex-1 ${
+          sidebarOpen
+            ? "grid-cols-[176px_1fr] divide-x divide-separator"
+            : "grid-cols-[1fr]"
+        }`}
+      >
+        {sidebarOpen && (
+          <aside className="flex flex-col gap-2 overflow-y-auto bg-surface-secondary p-2">
+            <button
+              type="button"
+              onClick={() => setView("info")}
+              aria-label="Show project info"
+              aria-current={view === "info"}
+              className={`flex aspect-video w-full flex-col items-center justify-center gap-1.5 overflow-hidden rounded-md border-2 bg-surface-tertiary text-foreground/75 transition-colors ${
+                view === "info"
+                  ? "border-accent"
+                  : "border-transparent hover:border-field-border"
+              }`}
+            >
+              <Info size={20} />
+              <span className="text-[10px] font-medium tracking-wide">
+                Project Info
+              </span>
+            </button>
+
+            {screenshots.length > 0 && (
+              <hr className="my-1 border-0 border-t border-separator" />
+            )}
+
+            {screenshots.map((s, i) => (
+              <button
+                key={s.src}
+                type="button"
+                onClick={() => setView(i)}
+                aria-label={`Show ${s.alt}`}
+                aria-current={view === i}
+                className={`block aspect-video w-full overflow-hidden rounded-md border-2 transition-colors ${
+                  view === i
+                    ? "border-accent"
+                    : "border-transparent hover:border-field-border"
+                }`}
+              >
+                <img
+                  src={s.src}
+                  alt={s.alt}
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
+              </button>
+            ))}
+          </aside>
         )}
 
-        {screenshots.map((s, i) => (
-          <button
-            key={s.src}
-            type="button"
-            onClick={() => setView(i)}
-            aria-label={`Show ${s.alt}`}
-            aria-current={view === i}
-            className={`block aspect-video w-full overflow-hidden rounded-md border-2 transition-colors ${
-              view === i
-                ? "border-accent"
-                : "border-transparent hover:border-field-border"
-            }`}
-          >
-            <img
-              src={s.src}
-              alt={s.alt}
-              loading="lazy"
-              className="h-full w-full object-cover"
+        {view === "info" ? (
+          <div className="overflow-y-auto">
+            <CaseStudy
+              project={project}
+              onScreenshotClick={(i) => setView(i)}
             />
-          </button>
-        ))}
-      </aside>
-
-      {view === "info" ? (
-        <div className="overflow-y-auto">
-          <CaseStudy project={project} />
-        </div>
-      ) : (
-        <ImageView
-          key={view}
-          screenshot={screenshots[view]}
-          index={view}
-          total={screenshots.length}
-        />
-      )}
+          </div>
+        ) : (
+          <ImageView
+            key={view}
+            screenshot={screenshots[view]}
+            index={view}
+            total={screenshots.length}
+          />
+        )}
+      </div>
     </div>
   );
 }

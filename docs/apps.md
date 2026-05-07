@@ -111,27 +111,38 @@ If `project` is undefined (missing/unknown id), the app renders an `Eye`-icon em
 
 ### Layout
 
-A single 2-column grid that fills the window body — no vertical split, the right pane gets the full window height:
+A vertical flex with a thin top toolbar above a 2-column body. The right pane fills the body height:
 
 ```
-grid h-full grid-cols-[176px_1fr]
-┌──────────┬──────────────────────────────────┐
-│ sidebar  │ right pane (full height)         │
-│          │                                  │
-│ ⓘ Info   │   ImageView OR CaseStudy         │
-│ ──────   │   (depending on selection)       │
-│ ▢ thumb1 │                                  │
-│ ▢ thumb2 │                                  │
-└──────────┴──────────────────────────────────┘
+flex h-full flex-col
+┌────────────────────────────────────────────┐
+│ [☰]  toolbar (h-9, sidebar toggle)         │
+├──────────┬─────────────────────────────────┤
+│ sidebar  │ right pane                      │
+│          │                                 │
+│ ⓘ Info   │   ImageView OR CaseStudy        │
+│ ──────   │   (depending on selection)      │
+│ ▢ thumb1 │                                 │
+│ ▢ thumb2 │                                 │
+└──────────┴─────────────────────────────────┘
 ```
 
-`PreviewApp` owns a `view: "info" | number` state. Default: `0` (first screenshot) when there are screenshots; `"info"` otherwise. `key={project.id}` on the inner content forces a fresh mount when switching projects so `view` resets cleanly.
+`PreviewApp` owns two pieces of state:
+
+- `view: "info" | number` — which content the right pane shows. Default: **`"info"`** (the case-study). `key={project.id}` on the inner content forces a fresh mount when switching projects so `view` resets cleanly.
+- `sidebarOpen: boolean` — whether the sidebar column is rendered. Default: `true`. Toggled via the toolbar button. When `false`, the body grid switches from `grid-cols-[176px_1fr]` to `grid-cols-[1fr]` and the right pane gets full width — useful on tablet / narrow windows.
 
 Right-pane render:
-- `view === "info"` → `<div className="overflow-y-auto"><CaseStudy /></div>`
+- `view === "info"` → `<div className="overflow-y-auto"><CaseStudy project={project} onScreenshotClick={(i) => setView(i)} /></div>`
 - `typeof view === "number"` → `<ImageView key={view} screenshot={screenshots[view]} index={view} total={screenshots.length} />`. The `key` forces remount on switch, which resets `zoom`/`pan`/`mode`/`naturalSize`.
 
-### Sidebar (lives in PreviewApp)
+### Toolbar (top)
+
+`flex h-9 shrink-0 items-center border-b border-separator bg-surface px-2`. Single button on the left:
+
+- `<button>` with `PanelLeft` icon (size 14) — toggles `sidebarOpen`. `aria-pressed` reflects open state; `aria-label` flips between `"Hide sidebar"` and `"Show sidebar"`. Style: `grid h-7 w-7 place-items-center rounded-md text-foreground/75 hover:bg-default`.
+
+### Sidebar (lives in PreviewApp, rendered only when `sidebarOpen`)
 
 `<aside className="flex flex-col gap-2 overflow-y-auto bg-surface-secondary p-2">` containing:
 
@@ -140,6 +151,24 @@ Right-pane render:
 3. Screenshot thumbs — `aspect-video` `<button>` containing `<img object-cover>`. Same border-2 styling as the Info thumb. Click sets `view = i`.
 
 All buttons get `aria-current` reflecting selection.
+
+When the sidebar is collapsed, screenshot navigation still works via `←` / `→` keys (handled by PreviewApp). Re-opening the sidebar to switch back to Info is one click on the toolbar toggle.
+
+### CaseStudy ([preview/CaseStudy.tsx](../src/components/apps/preview/CaseStudy.tsx))
+
+Long-form scroll inside `mx-auto max-w-2xl px-8 pt-6 pb-12`. Props: `{ project: Project; onScreenshotClick?: (index: number) => void }`. Rendered top to bottom:
+
+1. **Title block** — `<h1>` title, `summary` tagline, tag chips.
+2. **Screenshots** (only when `screenshots` is non-empty AND `onScreenshotClick` is provided) — `Section` titled "Screenshots" with a 2-column grid (`sm:grid-cols-2`) of `aspect-video` thumbnail `<button>`s. Each thumb has a hover-zoom (`group-hover:scale-105`) and dispatches `onScreenshotClick(i)` on click — PreviewApp wires this to `setView(i)` so clicking jumps to the image viewer for that screenshot.
+3. **CTA row** (only when `project.link` or `project.source`) — `flex flex-wrap gap-2` of glass anchor buttons: primary "Visit project" (label can be customized via `linkLabel`, e.g. "Install on Chrome Web Store") and secondary "View source" with the GitHub `BrandIcon`.
+4. **Meta strip** (only when `role`/`stack`/`status` is set) — `grid grid-cols-[72px_1fr]` definition list inside `rounded-xl border border-field-border bg-surface-secondary/40 p-5`. Stack entries render as mono pills.
+5. **Description** — body paragraph.
+6. **The problem** (only when `problem` is set) — `Section` + `<Prose>`.
+7. **Engineering highlights** (only when `highlights` is non-empty) — `Section` + numbered `<HighlightCard>`s.
+8. **Design** (only when `designNotes`) — `Section` + `<Prose>`.
+9. **What I learned** (only when `learnings` is non-empty) — `Section` + `<ul>` of `lead` (bold) + inline-formatted `body`.
+
+Inline formatting (`renderInline`) supports `` `code` ``, `**bold**`, and `*em*` markers. Multi-paragraph prose splits on `\n\n` via the `<Prose>` helper.
 
 ### ImageView ([preview/ImageViewer.tsx](../src/components/apps/preview/ImageViewer.tsx))
 
@@ -180,37 +209,9 @@ Both listeners gate on the event target (skip when in `<input>`/`<textarea>`/`co
 | Click-drag on canvas (when `zoom > 1`) | Pans. Uses `setPointerCapture` on `pointerdown`. Cursor swaps to `cursor-grabbing`. |
 | Double-click on canvas | Toggles between `fit` and `actual`. |
 
-### CaseStudy ([preview/CaseStudy.tsx](../src/components/apps/preview/CaseStudy.tsx))
+Section headings throughout CaseStudy are uniformly `text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/50`.
 
-A long-form scroll inside `mx-auto max-w-2xl px-8 pt-6 pb-12`, rendering project metadata top to bottom:
-
-1. **Title block** — `<h1 className="text-2xl font-semibold tracking-tight">` title, `summary` tagline, tag chips.
-2. **CTA row** (only when `project.link` or `project.source` is set) — `flex flex-wrap gap-2` of glass anchor buttons:
-   - **Primary**: `buttonVariants({ variant: "secondary" })`, label = `linkLabel ?? "Visit project"`, trailing `<ExternalLink size={14}>`.
-   - **Source**: `buttonVariants({ variant: "tertiary" })`, leading `<BrandIcon icon={siGithub} size={14}>`, label "View source".
-   Both use HeroUI Pro's glass theme (`button--secondary` / `button--tertiary` get `backdrop-filter: blur(var(--glass-blur))` automatically). Anchors carry `target="_blank" rel="noopener noreferrer"`.
-3. **Meta strip** (`<MetaStrip>`, only when at least one of `role`/`stack`/`status` is set) — `grid grid-cols-[72px_1fr]` definition list inside `rounded-xl border border-field-border bg-surface-secondary/40 p-5`. Stack entries render as mono pills.
-4. **Description** — body paragraph (with inline-formatting support; see below).
-5. **The problem** (only when `problem` is set) — section heading + `<Prose>`.
-6. **Engineering highlights** (only when `highlights` is non-empty) — section heading + a vertical stack of `<HighlightCard>`s. Each card has a numbered circle, a title, prose body, and an optional `code` snippet in a `<pre>`.
-7. **Design** (only when `designNotes` is set) — section heading + `<Prose>`.
-8. **What I learned** (only when `learnings` is non-empty) — section heading + `<ul>` of `lead` (bold) + inline-formatted `body`.
-
-There is no screenshot section — that's the ImageViewer's job. There is no internal toolbar or back button — the window's traffic-light close handles closing.
-
-Section headings are uniformly `text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/50`.
-
-Inline formatting (`renderInline`) splits prose strings and renders the markers:
-
-| Marker          | Rendered as                                                                  |
-| --------------- | ---------------------------------------------------------------------------- |
-| `` `code` ``    | `<code className="rounded bg-surface-tertiary/60 px-1 font-mono text-[12px]">` |
-| `**bold**`      | `<strong className="font-semibold text-foreground">`                          |
-| `*em*`          | `<em className="italic">`                                                     |
-
-Multi-paragraph prose uses `\n\n`; `<Prose>` splits and emits one `<p>` per chunk inside `flex flex-col gap-3`.
-
-CaseStudy renders gracefully for projects without optional fields — only the title block (and, if present, `description`) are unconditional.
+CaseStudy renders gracefully for projects without optional fields — only the title block (and, if present, `description`) are unconditional. There is no internal toolbar or back button — the window's traffic-light close handles closing.
 
 ---
 
