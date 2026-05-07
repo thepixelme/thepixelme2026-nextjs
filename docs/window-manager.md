@@ -8,10 +8,10 @@ Defined in [src/types/window.ts](../src/types/window.ts) and consumed throughout
 
 ### `AppId`
 
-String literal union of the seven registered apps:
+String literal union of the eight registered apps:
 
 ```
-"finder" | "about" | "resume" | "contact" | "terminal" | "photos" | "settings"
+"finder" | "preview" | "about" | "resume" | "contact" | "terminal" | "photos" | "settings"
 ```
 
 ### `WindowBounds`
@@ -29,7 +29,7 @@ String literal union of the seven registered apps:
 | `minimized`      | `boolean`           | Hidden by `WindowManager` when true.                             |
 | `maximized`      | `boolean`           | Suppresses drag/resize handles when true.                        |
 | `prevBounds`     | `WindowBounds?`     | Captured on MAXIMIZE so RESTORE can return to the prior bounds.  |
-| `initialPayload` | `unknown?`          | Optional opaque payload from the OPEN action; unused by Window itself, available to apps. |
+| `initialPayload` | `unknown?`          | Opaque payload from the OPEN action. Refreshed on subsequent OPEN if a new payload is supplied; otherwise preserved. Unused by Window itself, available to apps (e.g. PreviewApp reads `{ projectId }`). |
 
 ### `AppDef`
 
@@ -62,7 +62,7 @@ Constants: `BASE_Z = 10`, `CASCADE = 24` (the per-window cascade offset, in px).
 
 | Action                                                | Effect                                                                                                                                                                                                                          |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `OPEN { appId, payload? }`                            | If a window with that `appId` already exists, bumps it to `topZ + 1` and clears `minimized` (acts as focus/restore). Otherwise creates a new `WindowState` centered in the viewport with a `(openCount * CASCADE)` offset, capped to viewport. `topZ` and `openCount` increment. |
+| `OPEN { appId, payload? }`                            | If a window with that `appId` already exists, bumps it to `topZ + 1`, clears `minimized`, and (if `payload` is supplied) replaces its `initialPayload` so the app re-renders with the new content. Acts as focus/restore otherwise. If no existing window, creates a new `WindowState` centered in the viewport with a `(openCount * CASCADE)` offset, capped to viewport. `topZ` and `openCount` increment. |
 | `CLOSE { id }`                                        | Removes the window from the array.                                                                                                                                                                                              |
 | `FOCUS { id }`                                        | If the window isn't already at `topZ`, bumps it to `topZ + 1` and clears `minimized`. No-op otherwise.                                                                                                                          |
 | `MOVE { id, x, y }`                                   | Sets `x`, `y` on the matching window.                                                                                                                                                                                           |

@@ -48,7 +48,16 @@ function reducer(state: State, action: Action): State {
           ...state,
           topZ: newZ,
           windows: state.windows.map((w) =>
-            w.id === existing.id ? { ...w, z: newZ, minimized: false } : w,
+            w.id === existing.id
+              ? {
+                  ...w,
+                  z: newZ,
+                  minimized: false,
+                  ...(action.payload !== undefined && {
+                    initialPayload: action.payload,
+                  }),
+                }
+              : w,
           ),
         };
       }

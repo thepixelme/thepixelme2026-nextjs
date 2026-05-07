@@ -1,4 +1,5 @@
 import {
+  Eye,
   FileText,
   FolderOpen,
   Image as ImageIcon,
@@ -12,6 +13,7 @@ import AboutApp from "./AboutApp";
 import ContactApp from "./ContactApp";
 import FinderApp from "./FinderApp";
 import PhotosApp from "./PhotosApp";
+import PreviewApp from "./PreviewApp";
 import ResumeApp from "./ResumeApp";
 import SettingsApp from "./SettingsApp";
 import TerminalApp from "./TerminalApp";
@@ -23,6 +25,13 @@ export const APPS: AppDef[] = [
     icon: FolderOpen,
     defaultSize: { w: 880, h: 560 },
     Component: FinderApp,
+  },
+  {
+    id: "preview",
+    title: "Preview",
+    icon: Eye,
+    defaultSize: { w: 1024, h: 720 },
+    Component: PreviewApp,
   },
   {
     id: "about",

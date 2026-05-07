@@ -3,6 +3,7 @@ import type { ComponentType } from "react";
 
 export type AppId =
   | "finder"
+  | "preview"
   | "about"
   | "resume"
   | "contact"

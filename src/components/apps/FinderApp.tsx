@@ -2,14 +2,14 @@
 
 import { Star, Tag } from "lucide-react";
 import { useMemo, useState } from "react";
-import { PROJECTS, type Project } from "@/lib/projects";
-import { ProjectDetail } from "./ProjectDetail";
+import { PROJECTS } from "@/lib/projects";
+import { useWindowsDispatch } from "@/lib/windows-store";
 
 type Filter = { kind: "all" } | { kind: "tag"; tag: string };
 
 export default function FinderApp() {
   const [filter, setFilter] = useState<Filter>({ kind: "all" });
-  const [selected, setSelected] = useState<Project | null>(null);
+  const dispatch = useWindowsDispatch();
 
   const tags = useMemo(
     () => Array.from(new Set(PROJECTS.flatMap((p) => p.tags))).sort(),
@@ -20,12 +20,6 @@ export default function FinderApp() {
     if (filter.kind === "all") return PROJECTS;
     return PROJECTS.filter((p) => p.tags.includes(filter.tag));
   }, [filter]);
-
-  if (selected) {
-    return (
-      <ProjectDetail project={selected} onBack={() => setSelected(null)} />
-    );
-  }
 
   return (
     <div className="grid h-full grid-cols-[200px_1fr] divide-x divide-separator">
@@ -57,7 +51,13 @@ export default function FinderApp() {
             <button
               key={p.id}
               type="button"
-              onClick={() => setSelected(p)}
+              onClick={() =>
+                dispatch({
+                  type: "OPEN",
+                  appId: "preview",
+                  payload: { projectId: p.id },
+                })
+              }
               className="flex flex-col items-stretch rounded-lg border border-field-border bg-surface p-4 text-left transition-colors hover:bg-default"
             >
               {p.screenshots?.[0] ? (

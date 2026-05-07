@@ -1,6 +1,6 @@
 # Apps
 
-Each window's body content. The seven apps live in [src/components/apps/](../src/components/apps/) and are wired into the window manager through [registry.ts](../src/components/apps/registry.ts).
+Each window's body content. The eight apps live in [src/components/apps/](../src/components/apps/) and are wired into the window manager through [registry.ts](../src/components/apps/registry.ts).
 
 ## App contract
 
@@ -28,12 +28,13 @@ The `Component` is rendered by [WindowManager](../src/components/window/WindowMa
 | # | `id`       | `title`            | `icon` (lucide)        | `defaultSize` (w × h) |
 | - | ---------- | ------------------ | ---------------------- | --------------------- |
 | 1 | `finder`   | Finder             | `FolderOpen`           | 880 × 560             |
-| 2 | `about`    | About Me           | `User`                 | 520 × 600             |
-| 3 | `resume`   | Resume             | `FileText`             | 720 × 800             |
-| 4 | `contact`  | Contact            | `Mail`                 | 520 × 520             |
-| 5 | `terminal` | Terminal           | `Terminal`             | 640 × 420             |
-| 6 | `photos`   | Photos             | `Image`                | 880 × 600             |
-| 7 | `settings` | System Settings    | `Settings`             | 720 × 560             |
+| 2 | `preview`  | Preview            | `Eye`                  | 1024 × 720            |
+| 3 | `about`    | About Me           | `User`                 | 520 × 600             |
+| 4 | `resume`   | Resume             | `FileText`             | 720 × 800             |
+| 5 | `contact`  | Contact            | `Mail`                 | 520 × 520             |
+| 6 | `terminal` | Terminal           | `Terminal`             | 640 × 420             |
+| 7 | `photos`   | Photos             | `Image`                | 880 × 600             |
+| 8 | `settings` | System Settings    | `Settings`             | 720 × 560             |
 
 Sizes are clamped at OPEN time to `vw - 80` and `vh - 160` (see [window-manager.md](window-manager.md#initial-position-math-open)).
 
@@ -48,12 +49,11 @@ The registry is consumed by:
 
 ## FinderApp ([FinderApp.tsx](../src/components/apps/FinderApp.tsx))
 
-Two-pane layout: a sidebar of saved filters on the left, a project grid on the right. Clicking a project replaces the whole pane with a detail view.
+Two-pane layout: a sidebar of saved filters on the left, a project grid on the right. Finder is a pure list — it does not host any project detail view. Clicking a project dispatches `OPEN { appId: "preview", payload: { projectId } }`, which opens (or refreshes) the [PreviewApp](#previewapp-previewapptsx) window.
 
 ### State
 
 - `filter: { kind: "all" } | { kind: "tag"; tag: string }` — initial `{ kind: "all" }`.
-- `selected: Project | null` — initial `null`. When non-null, the component returns `<ProjectDetail>` and skips the grid layout entirely.
 
 ### Derived data (memoized)
 
@@ -77,34 +77,130 @@ Sidebar background: `bg-surface-secondary px-2 py-3 text-sm`. Outer grid: `grid-
 
 `grid grid-cols-1 gap-3 md:grid-cols-2`. Each card is a `<button>` containing:
 
-- A square gradient placeholder (`aspect-video`, `bg-linear-to-br from-[oklch(0.78_0.13_240)] to-[oklch(0.65_0.18_310)]`) with the project's first letter centered in white.
+- The project's first screenshot (`aspect-video object-cover rounded-md`), or a gradient placeholder with the project's first letter when no screenshots exist.
 - `<h3>` title (`text-sm font-semibold`).
 - `<p>` summary (`text-xs text-foreground/70`, line-clamp-2).
 - Up to 3 tag chips (`rounded-full bg-default px-2 py-0.5 text-[10px]`).
 
-Click → `setSelected(project)`.
+Click → `dispatch({ type: "OPEN", appId: "preview", payload: { projectId: p.id } })` via `useWindowsDispatch()`.
 
-### Project detail
+---
 
-`<ProjectDetail>` lives in its own file ([ProjectDetail.tsx](../src/components/apps/ProjectDetail.tsx)) so the case-study layout doesn't bloat FinderApp. It renders a long-form scroll inside `mx-auto max-w-2xl px-8 pt-6 pb-12`:
+## PreviewApp ([PreviewApp.tsx](../src/components/apps/PreviewApp.tsx))
 
-1. **Toolbar** — back button (`<ArrowLeft size={14}>`, `aria-label="Back to projects"`) + project title (truncates if narrow). When `project.link` is set, a sticky CTA `<a>` is pinned to the right (`ml-auto shrink-0`), styled via `buttonVariants({ variant: "secondary", size: "sm" })` from `@heroui/styles`. Because the toolbar is outside the scroll area, this CTA stays in view as the user reads.
-2. **Hero** — `aspect-video` gradient placeholder with the project's first letter (`text-5xl`, white).
-3. **Title block** — `<h1 className="text-2xl font-semibold tracking-tight">`, then `summary` as a `text-base text-foreground/75` tagline, then tag chips.
-4. **CTA row** (only when `project.link` or `project.source` is set) — a `flex flex-wrap gap-2` with up to two glass-style anchor buttons:
-   - **Primary**: `buttonVariants({ variant: "secondary" })`, label = `linkLabel ?? "Visit project"`, with a trailing `<ExternalLink size={14}>`.
+A macOS Preview-style project viewer. Opens via `OPEN` from FinderApp with payload `{ projectId: string }`. The reducer's existing-window OPEN branch refreshes `initialPayload`, so clicking a different project in Finder while Preview is already open swaps the content in place (single-window-per-app, content driven by payload).
+
+### Payload contract
+
+```ts
+{ projectId: string }   // must match an entry in PROJECTS
+```
+
+Read in `PreviewApp` via `useWindows()`:
+
+```ts
+const { windows } = useWindows();
+const win = windows.find((w) => w.id === windowId);
+const payload = win?.initialPayload as { projectId?: string } | undefined;
+const project = payload?.projectId
+  ? PROJECTS.find((p) => p.id === payload.projectId)
+  : undefined;
+```
+
+If `project` is undefined (missing/unknown id), the app renders an `Eye`-icon empty state.
+
+### Layout
+
+A single 2-column grid that fills the window body — no vertical split, the right pane gets the full window height:
+
+```
+grid h-full grid-cols-[176px_1fr]
+┌──────────┬──────────────────────────────────┐
+│ sidebar  │ right pane (full height)         │
+│          │                                  │
+│ ⓘ Info   │   ImageView OR CaseStudy         │
+│ ──────   │   (depending on selection)       │
+│ ▢ thumb1 │                                  │
+│ ▢ thumb2 │                                  │
+└──────────┴──────────────────────────────────┘
+```
+
+`PreviewApp` owns a `view: "info" | number` state. Default: `0` (first screenshot) when there are screenshots; `"info"` otherwise. `key={project.id}` on the inner content forces a fresh mount when switching projects so `view` resets cleanly.
+
+Right-pane render:
+- `view === "info"` → `<div className="overflow-y-auto"><CaseStudy /></div>`
+- `typeof view === "number"` → `<ImageView key={view} screenshot={screenshots[view]} index={view} total={screenshots.length} />`. The `key` forces remount on switch, which resets `zoom`/`pan`/`mode`/`naturalSize`.
+
+### Sidebar (lives in PreviewApp)
+
+`<aside className="flex flex-col gap-2 overflow-y-auto bg-surface-secondary p-2">` containing:
+
+1. **Info thumb** — `aspect-video` `<button>` with `bg-surface-tertiary` background, centered `Info` icon (lucide, size 20) + small "Project Info" label below. Active when `view === "info"`: `border-accent`. Inactive: `border-transparent hover:border-field-border`.
+2. A separator (`<hr className="my-1 border-0 border-t border-separator" />`) — only when there are screenshots.
+3. Screenshot thumbs — `aspect-video` `<button>` containing `<img object-cover>`. Same border-2 styling as the Info thumb. Click sets `view = i`.
+
+All buttons get `aria-current` reflecting selection.
+
+### ImageView ([preview/ImageViewer.tsx](../src/components/apps/preview/ImageViewer.tsx))
+
+A self-contained single-screenshot canvas. Selection and arrow-key nav live in PreviewApp; this component is purely the canvas + zoom controls + status bar.
+
+**Props**: `{ screenshot: Screenshot; index?: number; total?: number }`. `index`/`total` only feed the status bar's "N of M" segment; if omitted, that segment is hidden.
+
+**Layout** (`flex h-full flex-col`):
+
+| Region | Class | Contents |
+| --- | --- | --- |
+| Canvas | `min-h-0 flex-1 relative overflow-hidden bg-surface-tertiary` | the image (transformed) + floating zoom controls |
+| Status bar | `h-7 border-t border-separator bg-surface-secondary px-3 text-[11px]` | `[N of M · ]WxH · ZZZ%` (+ alt text right-aligned) |
+
+**Canvas**: subtle 16px diagonal-gradient checkerboard background (inline `style.backgroundImage`) to communicate "image canvas" the way Preview does. The image is positioned absolute at the canvas center and transformed with `translate(panX, panY) scale(displayScale)` where `displayScale = fitScale * zoom`.
+
+`fitScale = min(canvasW / naturalW, canvasH / naturalH, 1)` — recomputed via `ResizeObserver` on the canvas and an `<img onLoad>` populating `naturalSize`. Fit never upscales beyond 1:1.
+
+**Floating zoom controls**: glass pill in the canvas's bottom-right (`rounded-full border bg-surface backdrop-blur-(--glass-blur) shadow-overlay`). Five buttons via the local `<ZoomBtn>`: `Minus` (zoom out), `Plus` (zoom in), separator, `Maximize2` (fit, active when `mode==="fit"`), `1:1` text (actual size, active when `mode==="actual"`).
+
+**Keyboard ownership** — split between PreviewApp and ImageView:
+
+| Key | Where handled | Effect |
+| --- | --- | --- |
+| `→` / `←` | **PreviewApp** | Next / previous screenshot (clamped, no wrap). Only when `typeof view === "number"`. |
+| `+` / `=` / `-` / `_` | ImageView | Multiplicative zoom by 1.2×. Sets `mode = "custom"`. |
+| `Cmd+0` / `Ctrl+0` | ImageView | Fit. `zoom = 1`, `pan = (0,0)`, `mode = "fit"`. |
+| `Cmd+1` / `Ctrl+1` | ImageView | Actual size. `zoom = 1 / fitScale`, `pan = (0,0)`, `mode = "actual"`. |
+| `Escape` | ImageView | Reset to fit (does NOT close the window). |
+
+Both listeners gate on the event target (skip when in `<input>`/`<textarea>`/`contentEditable`). ImageView is unmounted when `view === "info"`, so its zoom shortcuts can't fire from the case-study reading view.
+
+**Pointer interactions**:
+
+| Action | Effect |
+| --- | --- |
+| Wheel on canvas | Cursor-anchored zoom. Native `addEventListener("wheel", …, { passive: false })` so we can `preventDefault`. New zoom = `clamp(prev * exp(-deltaY / 200), 0.05, 40)`. Pan adjusted so the point under the cursor stays fixed. Sets `mode = "custom"`. |
+| Click-drag on canvas (when `zoom > 1`) | Pans. Uses `setPointerCapture` on `pointerdown`. Cursor swaps to `cursor-grabbing`. |
+| Double-click on canvas | Toggles between `fit` and `actual`. |
+
+### CaseStudy ([preview/CaseStudy.tsx](../src/components/apps/preview/CaseStudy.tsx))
+
+A long-form scroll inside `mx-auto max-w-2xl px-8 pt-6 pb-12`, rendering project metadata top to bottom:
+
+1. **Title block** — `<h1 className="text-2xl font-semibold tracking-tight">` title, `summary` tagline, tag chips.
+2. **CTA row** (only when `project.link` or `project.source` is set) — `flex flex-wrap gap-2` of glass anchor buttons:
+   - **Primary**: `buttonVariants({ variant: "secondary" })`, label = `linkLabel ?? "Visit project"`, trailing `<ExternalLink size={14}>`.
    - **Source**: `buttonVariants({ variant: "tertiary" })`, leading `<BrandIcon icon={siGithub} size={14}>`, label "View source".
-   Both use the HeroUI Pro glass theme (`button--secondary` and `button--tertiary` get `backdrop-filter: blur(var(--glass-blur))` from the glass theme automatically). Anchors carry `target="_blank" rel="noopener noreferrer"` so they open in a new tab and middle-/cmd-click work; we use `<a>` rather than HeroUI's `<Button>` because React Aria's Button explicitly omits `href`/`target`/`rel`.
-5. **Meta strip** (`<MetaStrip>`, only when at least one of `role`/`stack`/`status` is set) — a `grid grid-cols-[72px_1fr]` definition list inside `rounded-xl border border-field-border bg-surface-secondary/40 p-5`. Stack entries render as mono-font pills.
-6. **Description** — `description` as a body paragraph (with inline-formatting support; see below).
-7. **The problem** (only when `problem` is set) — section heading + `<Prose>`.
-8. **Engineering highlights** (only when `highlights` is non-empty) — section heading + a vertical stack of `<HighlightCard>`s. Each card has a numbered circle, a title, prose body, and an optional `code` snippet rendered in a `<pre>` on `bg-surface-tertiary/60`.
-9. **Design** (only when `designNotes` is set) — section heading + `<Prose>`.
-10. **What I learned** (only when `learnings` is non-empty) — section heading + `<ul>` where each item is a bolded `lead` followed by inline-formatted `body`.
+   Both use HeroUI Pro's glass theme (`button--secondary` / `button--tertiary` get `backdrop-filter: blur(var(--glass-blur))` automatically). Anchors carry `target="_blank" rel="noopener noreferrer"`.
+3. **Meta strip** (`<MetaStrip>`, only when at least one of `role`/`stack`/`status` is set) — `grid grid-cols-[72px_1fr]` definition list inside `rounded-xl border border-field-border bg-surface-secondary/40 p-5`. Stack entries render as mono pills.
+4. **Description** — body paragraph (with inline-formatting support; see below).
+5. **The problem** (only when `problem` is set) — section heading + `<Prose>`.
+6. **Engineering highlights** (only when `highlights` is non-empty) — section heading + a vertical stack of `<HighlightCard>`s. Each card has a numbered circle, a title, prose body, and an optional `code` snippet in a `<pre>`.
+7. **Design** (only when `designNotes` is set) — section heading + `<Prose>`.
+8. **What I learned** (only when `learnings` is non-empty) — section heading + `<ul>` of `lead` (bold) + inline-formatted `body`.
 
-Section headings are uniformly `text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/50` (a Resume-style secondary header).
+There is no screenshot section — that's the ImageViewer's job. There is no internal toolbar or back button — the window's traffic-light close handles closing.
 
-Inline formatting: a small `renderInline()` helper splits prose strings on three patterns and renders them with the matching primitives:
+Section headings are uniformly `text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/50`.
+
+Inline formatting (`renderInline`) splits prose strings and renders the markers:
 
 | Marker          | Rendered as                                                                  |
 | --------------- | ---------------------------------------------------------------------------- |
@@ -112,11 +208,9 @@ Inline formatting: a small `renderInline()` helper splits prose strings on three
 | `**bold**`      | `<strong className="font-semibold text-foreground">`                          |
 | `*em*`          | `<em className="italic">`                                                     |
 
-Multi-paragraph prose uses `\n\n` between paragraphs; the `<Prose>` helper splits on that and emits one `<p>` per chunk inside a `flex flex-col gap-3`.
+Multi-paragraph prose uses `\n\n`; `<Prose>` splits and emits one `<p>` per chunk inside `flex flex-col gap-3`.
 
-The component renders gracefully for projects without any optional fields — only the toolbar, hero, title block, and (if present) `description` show. The CTA row, meta strip, and case-study sections all hide when their data is absent.
-
-There is no Finder toolbar (no back/forward arrows for the project history; the only "back" is the one inside ProjectDetail).
+CaseStudy renders gracefully for projects without optional fields — only the title block (and, if present, `description`) are unconditional.
 
 ---
 

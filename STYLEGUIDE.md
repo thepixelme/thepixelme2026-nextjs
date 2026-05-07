@@ -107,6 +107,7 @@ Antialiasing: `antialiased` is set on `<html>` in layout. Don't override.
 | ------------------- | --------------- |
 | About menu (menu bar) | `User`        |
 | Finder              | `FolderOpen`    |
+| Preview             | `Eye`           |
 | About Me            | `User`          |
 | About Me — Location | `MapPin`        |
 | About Me — Skills section | `Wrench`  |
