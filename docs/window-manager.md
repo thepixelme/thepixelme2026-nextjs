@@ -27,7 +27,7 @@ String literal union of the eight registered apps:
 | `title`          | `string`            | Copied from the `AppDef.title` at OPEN time.                     |
 | `z`              | `number`            | Stacking order. The reducer maintains `topZ` and assigns on OPEN/FOCUS. |
 | `minimized`      | `boolean`           | Hidden by `WindowManager` when true.                             |
-| `maximized`      | `boolean`           | Suppresses drag/resize handles when true.                        |
+| `maximized`      | `boolean`           | Suppresses drag/resize handles when true; window background switches from glass to a solid surface (`--glass-pinned-surface`) for readability. |
 | `prevBounds`     | `WindowBounds?`     | Captured on MAXIMIZE so RESTORE can return to the prior bounds.  |
 | `initialPayload` | `unknown?`          | Opaque payload from the OPEN action. Refreshed on subsequent OPEN if a new payload is supplied; otherwise preserved. Unused by Window itself, available to apps (e.g. PreviewApp reads `{ projectId }`). |
 

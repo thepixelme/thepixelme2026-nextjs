@@ -51,6 +51,7 @@ These are CSS custom properties defined by the glass theme. Use them via Tailwin
 | `--accent-foreground`     | Foreground color used on top of `--accent` surfaces.                  |
 | `--default`               | Neutral interactive bg (`bg-default`, `hover:bg-default`).            |
 | `--glass-blur`            | The `backdrop-filter` blur radius (20px in light, 36px in dark).      |
+| `--glass-pinned-surface`  | Fully opaque surface. Used by `Window` when `win.maximized` is true (and originally by HeroUI Pro for pinned data-grid cells). Has both light/dark variants. |
 | `--surface-shadow`        | `shadow-surface` (transparent in glass — kept as a token so other themes can populate it). |
 | `--overlay-shadow`        | `shadow-overlay` — the layered drop shadow used by windows, modals, tooltips. |
 | `--field-shadow`          | Optional shadow on form fields.                                       |
@@ -75,7 +76,7 @@ Used inline as `bg-[#ff5f57]` etc. in [TrafficLights.tsx](../src/components/wind
 bg-surface backdrop-blur-(--glass-blur) border border-field-border shadow-overlay rounded-xl
 ```
 
-Used by [Window.tsx](../src/components/window/Window.tsx). Variants:
+Used by [Window.tsx](../src/components/window/Window.tsx). When `win.maximized` is true, Window swaps `bg-surface` for `bg-(--glass-pinned-surface)` (opaque) and drops `backdrop-blur-(--glass-blur)` so the maximized content reads clearly. Variants:
 
 - Menu bar (top): `bg-surface ... border-b border-separator backdrop-blur-(--glass-blur)`.
 - Dock pill: `bg-surface-secondary ... border border-separator shadow-overlay`.

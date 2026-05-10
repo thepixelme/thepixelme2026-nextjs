@@ -87,7 +87,11 @@ export default function Window({ win, children }: Props) {
 
   return (
     <motion.div
-      className="absolute flex flex-col rounded-xl border border-field-border bg-surface shadow-overlay backdrop-blur-(--glass-blur) overflow-hidden"
+      className={`absolute flex flex-col rounded-xl border border-field-border shadow-overlay overflow-hidden ${
+        win.maximized
+          ? "bg-(--glass-pinned-surface)"
+          : "bg-surface backdrop-blur-(--glass-blur)"
+      }`}
       style={{
         left: win.x,
         top: win.y,
