@@ -27,6 +27,7 @@ export interface Project {
   role?: string;
   stack?: string[];
   status?: string;
+  orientation?: "landscape" | "portrait";
   problem?: string;
   highlights?: Highlight[];
   designNotes?: string;

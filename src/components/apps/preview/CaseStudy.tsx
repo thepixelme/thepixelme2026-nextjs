@@ -17,6 +17,7 @@ export function CaseStudy({
   const hasMeta = !!project.role || !!project.stack?.length || !!project.status;
   const linkLabel = project.linkLabel ?? "Visit project";
   const screenshots = project.screenshots ?? [];
+  const isPortrait = project.orientation === "portrait";
 
   return (
     <div className="mx-auto max-w-2xl px-8 pt-6 pb-12">
@@ -39,14 +40,16 @@ export function CaseStudy({
 
       {screenshots.length > 0 && onScreenshotClick && (
         <Section title="Screenshots">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div
+            className={`grid gap-3 ${isPortrait ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2"}`}
+          >
             {screenshots.map((s, i) => (
               <button
                 key={s.src}
                 type="button"
                 onClick={() => onScreenshotClick(i)}
                 aria-label={`Open ${s.alt}`}
-                className="group relative aspect-video overflow-hidden rounded-md border border-field-border bg-surface-secondary/40"
+                className={`group relative ${isPortrait ? "aspect-9/19" : "aspect-video"} overflow-hidden rounded-md border border-field-border bg-surface-secondary/40`}
               >
                 <img
                   src={s.src}

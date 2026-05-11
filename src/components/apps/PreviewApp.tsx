@@ -37,6 +37,8 @@ function PreviewContent({
   project: NonNullable<ReturnType<typeof PROJECTS.find>>;
 }) {
   const screenshots = project.screenshots ?? [];
+  const isPortrait = project.orientation === "portrait";
+  const thumbAspect = isPortrait ? "aspect-9/19" : "aspect-video";
   const [view, setView] = useState<View>("info");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -92,7 +94,7 @@ function PreviewContent({
               onClick={() => setView("info")}
               aria-label="Show project info"
               aria-current={view === "info"}
-              className={`flex aspect-video w-full flex-col items-center justify-center gap-1.5 overflow-hidden rounded-md border-2 bg-surface-tertiary text-foreground/75 transition-colors ${
+              className={`flex ${thumbAspect} w-full flex-col items-center justify-center gap-1.5 overflow-hidden rounded-md border-2 bg-surface-tertiary text-foreground/75 transition-colors ${
                 view === "info"
                   ? "border-accent"
                   : "border-transparent hover:border-field-border"
@@ -115,7 +117,7 @@ function PreviewContent({
                 onClick={() => setView(i)}
                 aria-label={`Show ${s.alt}`}
                 aria-current={view === i}
-                className={`block aspect-video w-full overflow-hidden rounded-md border-2 transition-colors ${
+                className={`block ${thumbAspect} w-full overflow-hidden rounded-md border-2 transition-colors ${
                   view === i
                     ? "border-accent"
                     : "border-transparent hover:border-field-border"

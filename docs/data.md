@@ -44,6 +44,7 @@ interface Project {
   role?: string;          // e.g. "Sole engineer and designer"
   stack?: string[];       // tech list rendered as mono pills in the meta strip
   status?: string;        // e.g. "v0.0.1, prepared for Chrome Web Store submission"
+  orientation?: "landscape" | "portrait"; // default "landscape"; "portrait" switches FinderApp card to object-contain and PreviewApp/CaseStudy slots to aspect-9/19 with a 3-col gallery
   problem?: string;       // long prose; supports \n\n + inline formatting
   highlights?: Highlight[];
   designNotes?: string;   // long prose
@@ -125,9 +126,10 @@ Order matters — it determines the rendered order in About → Find me.
 
 ## `PROJECTS: Project[]` ([src/lib/projects/index.ts](../src/lib/projects/index.ts))
 
-| `id`      | file                                                       | `title`                              | `tags`                                 | rich case-study?     |
-| --------- | ---------------------------------------------------------- | ------------------------------------ | -------------------------------------- | -------------------- |
-| `apipeek` | [apipeek.ts](../src/lib/projects/apipeek.ts)               | APIPeek — JSON viewer & API sandbox  | Browser extension · TypeScript · React | yes (full + 4 shots) |
+| `id`                | file                                                             | `title`                              | `tags`                                                       | rich case-study?         |
+| ------------------- | ---------------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------ | ------------------------ |
+| `bonneville-mobile` | [bonneville-mobile.ts](../src/lib/projects/bonneville-mobile.ts) | Bonneville News & Sports Mobile      | Mobile · React Native · TypeScript · Expo · Native modules   | yes (full + 9 portrait shots) |
+| `apipeek`           | [apipeek.ts](../src/lib/projects/apipeek.ts)                     | APIPeek — JSON viewer & API sandbox  | Browser extension · TypeScript · React                       | yes (full + 4 shots)     |
 
 Each project lives in its own file under [src/lib/projects/](../src/lib/projects/) so that long-form copy doesn't crowd one giant module. [index.ts](../src/lib/projects/index.ts) imports each project file and exports `PROJECTS: Project[]` in the order they should appear in the Finder grid.
 

@@ -77,7 +77,7 @@ Sidebar background: `bg-surface-secondary px-2 py-3 text-sm`. Outer grid: `grid-
 
 `grid grid-cols-1 gap-3 md:grid-cols-2`. Each card is a `<button>` containing:
 
-- The project's first screenshot (`aspect-video object-cover rounded-md`), or a gradient placeholder with the project's first letter when no screenshots exist.
+- The project's first screenshot (`aspect-video rounded-md`; `object-cover` for landscape projects, `object-contain` when `project.orientation === "portrait"` so a phone screenshot fits inside the wide slot without cropping), or a gradient placeholder with the project's first letter when no screenshots exist.
 - `<h3>` title (`text-sm font-semibold`).
 - `<p>` summary (`text-xs text-foreground/70`, line-clamp-2).
 - Up to 3 tag chips (`rounded-full bg-default px-2 py-0.5 text-[10px]`).
@@ -150,6 +150,8 @@ Right-pane render:
 2. A separator (`<hr className="my-1 border-0 border-t border-separator" />`) — only when there are screenshots.
 3. Screenshot thumbs — `aspect-video` `<button>` containing `<img object-cover>`. Same border-2 styling as the Info thumb. Click sets `view = i`.
 
+For projects with `orientation: "portrait"`, both the Info thumb and the screenshot thumbs swap `aspect-video` for `aspect-9/19` so portrait phone shots fill the 176px sidebar column without cropping. The shared `thumbAspect` derivation in `PreviewApp` keeps the two slot types in sync.
+
 All buttons get `aria-current` reflecting selection.
 
 When the sidebar is collapsed, screenshot navigation still works via `←` / `→` keys (handled by PreviewApp). Re-opening the sidebar to switch back to Info is one click on the toolbar toggle.
@@ -159,7 +161,7 @@ When the sidebar is collapsed, screenshot navigation still works via `←` / `�
 Long-form scroll inside `mx-auto max-w-2xl px-8 pt-6 pb-12`. Props: `{ project: Project; onScreenshotClick?: (index: number) => void }`. Rendered top to bottom:
 
 1. **Title block** — `<h1>` title, `summary` tagline, tag chips.
-2. **Screenshots** (only when `screenshots` is non-empty AND `onScreenshotClick` is provided) — `Section` titled "Screenshots" with a 2-column grid (`sm:grid-cols-2`) of `aspect-video` thumbnail `<button>`s. Each thumb has a hover-zoom (`group-hover:scale-105`) and dispatches `onScreenshotClick(i)` on click — PreviewApp wires this to `setView(i)` so clicking jumps to the image viewer for that screenshot.
+2. **Screenshots** (only when `screenshots` is non-empty AND `onScreenshotClick` is provided) — `Section` titled "Screenshots" with a 2-column grid (`sm:grid-cols-2`) of `aspect-video` thumbnail `<button>`s. Each thumb has a hover-zoom (`group-hover:scale-105`) and dispatches `onScreenshotClick(i)` on click — PreviewApp wires this to `setView(i)` so clicking jumps to the image viewer for that screenshot. For `orientation: "portrait"` projects, the grid switches to `grid-cols-2 sm:grid-cols-3` and each item uses `aspect-9/19` so phone screenshots stay readable inside the `max-w-2xl` case-study column.
 3. **CTA row** (only when `project.link` or `project.source`) — `flex flex-wrap gap-2` of glass anchor buttons: primary "Visit project" (label can be customized via `linkLabel`, e.g. "Install on Chrome Web Store") and secondary "View source" with the GitHub `BrandIcon`.
 4. **Meta strip** (only when `role`/`stack`/`status` is set) — `grid grid-cols-[72px_1fr]` definition list inside `rounded-xl border border-field-border bg-surface-secondary/40 p-5`. Stack entries render as mono pills.
 5. **Description** — body paragraph.

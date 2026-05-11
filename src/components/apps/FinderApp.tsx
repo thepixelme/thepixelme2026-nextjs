@@ -65,7 +65,7 @@ export default function FinderApp() {
                   src={p.screenshots[0].src}
                   alt={p.screenshots[0].alt}
                   loading="lazy"
-                  className="mb-3 aspect-video w-full rounded-md object-cover"
+                  className={`mb-3 aspect-video w-full rounded-md ${p.orientation === "portrait" ? "object-contain" : "object-cover"}`}
                 />
               ) : (
                 <div className="mb-3 grid aspect-video place-items-center rounded-md bg-linear-to-br from-[oklch(0.78_0.13_240)] to-[oklch(0.65_0.18_310)] text-2xl font-semibold text-white">
