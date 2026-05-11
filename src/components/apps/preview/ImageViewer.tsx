@@ -296,11 +296,6 @@ export function ImageView({
           </>
         )}
         <span className="tabular-nums">{zoomPercent}%</span>
-        {screenshot.alt && (
-          <span className="ml-auto truncate text-foreground/55">
-            {screenshot.alt}
-          </span>
-        )}
       </div>
     </div>
   );

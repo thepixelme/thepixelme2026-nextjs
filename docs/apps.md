@@ -146,11 +146,9 @@ Right-pane render:
 
 `<aside className="flex flex-col gap-2 overflow-y-auto bg-surface-secondary p-2">` containing:
 
-1. **Info thumb** — `aspect-video` `<button>` with `bg-surface-tertiary` background, centered `Info` icon (lucide, size 20) + small "Project Info" label below. Active when `view === "info"`: `border-accent`. Inactive: `border-transparent hover:border-field-border`.
+1. **Info tile** — `aspect-square w-full` `<button>` with `bg-surface-tertiary` background, centered `<Info size={28}>` icon stacked above a `Project Info` label (`text-xs font-medium`). Active state (`view === "info"`) gets `border-accent` + `text-foreground`; inactive: `border-transparent hover:border-field-border`. The square geometry distinguishes it from the rectangular screenshot thumbs (`aspect-video` for landscape, `aspect-9/19` for portrait), so the nav role is unmistakable.
 2. A separator (`<hr className="my-1 border-0 border-t border-separator" />`) — only when there are screenshots.
-3. Screenshot thumbs — `aspect-video` `<button>` containing `<img object-cover>`. Same border-2 styling as the Info thumb. Click sets `view = i`.
-
-For projects with `orientation: "portrait"`, both the Info thumb and the screenshot thumbs swap `aspect-video` for `aspect-9/19` so portrait phone shots fill the 176px sidebar column without cropping. The shared `thumbAspect` derivation in `PreviewApp` keeps the two slot types in sync.
+3. Screenshot thumbs — single column always. Each is a `<button>` containing `<img object-cover>`, `border-2` swapping to `border-accent` when selected. For landscape projects, each thumb is `aspect-video w-full` (~160 × 90px). For `orientation: "portrait"` projects, the wrapping container adds `items-center` and each thumb becomes `aspect-9/19 w-24` (~96 × 203px) — a centered, narrower mini-phone shape so portrait shots stay legible without packing two side-by-side.
 
 All buttons get `aria-current` reflecting selection.
 
@@ -183,7 +181,7 @@ A self-contained single-screenshot canvas. Selection and arrow-key nav live in P
 | Region | Class | Contents |
 | --- | --- | --- |
 | Canvas | `min-h-0 flex-1 relative overflow-hidden bg-surface-tertiary` | the image (transformed) + floating zoom controls |
-| Status bar | `h-7 border-t border-separator bg-surface-secondary px-3 text-[11px]` | `[N of M · ]WxH · ZZZ%` (+ alt text right-aligned) |
+| Status bar | `h-7 border-t border-separator bg-surface-secondary px-3 text-[11px]` | `[N of M · ]WxH · ZZZ%` |
 
 **Canvas**: subtle 16px diagonal-gradient checkerboard background (inline `style.backgroundImage`) to communicate "image canvas" the way Preview does. The image is positioned absolute at the canvas center and transformed with `translate(panX, panY) scale(displayScale)` where `displayScale = fitScale * zoom`.
 

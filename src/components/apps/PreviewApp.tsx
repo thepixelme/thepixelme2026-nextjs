@@ -38,7 +38,6 @@ function PreviewContent({
 }) {
   const screenshots = project.screenshots ?? [];
   const isPortrait = project.orientation === "portrait";
-  const thumbAspect = isPortrait ? "aspect-9/19" : "aspect-video";
   const [view, setView] = useState<View>("info");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -94,43 +93,49 @@ function PreviewContent({
               onClick={() => setView("info")}
               aria-label="Show project info"
               aria-current={view === "info"}
-              className={`flex ${thumbAspect} w-full flex-col items-center justify-center gap-1.5 overflow-hidden rounded-md border-2 bg-surface-tertiary text-foreground/75 transition-colors ${
+              className={`flex aspect-square w-full shrink-0 flex-col items-center justify-center gap-2 overflow-hidden rounded-md border-2 bg-surface-tertiary text-foreground/75 transition-colors ${
                 view === "info"
-                  ? "border-accent"
+                  ? "border-accent text-foreground"
                   : "border-transparent hover:border-field-border"
               }`}
             >
-              <Info size={20} />
-              <span className="text-[10px] font-medium tracking-wide">
-                Project Info
-              </span>
+              <Info size={28} />
+              <span className="text-xs font-medium">Project Info</span>
             </button>
 
             {screenshots.length > 0 && (
               <hr className="my-1 border-0 border-t border-separator" />
             )}
 
-            {screenshots.map((s, i) => (
-              <button
-                key={s.src}
-                type="button"
-                onClick={() => setView(i)}
-                aria-label={`Show ${s.alt}`}
-                aria-current={view === i}
-                className={`block ${thumbAspect} w-full overflow-hidden rounded-md border-2 transition-colors ${
-                  view === i
-                    ? "border-accent"
-                    : "border-transparent hover:border-field-border"
-                }`}
-              >
-                <img
-                  src={s.src}
-                  alt={s.alt}
-                  loading="lazy"
-                  className="h-full w-full object-cover"
-                />
-              </button>
-            ))}
+            <div
+              className={
+                isPortrait
+                  ? "flex shrink-0 flex-col items-center gap-2"
+                  : "flex shrink-0 flex-col gap-2"
+              }
+            >
+              {screenshots.map((s, i) => (
+                <button
+                  key={s.src}
+                  type="button"
+                  onClick={() => setView(i)}
+                  aria-label={`Show ${s.alt}`}
+                  aria-current={view === i}
+                  className={`block ${isPortrait ? "aspect-9/19 w-24" : "aspect-video w-full"} overflow-hidden rounded-md border-2 transition-colors ${
+                    view === i
+                      ? "border-accent"
+                      : "border-transparent hover:border-field-border"
+                  }`}
+                >
+                  <img
+                    src={s.src}
+                    alt={s.alt}
+                    loading="lazy"
+                    className="h-full w-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
           </aside>
         )}
 
