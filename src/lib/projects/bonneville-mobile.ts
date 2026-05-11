@@ -44,9 +44,9 @@ export const bonnevilleMobile: Project = {
     },
   ],
   summary:
-    "A multi-tenant React Native platform that ships nine branded news and sports radio apps from one codebase--KIRO Newsradio, KSL Newsradio, KTAR News, Arizona Sports, Sactown Sports, KSL Sports, Seattle Red, Seattle Sports, Denver Sports--for Bonneville International across five U.S. markets.",
+    "Nine mobile apps — one for each of Bonneville International's news and sports radio stations across five U.S. markets — all built and shipped from a single codebase. KIRO Newsradio, KSL Newsradio, KTAR News, Arizona Sports, Sactown Sports, KSL Sports, Seattle Red, Seattle Sports, and Denver Sports.",
   description:
-    "I led both product and engineering: I owned the roadmap, made the architectural calls, contributed to the code, and led a small developer team to ship it.",
+    "I led both sides — product and engineering. I owned the roadmap, made the architectural calls, wrote code alongside the team, and led a small group of developers all the way to launch.",
   role: "Product & engineering lead, small developer team",
   stack: [
     "Expo 54",
@@ -64,57 +64,39 @@ export const bonnevilleMobile: Project = {
     "Kotlin",
   ],
   status:
-    "Shipping in production — 9 App Store / Play Store releases, ~24K LOC TypeScript across 159 files",
+    "Live in production — 9 apps on the App Store and Google Play, ~24,000 lines of TypeScript across 159 files",
   problem:
-    "The default path was one mobile project per station, each with its own engineers, quirks, and debt. I argued for a single codebase that re-skins itself per station at build time. Every feature ships to nine apps at once, every fix lands everywhere, and onboarding a new station becomes a JSON entry instead of a multi-quarter rebuild.",
+    "The obvious approach would have been nine separate apps — one team per station, each with its own backlog, its own bugs, its own years of accumulated mess. I pushed for the opposite: one app that puts on a different costume for each station. Same engine, different paint job. Every new feature ships to all nine stations the day it's built. Every bug fix lands everywhere at once. Onboarding a new station — should Bonneville acquire one — is a configuration change, not a six-month rebuild.",
   highlights: [
     {
-      title: "One codebase, nine App Store releases",
-      body: "The lever sits in `app.config.js`. A single map turns the build pipeline into nine distinct App Store / Play Store submissions. Bundle ID, deep-link scheme, push credentials, branded assets, every per-station fact resolves from one source of truth.",
-      code: `const stationConfigs = {
-  "KIRO-AM": {
-    name: "Seattle Sports",
-    scheme: "kiroam",
-    bundleIdentifier: "com.bonneville.kiroam",
-    package: "com.jacobsmedia.KIROAM",
-    androidApiKey: "<redacted>",
-    iosApiKey: "<redacted>",
-    firebaseCloudMessagingSenderId: "<redacted>",
-    assetsFolder: "kiroam",
-  },
-  // ... eight more stations
-};`,
+      title: "Nine apps in the App Store, built and shipped from one project",
+      body: "Each station has its own logo, colors, and brand — and to a listener, each one feels like a polished standalone app. Behind the scenes, they're the same app wearing different costumes. A single configuration file holds each station's identity (name, app icon, push credentials, brand colors), and the build turns that map into nine separate App Store and Google Play submissions. Adding a tenth station is one new entry in the map.",
     },
     {
-      title: "Custom Expo modules where the SDK ecosystem stopped",
-      body: "Off-the-shelf React Native ad SDKs couldn't coordinate preroll with our custom audio/video state machine, so I scoped a custom Expo module `expo-ima` wrapping Google's IMA SDK in Swift on iOS and Kotlin on Android, dispatching the full ad lifecycle back into JS.\n\nPaired with `expo-carplay` (standalone CarPlay audio without the phone app), these modules unlocked monetization and in-car listening that would otherwise have been blocking.",
-      code: `func adsLoader(_ loader: IMAAdsLoader, adsLoadedWith adsLoadedData: IMAAdsLoadedData) {
-  adsManager = adsLoadedData.adsManager
-  adsManager?.delegate = self
-
-  let renderingSettings = IMAAdsRenderingSettings()
-  renderingSettings.linkOpenerPresentingController = findViewController()
-
-  adsManager?.initialize(with: renderingSettings)
-}`,
+      title: "When the off-the-shelf tools fell short, we built our own",
+      body: "Two features had no working off-the-shelf solution: pre-roll ads (the ones that play before a podcast or live stream — Bonneville's main way of monetizing the app) and CarPlay (so drivers can keep listening in the car). I built both as custom native modules in Swift (iPhone) and Kotlin (Android), plugging straight into our audio and video player. The ads module handles every step of an ad's lifecycle. The CarPlay module gives drivers a clean in-car experience without ever needing the phone app open. Together, they unlocked revenue for the business and in-car listening for the audience.",
     },
     {
-      title: "Engineering discipline that scales with users, not feature creep",
-      body: "User data syncs through AWS API Gateway → DynamoDB, which bills writes in **1 KB increments**, a 1.1 KB write costs 2 WCUs. With podcast progress auto-saving every 120 s and loyalty events firing on every share, listen, and login, sloppy payloads compound fast. I wrote the standard into `AGENTS.md` and held the team to it: every write payload should fit in ~1 KB, split hot-path data from cold-path metadata, shard collections into per-item lists, smart-write to skip writes when nothing changed, debounce repeated mutations.\n\nSteady state is an ~80 B progress write every 120 s with zero metadata writes, a cost curve that scales with users, not feature creep.",
+      title: "The show is already loaded by the time the ad ends",
+      body: "On radio apps, listeners expect playback to be immediate — tap and the show starts. A pre-roll ad already strains that expectation; if the actual show then takes another two or three seconds to buffer after the ad ends, it feels broken. The fix lives inside the ads module: while the ad is playing, it quietly tells the audio and video player to start fetching and buffering the real content in parallel — two normally-separate systems coordinated through the native bridge. By the time the ad finishes, the show is already loaded. The hand-off is invisible: no spinner, no awkward gap.",
+    },
+    {
+      title: "A cost curve that scales with listeners, not with carelessness",
+      body: "Every time the app saves something — your podcast progress, your loyalty points, a saved article — Bonneville pays a tiny fraction of a cent to the cloud database. Multiply by tens of thousands of listeners, every couple of minutes, all day long, and the bill adds up fast. The database also charges in fixed one-kilobyte chunks: a 1.1 KB save costs the same as a 2 KB one. I wrote a single rule into the team's standards: every save fits inside one kilobyte, skip the write when nothing changed, batch quick edits together. Steady state is about 80 bytes every two minutes per listener — a bill that scales with the audience, not with carelessness.",
     },
   ],
   learnings: [
     {
-      lead: "Holding both bets at once changes the architecture.",
-      body: "When the same person owns the product roadmap and the technical roadmap, decisions like *one codebase or nine* get made on the merits, not on org-chart politics.",
+      lead: "Owning both sides of the table changes what's possible.",
+      body: "When the same person owns the product roadmap and the technical roadmap, decisions like *one app or nine* get made on what's right for the business — not on what's easiest given who reports to whom.",
     },
     {
-      lead: "Native modules are a product lever, not a fallback.",
-      body: "Building `expo-ima` and `expo-carplay` from scratch was the difference between shipping monetization + CarPlay and shipping neither. The right time to write a native bridge is when no SDK matches the contract you actually need.",
+      lead: "Writing custom plumbing is sometimes the only path to the product you want.",
+      body: "If we'd waited for an off-the-shelf plugin to support pre-roll ads and CarPlay the way we needed, the project would still be waiting. Sometimes the bravest call is to stop hunting for a workaround and build the missing piece yourself.",
     },
     {
-      lead: "Cost discipline belongs in the codebase, not the spreadsheet.",
-      body: "DynamoDB's per-KB billing made write-payload size a first-class concern. Writing the rule down (~1 KB target) gave reviewers something concrete to enforce, so the bill scaled with usage instead of with carelessness.",
+      lead: "Spending the company's money carefully is an engineering job, not just a finance one.",
+      body: "The bill from a cloud database is set by every line of code that writes to it. Putting a clear, measurable rule into the team's standards — every save under one kilobyte — gave reviewers a target to design against. The result is a bill that scales with how many people use the app, not with how careful any one engineer happened to be on a Tuesday.",
     },
   ],
 };
