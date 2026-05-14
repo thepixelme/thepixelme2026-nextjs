@@ -77,7 +77,7 @@ Sidebar background: `bg-surface-secondary px-2 py-3 text-sm`. Outer grid: `grid-
 
 `grid grid-cols-1 gap-3 md:grid-cols-2`. Each card is a `<button>` containing:
 
-- The project's first screenshot (`aspect-video rounded-md`; `object-cover` for landscape projects, `object-contain` when `project.orientation === "portrait"` so a phone screenshot fits inside the wide slot without cropping), or a gradient placeholder with the project's first letter when no screenshots exist.
+- A fixed `aspect-video w-full` image slot with `bg-surface-secondary` backdrop and `overflow-hidden rounded-md` — same wrapper for every project so titles in adjacent cards line up. Inside the slot: `project.logo` (rendered at `h-3/4 w-3/4 object-contain`) if present, otherwise the first screenshot (`h-full w-full object-cover` for landscape, `h-full w-auto object-contain` when `project.orientation === "portrait"` so a phone screenshot pillar-boxes on the gray backdrop), otherwise the project's first letter as a fallback glyph.
 - `<h3>` title (`text-sm font-semibold`).
 - `<p>` summary (`text-xs text-foreground/70`, line-clamp-2).
 - Up to 3 tag chips (`rounded-full bg-default px-2 py-0.5 text-[10px]`).
