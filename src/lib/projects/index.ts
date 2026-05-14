@@ -1,7 +1,8 @@
 import { apipeek } from "./apipeek";
 import { bonnevilleMobile } from "./bonneville-mobile";
+import { claudeswitcher } from "./claudeswitcher";
 import type { Project } from "./types";
 
 export type { Highlight, Learning, Project, Screenshot } from "./types";
 
-export const PROJECTS: Project[] = [bonnevilleMobile, apipeek];
+export const PROJECTS: Project[] = [claudeswitcher, bonnevilleMobile, apipeek];

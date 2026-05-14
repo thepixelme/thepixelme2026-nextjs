@@ -60,7 +60,16 @@ export default function FinderApp() {
               }
               className="flex flex-col items-stretch rounded-lg border border-field-border bg-surface p-4 text-left transition-colors hover:bg-default"
             >
-              {p.screenshots?.[0] ? (
+              {p.logo ? (
+                <div className="mb-3 grid aspect-video w-full place-items-center rounded-md bg-surface-secondary">
+                  <img
+                    src={p.logo.src}
+                    alt={p.logo.alt}
+                    loading="lazy"
+                    className="h-3/4 w-3/4 object-contain"
+                  />
+                </div>
+              ) : p.screenshots?.[0] ? (
                 <img
                   src={p.screenshots[0].src}
                   alt={p.screenshots[0].alt}

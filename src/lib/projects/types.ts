@@ -23,6 +23,7 @@ export interface Project {
   link?: string;
   linkLabel?: string;
   source?: string;
+  logo?: Screenshot;
   screenshots?: Screenshot[];
   role?: string;
   stack?: string[];

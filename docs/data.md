@@ -37,6 +37,7 @@ interface Project {
   link?: string;          // primary CTA href (live demo / install / canonical URL)
   linkLabel?: string;     // primary CTA label; defaults to "Visit project"
   source?: string;        // optional source-code URL; renders a "View source" button next to the primary CTA
+  logo?: Screenshot;      // optional brand icon; rendered as the Finder card thumbnail (preferred over screenshots[0]) and as a 64px chip to the left of the title in ProjectDetail
   screenshots?: Screenshot[]; // index 0 becomes the hero; full set rendered as a gallery section in ProjectDetail with click-to-lightbox
 
   // Optional case-study fields. Render only when present; light projects
@@ -128,6 +129,7 @@ Order matters — it determines the rendered order in About → Find me.
 
 | `id`                | file                                                             | `title`                              | `tags`                                                       | rich case-study?         |
 | ------------------- | ---------------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------ | ------------------------ |
+| `claudeswitcher`    | [claudeswitcher.ts](../src/lib/projects/claudeswitcher.ts)       | ClaudeSwitcher                       | macOS · Swift · SwiftUI · Menu-bar app                       | yes (full + logo + 2 shots) |
 | `bonneville-mobile` | [bonneville-mobile.ts](../src/lib/projects/bonneville-mobile.ts) | Bonneville News & Sports Mobile      | Mobile · React Native · TypeScript · Expo · Native modules   | yes (full + 9 portrait shots) |
 | `apipeek`           | [apipeek.ts](../src/lib/projects/apipeek.ts)                     | APIPeek — JSON viewer & API sandbox  | Browser extension · TypeScript · React                       | yes (full + 4 shots)     |
 

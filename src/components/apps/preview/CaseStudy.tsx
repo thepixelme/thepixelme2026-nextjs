@@ -21,12 +21,23 @@ export function CaseStudy({
 
   return (
     <div className="mx-auto max-w-2xl px-8 pt-6 pb-12">
-      <h1 className="text-2xl font-semibold leading-tight tracking-tight">
-        {project.title}
-      </h1>
-      <p className="mt-3 text-base leading-relaxed text-foreground/75">
-        {project.summary}
-      </p>
+      <div className="flex items-start gap-4">
+        {project.logo && (
+          <img
+            src={project.logo.src}
+            alt={project.logo.alt}
+            className="h-16 w-16 shrink-0 rounded-xl border border-field-border bg-surface-secondary/40 object-contain"
+          />
+        )}
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold leading-tight tracking-tight">
+            {project.title}
+          </h1>
+          <p className="mt-3 text-base leading-relaxed text-foreground/75">
+            {project.summary}
+          </p>
+        </div>
+      </div>
       <div className="mt-4 flex flex-wrap gap-1.5">
         {project.tags.map((t) => (
           <span
