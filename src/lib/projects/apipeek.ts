@@ -26,9 +26,9 @@ export const apipeek: Project = {
     },
   ],
   summary:
-    "A Chrome / Firefox extension that turns the browser's built-in JSON viewer into a developer-friendly API sandbox: collapsible tree, search, JSONPath filter, schema generation, and a request panel that lets you change method, headers and body and re-fire the call without ever leaving the tab.",
+    "A browser extension that turns raw JSON responses into a usable workspace: tree view, search, JSONPath filtering, schema export, and quick request retries from the same tab.",
   description:
-    "Built solo, end to end. The interesting work isn't the feature list; it's making it all run inside MV3's runtime without the user feeling any of the seams.",
+    "I built APIPeek because checking an API response in the browser should not immediately turn into a chain of copy-paste chores.",
   role: "Sole developer, from concept to store listing",
   stack: [
     "TypeScript",
@@ -42,40 +42,40 @@ export const apipeek: Project = {
   ],
   status: "v0.0.1, prepared for Chrome Web Store submission",
   problem:
-    "Looking at a JSON response in a browser tab is a dead end. You eyeball it, then you copy-paste it into Postman to re-fire the request, into `jq` to filter, into quicktype.io to generate types, into VS Code to format. APIPeek collapses all of those round-trips into the page where the response already lives.",
+    "The browser is usually the first place I see an API response, but it is a bad place to work with one. If I want to retry the request, filter a nested value, or turn the payload into types, I have to move the same JSON through three or four other tools. APIPeek keeps those small jobs next to the response.",
   highlights: [
     {
       title: "Mounting React inside a shadow root, on a page that isn't yours",
-      body: "The viewer mounts into a shadow DOM on the host page. CSS isolation works both ways: site styles can't leak in, APIPeek's can't leak out.  But React's default `<style>` injection breaks across the shadow boundary.\n\nWXT's `createShadowRootUi` with `cssInjectionMode: 'ui'` routes styles into the shadow tree. Design tokens scope to `.apipeek-root`, **not** `:root` (selectors don't cross the boundary), and IBM Plex Mono is base64-inlined so typography survives sites with strict CSP.",
+      body: "The viewer runs inside a shadow DOM so the host page cannot style it, and it cannot style the host page. The tricky part was getting the extension's own CSS, design tokens, and font to live inside that boundary too. WXT's shadow-root UI helpers handled the style injection; the rest came down to scoping tokens to `.apipeek-root` and inlining IBM Plex Mono for CSP-heavy pages.",
     },
     {
       title: "Bypassing CORS with a type-safe message bridge",
-      body: "The `Send` button needs to fetch against arbitrary origins, which a content script can't do without CORS preflight. The request dispatches from the service worker (`host_permissions: ['<all_urls>']`) and pipes back.\n\nThe bridge is a discriminated union, not stringly-typed JSON. Both ends validate the `type` discriminant; the SW handler returns `true` only for messages it owns, so the Chrome message bus never dead-locks waiting on a response that never comes.",
+      body: "The request drawer can resend calls to arbitrary origins, which a content script cannot do reliably. APIPeek sends those requests through the MV3 service worker instead. I kept the bridge small and typed, so each message has a known shape and the service worker only answers the messages it owns.",
       code: "export type Message =\n  | { type: 'apipeek:fetch';  req: ApiRequest }\n  | { type: 'apipeek:schema'; json: unknown; target: SchemaTarget };",
     },
     {
       title: "Keeping a hibernating service worker warm",
-      body: "MV3 service workers idle out after ~30s. The first call after that pays a 100–300 ms cold-start, which is fine usually, but brutal on the `Send` button.\n\nThe fix is a long-lived port. When the request drawer mounts, the content script opens `chrome.runtime.connect({ name: 'apipeek:keepalive' })`. The SW stays alive while the port is open. Chrome force-disconnects ports at 5 minutes, so the client reconnects every 4. When the drawer closes, we let the SW idle out: keepalive shouldn't outlive intent.",
+      body: "MV3 lets service workers go idle quickly. That is good for the browser, but annoying when a user clicks `Send` and waits through a cold start. When the request drawer opens, APIPeek keeps a runtime port alive and refreshes it before Chrome closes it. When the drawer closes, the worker is free to sleep again.",
     },
     {
       title: "Lazy-loading 1.4 MB of quicktype-core out of the content bundle",
-      body: "`quicktype-core` weighs ~1.4 MB minified, and WXT bundles content scripts as a single file, no code-splitting. Importing it directly would force every JSON page to pull 1.4 MB before the viewer mounts.\n\nSchema generation is a background-only operation. The content script sends `{ type: 'apipeek:schema', json, target }`; the SW runs `await import('quicktype-core')` on first request and caches the module. Users pay a one-time ~200 ms cost on first generate; the per-page bundle stays small enough to mount instantly.",
+      body: "`quicktype-core` is too large to ship in the content script. I moved schema generation to the service worker and load the package only when someone asks for types. Normal JSON pages stay fast; the heavier code is paid for once, at the moment it is needed.",
     },
   ],
   designNotes:
-    "OpenCode-inspired aesthetic: IBM Plex Mono everywhere, warm near-black surfaces (`#1A1A19` dark, off-white light), Apple-HIG semantic colors (system blue for actions, system red for destructive). No shadows, no brightness filters, depth comes from borders and tonal shifts.\n\nPopup, command bar, request drawer, and viewer share one token set. Light / dark / system syncs live across realms via `chrome.storage`.",
+    "The UI is intentionally quiet: mono type, compact controls, clear borders, and light/dark themes that follow the user's preference. The popup, command bar, request drawer, and viewer all share the same token set, with theme state synced through `chrome.storage`.",
   learnings: [
     {
-      lead: "MV3 is a different runtime, not just a stricter version of MV2.",
-      body: "Code-splitting, persistence, port lifecycles, CSP, every assumption from regular web work needs re-examining.",
+      lead: "MV3 changes the shape of the app.",
+      body: "Bundle size, worker lifetime, permissions, and CSP all affect product decisions, not just implementation details.",
     },
     {
-      lead: "Type-safe IPC is the cheapest investment in extension code.",
-      body: "Once the message union exists, refactoring across realms becomes a TypeScript exercise instead of a debugging exercise.",
+      lead: "Typed extension messaging pays for itself quickly.",
+      body: "Once the content script and service worker share a message union, refactors become much less fragile.",
     },
     {
-      lead: "Shadow DOM gives you isolation, but charges you in tooling.",
-      body: "Most React component libraries assume `document.head` style injection; designing around that constraint shaped a lot of small decisions.",
+      lead: "Shadow DOM is helpful, but never free.",
+      body: "The isolation is worth it, as long as styles, fonts, and theme tokens are designed for that boundary from the start.",
     },
   ],
 };

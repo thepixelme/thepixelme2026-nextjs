@@ -22,9 +22,9 @@ export const claudeswitcher: Project = {
     },
   ],
   summary:
-    "A native macOS menu-bar app for switching between Claude Code accounts without touching the terminal. One click, no terminal — and a defense against every subtle edge case the macOS process model could throw at it.",
+    "A native macOS menu-bar app for switching between Claude Code accounts without touching the terminal.",
   description:
-    "Claude Code stores everything — credentials, config, session tokens — in one directory: `~/.claude`. The moment you try to use two accounts (a personal one and a paid work one) by pointing Claude at a different directory with `CLAUDE_CONFIG_DIR`, the wheels come off. ClaudeSwitcher exists to defeat that bug, correctly, every time, under every edge case I could think of.",
+    "I built ClaudeSwitcher so I could move between personal and work Claude Code sessions from the menu bar, without remembering shell commands or wondering which account VS Code had actually inherited.",
   role: "Sole engineer and designer",
   stack: [
     "Swift",
@@ -39,38 +39,38 @@ export const claudeswitcher: Project = {
   status:
     "v1 — Developer ID signed, Apple notarized, distributed via Homebrew cask and signed DMG",
   problem:
-    "You can point Claude Code at a different directory with `CLAUDE_CONFIG_DIR`, but the moment you try to wire that into your editor, you hit a quiet, ugly failure mode.\n\nIf VS Code is already running, launching it again with a different environment **silently drops the new env vars**. The IPC handoff between the new `code` invocation and the existing VS Code process doesn't propagate environment changes. Your shell prints nothing. VS Code looks like it switched. It didn't. You're still on the old account, and you only find out when a session does something it shouldn't.\n\nThat's the bug ClaudeSwitcher exists to defeat. Six Swift files, ~800 lines, zero third-party dependencies — a SwiftUI + AppKit menu-bar app that clicks once, launches VS Code under the right `CLAUDE_CONFIG_DIR`, and if VS Code is already running, confirms the quit-and-relaunch.",
+    "Claude Code can use a different config directory through `CLAUDE_CONFIG_DIR`, which sounds simple until VS Code is already running. A second `code` launch hands off to the existing app process, and that process keeps its old environment.\n\nClaudeSwitcher makes the account switch explicit. It launches VS Code with the right config directory, brings forward the instance it started when it is safe to do so, and asks before quitting/reopening VS Code when the current process cannot be trusted.",
   highlights: [
     {
-      title: "The same-account fast path is PID-gated, not account-gated",
-      body: "\"User clicked Personal, VS Code is already on Personal — just bring it to the front\" sounds like a trivial optimization. It isn't. If the user has since Cmd-Q'd VS Code and reopened it from the Dock, *that* instance has no `CLAUDE_CONFIG_DIR` — attaching to it would be a silent regression of the very bug this app exists to prevent. So I match on **both** the account AND the exact PID I launched.\n\nThe list it searches is already filtered by bundle ID first — kernel PIDs get reused, and a recycled PID belonging to another process must not match. Defensive layering all the way down.",
+      title: "Only trusting the VS Code process it launched",
+      body: "If the selected account is already running, ClaudeSwitcher can simply bring VS Code to the front. The catch is knowing that the running app is still the one it launched. If the user quit VS Code and reopened it from the Dock, that new process may not have `CLAUDE_CONFIG_DIR` at all.\n\nThe app tracks the account and the exact PID it started, after filtering running apps by VS Code's bundle ID. That keeps the shortcut fast without guessing.",
       code: "if appState.currentlyRunningAccount == account,\n   let launchedPID = appState.launchedProcessIdentifier,\n   let ours = running.first(where: { $0.processIdentifier == launchedPID }) {\n    ours.activate()\n    return\n}",
     },
     {
-      title: "The login-shell PATH dance",
-      body: "Menu-bar apps launched from Login Items inherit launchd's stripped `PATH` — no Homebrew, no nvm, no asdf. VS Code launched from such a context can't find half the tooling its extensions expect. The fix is to spawn the user's login shell, ask it for `$PATH`, and inject the result.\n\nThe fix done *carefully*: sentinel markers around `$PATH` so oh-my-zsh banners and nvm progress chatter don't contaminate the capture. `/dev/null` on stdin so an interactive shell that calls `read` during rc-file init can't deadlock the wait. A 3-second hard timeout so a hostile rc file that hangs on a network probe doesn't freeze the menu bar. Pre-warmed in `App.init()` so the spawn is already in flight by the time the user clicks.",
+      title: "Rebuilding the user's real PATH",
+      body: "Menu-bar apps launched from Login Items inherit a stripped-down `PATH`, which means VS Code may miss Homebrew, nvm, asdf, or other tools a normal terminal session can see. ClaudeSwitcher asks the user's login shell for its PATH and injects that value before launching VS Code.\n\nThe capture is guarded with sentinel markers, null stdin, and a short timeout so noisy shell startup files cannot pollute or hang the app.",
       code: 'process.arguments = ["-ilc", "printf \'\\(marker)%s\\(marker)\' \\"$PATH\\""]\nprocess.standardInput  = FileHandle.nullDevice\nprocess.standardError  = FileHandle.nullDevice\n// ...\nif group.wait(timeout: .now() + .seconds(3)) == .timedOut {\n    process.terminate()\n    return [:]\n}',
     },
     {
-      title: "State design that can't drift",
-      body: "There is no global \"active account\" variable. The menu-bar icon reflects the *last-launched* account as a visual hint only; it never gates behavior. Persistent state is exactly two fields (`lastLaunched`, `hasCompletedSetup`); everything else — running PID, currently-running account, launch-in-progress flag — is session-only and lives in memory.\n\nStale state can't desync across app restarts because there's nothing to desync. Bugs you don't have because of state you didn't keep.",
+      title: "Keeping persistent state small",
+      body: "The app only persists `lastLaunched` and `hasCompletedSetup`. Process IDs, launch state, and the currently running account live in memory because they are only true for the current session.\n\nThat keeps the menu-bar icon useful as a hint without turning it into authority. On restart, ClaudeSwitcher starts fresh instead of trying to reconcile stale process state.",
       code: "// Persistent — survives app relaunch.\n@Published var lastLaunched: ClaudeAccount { didSet { ... } }\n@Published var hasCompletedSetup: Bool      { didSet { ... } }\n\n// Session-only — deliberately NOT persisted.\n@Published var currentlyRunningAccount: ClaudeAccount? = nil\n@Published var launchedProcessIdentifier: pid_t? = nil",
     },
   ],
   designNotes:
-    "Six Swift files. ~800 lines. Zero third-party dependencies. Hardened Runtime enabled, minimal entitlements (only `com.apple.security.automation.apple-events`, required for `NSRunningApplication.terminate()` under TCC). Distributed two ways from the same signed, notarized build: a Homebrew cask in a personal tap, and a `create-dmg`-built DMG attached to GitHub Releases.",
+    "ClaudeSwitcher is intentionally small: six Swift files, around 800 lines, and no third-party dependencies. The release build uses Hardened Runtime, minimal Apple Events entitlement, Developer ID signing, Apple notarization, a Homebrew cask, and a signed DMG generated with `create-dmg`.",
   learnings: [
     {
-      lead: "Defensive layering isn't paranoia — it's the only way to defeat the bug you exist for.",
-      body: "The same-account fast path could have been one line. Making it PID-gated *and* bundle-ID-gated is two extra layers that turn an undetectable silent regression into an impossible one. The cost of the layers is small; the cost of the bug they prevent is the whole reason the app exists.",
+      lead: "Small utilities still need precise state.",
+      body: "A menu-bar app can feel simple while still coordinating with messy process behavior. Tracking the exact VS Code process made the main action predictable.",
     },
     {
-      lead: "The macOS process model has more sharp edges than its docs admit.",
-      body: "Login-Item PATH stripping, rc-file deadlocks via interactive shells, Apple Events under TCC, recycled kernel PIDs — every one of these is a footgun that doesn't show up until production. Treating the spec as a starting point and building from observed behavior is more honest than trusting it.",
+      lead: "macOS launch context matters.",
+      body: "The same app behaves differently from Terminal, Finder, Login Items, and the Dock. Handling PATH and relaunch behavior directly made the utility feel reliable.",
     },
     {
-      lead: "State you don't keep is state that can't desync.",
-      body: "The temptation with multi-process coordination is to mirror everything into a persistent store and reconcile on launch. Keeping the *minimum* state — two persisted fields, everything else session-only — eliminated a whole class of edge cases without writing any reconciliation code.",
+      lead: "Less persistence meant fewer recovery paths.",
+      body: "By storing only the settings that remain true across launches, the app avoided a lot of cleanup and reconciliation code.",
     },
   ],
 };
