@@ -44,9 +44,9 @@ export const bonnevilleMobile: Project = {
     },
   ],
   summary:
-    "Nine mobile apps — one for each of Bonneville International's news and sports radio stations across five U.S. markets — all built and shipped from a single codebase. KIRO Newsradio, KSL Newsradio, KTAR News, Arizona Sports, Sactown Sports, KSL Sports, Seattle Red, Seattle Sports, and Denver Sports.",
+    "A shared React Native platform behind nine Bonneville radio apps across five U.S. markets: KIRO Newsradio, KSL Newsradio, KTAR News, Arizona Sports, Sactown Sports, KSL Sports, Seattle Red, Seattle Sports, and Denver Sports.",
   description:
-    "I led both sides — product and engineering. I owned the roadmap, made the architectural calls, wrote code alongside the team, and led a small group of developers all the way to launch.",
+    "I led product and engineering, set the architecture, and shipped the apps with a small developer team.",
   role: "Product & engineering lead, small developer team",
   stack: [
     "Expo 54",
@@ -66,37 +66,41 @@ export const bonnevilleMobile: Project = {
   status:
     "Live in production — 9 apps on the App Store and Google Play, ~24,000 lines of TypeScript across 159 files",
   problem:
-    "The obvious approach would have been nine separate apps — one team per station, each with its own backlog, its own bugs, its own years of accumulated mess. I pushed for the opposite: one app that puts on a different costume for each station. Same engine, different paint job. Every new feature ships to all nine stations the day it's built. Every bug fix lands everywhere at once. Onboarding a new station — should Bonneville acquire one — is a configuration change, not a six-month rebuild.",
+    "Bonneville needed nine branded apps without nine separate products to maintain. The answer was a shared platform: station identity lives in config, while feeds, playback, accounts, loyalty, and messaging stay common. New features ship once and land everywhere.",
   highlights: [
     {
-      title: "Nine apps in the App Store, built and shipped from one project",
-      body: "Each station has its own logo, colors, and brand — and to a listener, each one feels like a polished standalone app. Behind the scenes, they're the same app wearing different costumes. A single configuration file holds each station's identity (name, app icon, push credentials, brand colors), and the build turns that map into nine separate App Store and Google Play submissions. Adding a tenth station is one new entry in the map.",
+      title: "One codebase, nine store listings",
+      body: "Station config defines the logo, colors, app icon, push credentials, stream IDs, and market-specific labels. The build turns that map into separate App Store and Google Play submissions. Listeners get an app that feels local; the team gets one product to improve.",
     },
     {
-      title: "When the off-the-shelf tools fell short, we built our own",
-      body: "Two features had no working off-the-shelf solution: pre-roll ads (the ones that play before a podcast or live stream — Bonneville's main way of monetizing the app) and CarPlay (so drivers can keep listening in the car). I built both as custom native modules in Swift (iPhone) and Kotlin (Android), plugging straight into our audio and video player. The ads module handles every step of an ad's lifecycle. The CarPlay module gives drivers a clean in-car experience without ever needing the phone app open. Together, they unlocked revenue for the business and in-car listening for the audience.",
+      title: "CarPlay, built native because React Native had no good path",
+      body: "CarPlay was one of the hardest parts of the project. There was no React Native package that handled the experience well enough for a production radio app, so I built the missing layer in Swift and Kotlin. The result is a proper in-car listening experience tied into the same playback system as the phone app.",
     },
     {
-      title: "The show is already loaded by the time the ad ends",
-      body: "On radio apps, listeners expect playback to be immediate — tap and the show starts. A pre-roll ad already strains that expectation; if the actual show then takes another two or three seconds to buffer after the ad ends, it feels broken. The fix lives inside the ads module: while the ad is playing, it quietly tells the audio and video player to start fetching and buffering the real content in parallel — two normally-separate systems coordinated through the native bridge. By the time the ad finishes, the show is already loaded. The hand-off is invisible: no spinner, no awkward gap.",
+      title: "Custom pre-roll ads tied into playback",
+      body: "Pre-roll ads also needed more control than the available libraries could give us. I built a native module that handles the ad lifecycle and plugs directly into the shared audio/video player, which made monetized playback reliable across live streams, podcasts, and video.",
     },
     {
-      title: "A cost curve that scales with listeners, not with carelessness",
-      body: "Every time the app saves something — your podcast progress, your loyalty points, a saved article — Bonneville pays a tiny fraction of a cent to the cloud database. Multiply by tens of thousands of listeners, every couple of minutes, all day long, and the bill adds up fast. The database also charges in fixed one-kilobyte chunks: a 1.1 KB save costs the same as a 2 KB one. I wrote a single rule into the team's standards: every save fits inside one kilobyte, skip the write when nothing changed, batch quick edits together. Steady state is about 80 bytes every two minutes per listener — a bill that scales with the audience, not with carelessness.",
+      title: "No dead air after the ad",
+      body: "A pre-roll ad is tolerable; a spinner after the ad is not. While the ad plays, the native module tells the main player to fetch and buffer the real stream in parallel. When the ad ends, playback hands off immediately.",
+    },
+    {
+      title: "Cloud writes kept deliberately small",
+      body: "Progress, loyalty, saves, and preferences all touch the database, so tiny choices become real operating cost at listener scale. We set a clear rule: keep each save under one kilobyte, skip unchanged writes, and batch quick edits. Steady state is about 80 bytes every two minutes per listener.",
     },
   ],
   learnings: [
     {
-      lead: "Owning both sides of the table changes what's possible.",
-      body: "When the same person owns the product roadmap and the technical roadmap, decisions like *one app or nine* get made on what's right for the business — not on what's easiest given who reports to whom.",
+      lead: "Product and architecture have to agree early.",
+      body: "The biggest decision was not a screen or a framework. It was choosing one shared platform instead of nine parallel apps, and making the roadmap fit that shape from day one.",
     },
     {
-      lead: "Writing custom plumbing is sometimes the only path to the product you want.",
-      body: "If we'd waited for an off-the-shelf plugin to support pre-roll ads and CarPlay the way we needed, the project would still be waiting. Sometimes the bravest call is to stop hunting for a workaround and build the missing piece yourself.",
+      lead: "Sometimes the right abstraction is native.",
+      body: "React Native carried most of the product, but revenue-critical playback and in-car listening needed platform code. Drawing that line clearly kept the app fast without fighting the framework.",
     },
     {
-      lead: "Spending the company's money carefully is an engineering job, not just a finance one.",
-      body: "The bill from a cloud database is set by every line of code that writes to it. Putting a clear, measurable rule into the team's standards — every save under one kilobyte — gave reviewers a target to design against. The result is a bill that scales with how many people use the app, not with how careful any one engineer happened to be on a Tuesday.",
+      lead: "Cost control belongs in code review.",
+      body: "The cloud bill is shaped by everyday implementation details. A simple write-size rule gave reviewers something measurable to enforce before usage scaled.",
     },
   ],
 };
