@@ -13,6 +13,7 @@ An "app" is anything that satisfies the `AppDef` shape ([src/types/window.ts](..
   icon: LucideIcon;
   defaultSize: { w: number; h: number };
   minSize?: { w: number; h: number };  // typed but currently unused
+  hideFromDock?: boolean;               // omit from Dock; still appears in Spotlight / launchable via dispatch
   Component: React.ComponentType<{ windowId: string }>;
 }
 ```
@@ -23,18 +24,20 @@ The `Component` is rendered by [WindowManager](../src/components/window/WindowMa
 
 ## Registry
 
-[src/components/apps/registry.ts](../src/components/apps/registry.ts) exports a single `APPS: AppDef[]`. Order is significant — it determines dock left-to-right order and Spotlight result order.
+[src/components/apps/registry.ts](../src/components/apps/registry.ts) exports a single `APPS: AppDef[]`. Order is significant — it determines dock left-to-right order (for apps with `hideFromDock !== true`) and Spotlight result order.
 
-| # | `id`       | `title`            | `icon` (lucide)        | `defaultSize` (w × h) |
-| - | ---------- | ------------------ | ---------------------- | --------------------- |
-| 1 | `finder`   | Finder             | `FolderOpen`           | 880 × 560             |
-| 2 | `preview`  | Preview            | `Eye`                  | 1024 × 720            |
-| 3 | `about`    | About Me           | `User`                 | 520 × 600             |
-| 4 | `resume`   | Resume             | `FileText`             | 720 × 800             |
-| 5 | `contact`  | Contact            | `Mail`                 | 520 × 520             |
-| 6 | `terminal` | Terminal           | `Terminal`             | 640 × 420             |
-| 7 | `photos`   | Photos             | `Image`                | 880 × 600             |
-| 8 | `settings` | System Settings    | `Settings`             | 720 × 560             |
+| # | `id`       | `title`            | `icon` (lucide)        | `defaultSize` (w × h) | in dock |
+| - | ---------- | ------------------ | ---------------------- | --------------------- | ------- |
+| 1 | `finder`   | Finder             | `FolderOpen`           | 880 × 560             | ✓       |
+| 2 | `preview`  | Preview            | `Eye`                  | 1024 × 720            | —¹      |
+| 3 | `about`    | About Me           | `User`                 | 520 × 600             | ✓       |
+| 4 | `resume`   | Resume             | `FileText`             | 720 × 800             | ✓       |
+| 5 | `contact`  | Contact            | `Mail`                 | 520 × 520             | ✓       |
+| 6 | `terminal` | Terminal           | `Terminal`             | 640 × 420             | ✓       |
+| 7 | `photos`   | Photos             | `Image`                | 880 × 600             | ✓       |
+| 8 | `settings` | System Settings    | `Settings`             | 720 × 560             | ✓       |
+
+¹ `preview` has `hideFromDock: true` — it's launched by [FinderApp](#finderapp-finderapptsx) with a `projectId` payload, not from the dock.
 
 Sizes are clamped at OPEN time to `vw - 80` and `vh - 160` (see [window-manager.md](window-manager.md#initial-position-math-open)).
 

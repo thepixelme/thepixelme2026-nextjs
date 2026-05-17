@@ -70,7 +70,7 @@ Fixed `inset-x-0 bottom-3 z-40` flex justify-center wrapper, with `pointer-event
 
 Inner pill: `pointer-events-auto flex items-end gap-3 rounded-2xl border border-separator bg-surface-secondary px-3 pb-2 pt-3 shadow-overlay backdrop-blur-(--glass-blur)`.
 
-Iterates [APPS](../src/components/apps/registry.ts) in registry order. For each app:
+Iterates [APPS](../src/components/apps/registry.ts) in registry order, skipping any entry where `hideFromDock` is true. For each remaining app:
 
 ```ts
 const isOpen = windows.some(w => w.appId === app.id);

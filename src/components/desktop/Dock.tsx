@@ -11,7 +11,7 @@ export default function Dock() {
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-3 z-40 flex justify-center">
       <div className="pointer-events-auto flex items-end gap-3 rounded-2xl border border-separator bg-surface-secondary px-3 pb-2 pt-3 shadow-overlay backdrop-blur-(--glass-blur)">
-        {APPS.map((app) => {
+        {APPS.filter((app) => !app.hideFromDock).map((app) => {
           const isOpen = windows.some((w) => w.appId === app.id);
           return (
             <DockIcon

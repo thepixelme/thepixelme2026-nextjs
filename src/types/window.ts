@@ -35,5 +35,6 @@ export interface AppDef {
   icon: LucideIcon;
   defaultSize: { w: number; h: number };
   minSize?: { w: number; h: number };
+  hideFromDock?: boolean;
   Component: ComponentType<{ windowId: string }>;
 }

@@ -31,6 +31,7 @@ export const APPS: AppDef[] = [
     title: "Preview",
     icon: Eye,
     defaultSize: { w: 1024, h: 720 },
+    hideFromDock: true,
     Component: PreviewApp,
   },
   {
