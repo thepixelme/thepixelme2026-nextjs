@@ -2,7 +2,7 @@
 
 Static portfolio content is split across two locations:
 
-- **[src/lib/portfolio-data.ts](../src/lib/portfolio-data.ts)** — `ABOUT`, `SOCIALS`, `RESUME`, `PHOTOS` and their interfaces.
+- **[src/lib/portfolio-data.ts](../src/lib/portfolio-data.ts)** — `ABOUT`, `SOCIALS`, `PHOTOS` and their interfaces.
 - **[src/lib/projects/](../src/lib/projects/)** — one file per project (`apipeek.ts`, etc.), the `Project` / `Highlight` / `Learning` types in [types.ts](../src/lib/projects/types.ts), and an [index.ts](../src/lib/projects/index.ts) that aggregates the per-project exports into `PROJECTS: Project[]`.
 
 Apps import directly from these — there is no API layer, no CMS, no fetch.
@@ -55,21 +55,6 @@ interface Project {
 
 Used by: [FinderApp](../src/components/apps/FinderApp.tsx) (grid card uses `id`, `title`, `summary`, `tags`, and `screenshots[0]` as the thumbnail when present, otherwise a gradient-with-initial fallback) and [ProjectDetail](../src/components/apps/ProjectDetail.tsx) (case-study layout — renders any optional fields that are present, including `screenshots` as the hero image plus a gallery section with a shared lightbox). [TerminalApp](../src/components/apps/TerminalApp.tsx) reads `id` and `title` for `ls projects`.
 
-### `ResumeEntry`
-
-```ts
-interface ResumeEntry {
-  kind: "job" | "education";
-  org: string;
-  role: string;
-  start: string;     // free-form, e.g. "2022", "Jan 2022"
-  end: string;       // free-form, e.g. "Present", "2017"
-  bullets: string[];
-}
-```
-
-Used by: [ResumeApp](../src/components/apps/ResumeApp.tsx). The component partitions on `kind` to render two sections (Experience / Education).
-
 ### `Photo`
 
 ```ts
@@ -88,7 +73,7 @@ Used by: [PhotosApp](../src/components/apps/PhotosApp.tsx). The grid uses `alt` 
 interface Social {
   label: string;
   href: string;
-  brand: "github" | "x" | "dribbble" | "instagram";
+  brand: "github";
 }
 ```
 
@@ -112,16 +97,13 @@ A plain object (not an interface'd type) with the operator's identity:
 | `bio`      | `string`   | `"I design and build interfaces that feel as good as they look. I obsess over typography, motion, and the small details — the kind of stuff most people never notice but everyone feels."` |
 | `skills`   | `{ category: string; items: string[] }[]` | 3 groups, 11 entries total: **Core Tech** (TypeScript, React/Next.js, Node.js, PostgreSQL), **Cloud & Scaling** (AWS/DevOps, System Architecture, Scalable Infrastructure), **Business & Product** (Product Strategy, Technical ROI Analysis, Agile Leadership, User-Centric Design) |
 
-Read by: [AboutApp](../src/components/apps/AboutApp.tsx) (full object), [ResumeApp](../src/components/apps/ResumeApp.tsx) (name, title, location, email), [ContactApp](../src/components/apps/ContactApp.tsx) (email), [TerminalApp](../src/components/apps/TerminalApp.tsx) (handle, title, bio).
+Read by: [AboutApp](../src/components/apps/AboutApp.tsx) (full object), [ContactApp](../src/components/apps/ContactApp.tsx) (email), [TerminalApp](../src/components/apps/TerminalApp.tsx) (handle, title, bio).
 
 ## `SOCIALS: Social[]`
 
-| `brand`     | `label`     | `href`                              |
-| ----------- | ----------- | ----------------------------------- |
-| `github`    | `GitHub`    | `https://github.com/thepixelme`     |
-| `x`         | `X`         | `https://x.com/thepixelme`          |
-| `dribbble`  | `Dribbble`  | `https://dribbble.com/thepixelme`   |
-| `instagram` | `Instagram` | `https://instagram.com/thepixelme`  |
+| `brand`  | `label`  | `href`                          |
+| -------- | -------- | ------------------------------- |
+| `github` | `GitHub` | `https://github.com/thepixelme` |
 
 Order matters — it determines the rendered order in About → Find me.
 
@@ -138,18 +120,6 @@ Each project lives in its own file under [src/lib/projects/](../src/lib/projects
 To add a new project: create `src/lib/projects/<id>.ts` with `export const <id>: Project = { ... }`, then add the import and array entry in `index.ts`.
 
 [FinderApp](../src/components/apps/FinderApp.tsx) derives its sidebar `Tags` filter by uniquing across `PROJECTS`. Adding/removing entries rebuilds the sidebar automatically.
-
-## `RESUME: ResumeEntry[]`
-
-Three entries, ordered as shown:
-
-| `kind`      | `org`                                | `role`                            | `start` | `end`     | `bullets` |
-| ----------- | ------------------------------------ | --------------------------------- | ------- | --------- | --------- |
-| `job`       | ThePixelMe Studio                    | Founder, Design & Engineering     | `2022`  | `Present` | 3         |
-| `job`       | Acme Co.                             | Senior Product Designer           | `2019`  | `2022`    | 2         |
-| `education` | Queensland University of Technology  | BFA, Interactive & Visual Design  | `2014`  | `2017`    | 1         |
-
-`ResumeApp` partitions by `kind` and renders Experience first, Education second.
 
 ## `PHOTOS: Photo[]`
 
@@ -169,5 +139,5 @@ Captions are paired by content with `PROJECTS` entries but the linkage is implic
 ## Notes for editing
 
 - No async/server side; changes appear at the next dev-server hot reload.
-- Consumers import via named exports — `ABOUT`, `SOCIALS`, `RESUME`, `PHOTOS` from `@/lib/portfolio-data`; `PROJECTS` and the project types from `@/lib/projects`. Renaming a constant requires updating every consumer; TypeScript will surface them.
+- Consumers import via named exports — `ABOUT`, `SOCIALS`, `PHOTOS` from `@/lib/portfolio-data`; `PROJECTS` and the project types from `@/lib/projects`. Renaming a constant requires updating every consumer; TypeScript will surface them.
 - There are no environment-specific overrides (no dev/prod data switch).

@@ -34,13 +34,6 @@ export default function MenuBar({ onOpenSpotlight }: Props) {
         <button
           type="button"
           className="text-foreground/70 hover:text-foreground rounded px-1 hover:bg-default"
-          onClick={() => dispatch({ type: "OPEN", appId: "resume" })}
-        >
-          Resume
-        </button>
-        <button
-          type="button"
-          className="text-foreground/70 hover:text-foreground rounded px-1 hover:bg-default"
           onClick={() => dispatch({ type: "OPEN", appId: "contact" })}
         >
           Contact

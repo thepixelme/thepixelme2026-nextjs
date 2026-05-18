@@ -1,6 +1,5 @@
 import {
   Eye,
-  FileText,
   FolderOpen,
   Image as ImageIcon,
   Mail,
@@ -14,7 +13,6 @@ import ContactApp from "./ContactApp";
 import FinderApp from "./FinderApp";
 import PhotosApp from "./PhotosApp";
 import PreviewApp from "./PreviewApp";
-import ResumeApp from "./ResumeApp";
 import SettingsApp from "./SettingsApp";
 import TerminalApp from "./TerminalApp";
 
@@ -40,13 +38,6 @@ export const APPS: AppDef[] = [
     icon: User,
     defaultSize: { w: 560, h: 680 },
     Component: AboutApp,
-  },
-  {
-    id: "resume",
-    title: "Resume",
-    icon: FileText,
-    defaultSize: { w: 720, h: 800 },
-    Component: ResumeApp,
   },
   {
     id: "contact",

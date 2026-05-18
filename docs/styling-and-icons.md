@@ -139,13 +139,13 @@ Canonical app → lucide mapping is documented in [STYLEGUIDE.md §4.1](../STYLE
 
 ### simple-icons
 
-Version `^16.18.0`. Source for brand/logo icons. Imported by `si<Brand>` constant — e.g. `import { siGithub, siX } from "simple-icons"`.
+Version `^16.18.0`. Source for brand/logo icons. Imported by `si<Brand>` constant — e.g. `import { siGithub } from "simple-icons"`.
 
 Each export is a `SimpleIcon` object with `{ title, slug, hex, source, svg, path, ... }`. We render it through `BrandIcon`.
 
 **Caveat:** at this version, `LinkedIn` is not available. The `Social["brand"]` literal union therefore omits `linkedin`. If a future version restores it, both the union in [portfolio-data.ts](../src/lib/portfolio-data.ts) and the `BRANDS` map in [AboutApp.tsx](../src/components/apps/AboutApp.tsx) need a matching entry.
 
-Brand icons used today: `siGithub`, `siX`, `siDribbble`, `siInstagram`.
+Brand icons used today: `siGithub`.
 
 ### BrandIcon
 

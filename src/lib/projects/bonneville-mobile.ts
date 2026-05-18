@@ -64,7 +64,7 @@ export const bonnevilleMobile: Project = {
     "Kotlin",
   ],
   status:
-    "Live in production — 9 apps on the App Store and Google Play, ~24,000 lines of TypeScript across 159 files",
+    "Live in production — 9 apps on the App Store and Google Play, with regular updates and active development.",
   problem:
     "Bonneville needed nine branded apps without nine separate products to maintain. The answer was a shared platform: station identity lives in config, while feeds, playback, accounts, loyalty, and messaging stay common. New features ship once and land everywhere.",
   highlights: [

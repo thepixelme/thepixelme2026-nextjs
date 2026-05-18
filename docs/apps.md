@@ -31,11 +31,10 @@ The `Component` is rendered by [WindowManager](../src/components/window/WindowMa
 | 1 | `finder`   | Finder             | `FolderOpen`           | 880 × 560             | ✓       |
 | 2 | `preview`  | Preview            | `Eye`                  | 1024 × 720            | —¹      |
 | 3 | `about`    | About Me           | `User`                 | 520 × 600             | ✓       |
-| 4 | `resume`   | Resume             | `FileText`             | 720 × 800             | ✓       |
-| 5 | `contact`  | Contact            | `Mail`                 | 520 × 520             | ✓       |
-| 6 | `terminal` | Terminal           | `Terminal`             | 640 × 420             | ✓       |
-| 7 | `photos`   | Photos             | `Image`                | 880 × 600             | ✓       |
-| 8 | `settings` | System Settings    | `Settings`             | 720 × 560             | ✓       |
+| 4 | `contact`  | Contact            | `Mail`                 | 520 × 520             | ✓       |
+| 5 | `terminal` | Terminal           | `Terminal`             | 640 × 420             | ✓       |
+| 6 | `photos`   | Photos             | `Image`                | 880 × 600             | ✓       |
+| 7 | `settings` | System Settings    | `Settings`             | 720 × 560             | ✓       |
 
 ¹ `preview` has `hideFromDock: true` — it's launched by [FinderApp](#finderapp-finderapptsx) with a `projectId` payload, not from the dock.
 
@@ -229,32 +228,9 @@ Sections, top to bottom:
 3. **Skills** — heading + flex-wrap of `<Chip size="sm" variant="secondary">` per `ABOUT.skills[i]`. `Chip` is from `@heroui/react`.
 4. **Find me** — heading + flex-wrap of social links. Each link is an `<a>` with `target="_blank" rel="noopener noreferrer"`, rendering `<BrandIcon icon={BRANDS[s.brand]} size={14} />` and `s.label`.
 
-`BRANDS` is a local mapping from the `brand` literal to a `simple-icons` constant: `github → siGithub`, `x → siX`, `dribbble → siDribbble`, `instagram → siInstagram`. The `Social.brand` union and the `BRANDS` map must be kept in sync.
+`BRANDS` is a local mapping from the `brand` literal to a `simple-icons` constant: `github → siGithub`. The `Social.brand` union and the `BRANDS` map must be kept in sync.
 
 Source content: `ABOUT` and `SOCIALS` from [portfolio-data.ts](../src/lib/portfolio-data.ts).
-
----
-
-## ResumeApp ([ResumeApp.tsx](../src/components/apps/ResumeApp.tsx))
-
-A document-style layout: `mx-auto max-w-2xl px-12 py-10`.
-
-Sections:
-
-1. **Header** — `<h1>` name, role, location · email, and a `Download PDF` link (`href="/resume.pdf"`, `download`). The PDF file is not currently present in `public/`; clicking yields a 404.
-2. **Experience** — every `RESUME` entry with `kind === "job"`, rendered via the local `<Section>` and `<Entry>` helpers.
-3. **Education** — every `RESUME` entry with `kind === "education"`, same renderer.
-
-`<Section>` renders an uppercase tracking-widest heading (`text-xs font-semibold text-foreground/60`) and a `flex flex-col gap-6` of children.
-
-`<Entry>` renders, in a `flex items-baseline justify-between` row:
-
-- Left: `<h3>` role + org.
-- Right: `start — end` in `tabular-nums`.
-
-Then a `<ul list-disc>` of bullets.
-
-Source content: `ABOUT`, `RESUME` from [portfolio-data.ts](../src/lib/portfolio-data.ts).
 
 ---
 

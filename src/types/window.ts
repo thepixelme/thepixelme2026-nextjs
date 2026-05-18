@@ -5,7 +5,6 @@ export type AppId =
   | "finder"
   | "preview"
   | "about"
-  | "resume"
   | "contact"
   | "terminal"
   | "photos"

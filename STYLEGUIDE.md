@@ -112,7 +112,6 @@ Antialiasing: `antialiased` is set on `<html>` in layout. Don't override.
 | About Me — Location | `MapPin`        |
 | About Me — Skills section | `Wrench`  |
 | About Me — Find me / socials section | `Link2` |
-| Resume              | `FileText`      |
 | Contact             | `Mail`          |
 | Terminal            | `Terminal`      |
 | Photos              | `Image`         |
@@ -251,7 +250,7 @@ Never write multi-paragraph docstrings.
 ### 9.2 Menu bar
 
 - About button (left-most) — combined User icon + bold owner-name span inside a single `<button>`. Clicking dispatches `OPEN { appId: "about" }`. No dropdown. The portfolio is about Nhat, not Apple, so the canonical Apple-logo + active-app-name pair is intentionally replaced with a single identity affordance.
-- Following items are top-level portfolio navigation: `Portfolio` (opens `finder`), `Resume`, `Contact`. Each is a real `<button>` that dispatches `OPEN` against the [APPS](src/components/apps/registry.ts) registry. The canonical macOS pattern of per-app menus for the focused window is intentionally not used — this is a single-purpose portfolio, not a multi-app desktop, so inert "File / Edit / View" menus would be decoration without function.
+- Following items are top-level portfolio navigation: `Portfolio` (opens `finder`), `Contact`. Each is a real `<button>` that dispatches `OPEN` against the [APPS](src/components/apps/registry.ts) registry. The canonical macOS pattern of per-app menus for the focused window is intentionally not used — this is a single-purpose portfolio, not a multi-app desktop, so inert "File / Edit / View" menus would be decoration without function.
 - Right side, in order, with `gap-3`: `Battery`, `Wifi`, `Search` (opens Spotlight on click), clock.
 - Clock format: `EEE h:mm a` (e.g. "Sat 3:42 PM"). Updates every minute (don't poll faster).
 

@@ -1,12 +1,3 @@
-export interface ResumeEntry {
-  kind: "job" | "education";
-  org: string;
-  role: string;
-  start: string;
-  end: string;
-  bullets: string[];
-}
-
 export interface Photo {
   src: string;
   alt: string;
@@ -16,7 +7,7 @@ export interface Photo {
 export interface Social {
   label: string;
   href: string;
-  brand: "github" | "x" | "dribbble" | "instagram";
+  brand: "github";
 }
 
 export const ABOUT = {
@@ -55,53 +46,6 @@ export const ABOUT = {
 
 export const SOCIALS: Social[] = [
   { label: "GitHub", href: "https://github.com/thepixelme", brand: "github" },
-  { label: "X", href: "https://x.com/thepixelme", brand: "x" },
-  {
-    label: "Dribbble",
-    href: "https://dribbble.com/thepixelme",
-    brand: "dribbble",
-  },
-  {
-    label: "Instagram",
-    href: "https://instagram.com/thepixelme",
-    brand: "instagram",
-  },
-];
-
-export const RESUME: ResumeEntry[] = [
-  {
-    kind: "job",
-    org: "ThePixelMe Studio",
-    role: "Founder, Design & Engineering",
-    start: "2022",
-    end: "Present",
-    bullets: [
-      "Lead design and front-end engineering for 8+ shipped products.",
-      "Built a reusable design-system pipeline used across all client work.",
-      "Speaker at three regional design conferences on motion in product UI.",
-    ],
-  },
-  {
-    kind: "job",
-    org: "Acme Co.",
-    role: "Senior Product Designer",
-    start: "2019",
-    end: "2022",
-    bullets: [
-      "Owned the design language for the flagship B2B product (1.2M MAU).",
-      "Partnered with engineering on a tokens-first rebuild that cut UI bugs ~40%.",
-    ],
-  },
-  {
-    kind: "education",
-    org: "Queensland University of Technology",
-    role: "BFA, Interactive & Visual Design",
-    start: "2014",
-    end: "2017",
-    bullets: [
-      "First-class honours. Capstone in motion design for accessibility.",
-    ],
-  },
 ];
 
 export const PHOTOS: Photo[] = [

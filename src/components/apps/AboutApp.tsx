@@ -2,15 +2,12 @@
 
 import { Chip } from "@heroui/react";
 import { Link2, MapPin, Wrench } from "lucide-react";
-import { siDribbble, siGithub, siInstagram, siX } from "simple-icons";
+import { siGithub } from "simple-icons";
 import BrandIcon from "@/components/BrandIcon";
 import { ABOUT, SOCIALS } from "@/lib/portfolio-data";
 
 const BRANDS = {
   github: siGithub,
-  x: siX,
-  dribbble: siDribbble,
-  instagram: siInstagram,
 };
 
 export default function AboutApp() {
