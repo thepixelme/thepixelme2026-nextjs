@@ -18,7 +18,7 @@ export default function MenuBar({ onOpenSpotlight }: Props) {
         <button
           type="button"
           aria-label="About menu"
-          className="flex h-5 items-center gap-1.5 rounded px-1 hover:bg-default"
+          className="flex h-5 items-center gap-1.5 rounded-md px-2 transition-colors duration-150 ease-out hover:bg-surface-tertiary"
           onClick={() => dispatch({ type: "OPEN", appId: "about" })}
         >
           <User size={14} />
@@ -26,14 +26,14 @@ export default function MenuBar({ onOpenSpotlight }: Props) {
         </button>
         <button
           type="button"
-          className="text-foreground/70 hover:text-foreground rounded px-1 hover:bg-default"
+          className="flex h-5 items-center rounded-md px-2 text-foreground/70 transition-colors duration-150 ease-out hover:bg-surface-tertiary hover:text-foreground"
           onClick={() => dispatch({ type: "OPEN", appId: "finder" })}
         >
           Projects
         </button>
         <button
           type="button"
-          className="text-foreground/70 hover:text-foreground rounded px-1 hover:bg-default"
+          className="flex h-5 items-center rounded-md px-2 text-foreground/70 transition-colors duration-150 ease-out hover:bg-surface-tertiary hover:text-foreground"
           onClick={() => dispatch({ type: "OPEN", appId: "contact" })}
         >
           Contact
@@ -46,7 +46,7 @@ export default function MenuBar({ onOpenSpotlight }: Props) {
           type="button"
           aria-label="Open Spotlight"
           onClick={onOpenSpotlight}
-          className="flex items-center hover:text-foreground"
+          className="flex h-5 items-center rounded-md px-1.5 transition-colors duration-150 ease-out hover:bg-surface-tertiary hover:text-foreground"
         >
           <Search size={14} />
         </button>

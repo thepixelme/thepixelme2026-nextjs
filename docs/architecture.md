@@ -64,7 +64,7 @@ Set in CSS classes; do not improvise. Source: [STYLEGUIDE.md §5.1](../STYLEGUID
 | Window (base)      | `≥ 10`  | Reducer's `topZ`, increments on `OPEN` / `FOCUS`            |
 | Dock               | `z-40`  | [Dock.tsx](../src/components/desktop/Dock.tsx)              |
 | Menu bar           | `z-50`  | [MenuBar.tsx](../src/components/desktop/MenuBar.tsx)        |
-| Spotlight / lightbox | `z-60` | [Spotlight.tsx](../src/components/desktop/Spotlight.tsx), Photos lightbox |
+| Spotlight          | `z-60`  | [Spotlight.tsx](../src/components/desktop/Spotlight.tsx)    |
 
 `BASE_Z = 10` and `topZ` start at 10 in [windows-store.ts](../src/lib/windows-store.ts); each `OPEN` / `FOCUS` / `UNMINIMIZE` / `MAXIMIZE`-restore action increments `topZ` and assigns it to the affected window.
 

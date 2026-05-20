@@ -1,7 +1,6 @@
 import {
   Eye,
   FolderOpen,
-  Image as ImageIcon,
   Mail,
   Settings,
   Terminal as TerminalIcon,
@@ -11,7 +10,6 @@ import type { AppDef } from "@/types/window";
 import AboutApp from "./AboutApp";
 import ContactApp from "./ContactApp";
 import FinderApp from "./FinderApp";
-import PhotosApp from "./PhotosApp";
 import PreviewApp from "./PreviewApp";
 import SettingsApp from "./SettingsApp";
 import TerminalApp from "./TerminalApp";
@@ -52,13 +50,6 @@ export const APPS: AppDef[] = [
     icon: TerminalIcon,
     defaultSize: { w: 640, h: 420 },
     Component: TerminalApp,
-  },
-  {
-    id: "photos",
-    title: "Photos",
-    icon: ImageIcon,
-    defaultSize: { w: 880, h: 600 },
-    Component: PhotosApp,
   },
   {
     id: "settings",

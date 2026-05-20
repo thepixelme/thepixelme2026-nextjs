@@ -8,10 +8,10 @@ Defined in [src/types/window.ts](../src/types/window.ts) and consumed throughout
 
 ### `AppId`
 
-String literal union of the seven registered apps:
+String literal union of the six registered apps:
 
 ```
-"finder" | "preview" | "about" | "contact" | "terminal" | "photos" | "settings"
+"finder" | "preview" | "about" | "contact" | "terminal" | "settings"
 ```
 
 ### `WindowBounds`

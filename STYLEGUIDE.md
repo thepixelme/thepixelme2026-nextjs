@@ -114,7 +114,6 @@ Antialiasing: `antialiased` is set on `<html>` in layout. Don't override.
 | About Me — Find me / socials section | `Link2` |
 | Contact             | `Mail`          |
 | Terminal            | `Terminal`      |
-| Photos              | `Image`         |
 | System Settings     | `Settings`      |
 | Wifi (menu bar)     | `Wifi`          |
 | Battery (menu bar)  | `Battery` / `BatteryFull` |

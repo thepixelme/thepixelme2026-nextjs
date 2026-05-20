@@ -33,8 +33,7 @@ The `Component` is rendered by [WindowManager](../src/components/window/WindowMa
 | 3 | `about`    | About Me           | `User`                 | 520 × 600             | ✓       |
 | 4 | `contact`  | Contact            | `Mail`                 | 520 × 520             | ✓       |
 | 5 | `terminal` | Terminal           | `Terminal`             | 640 × 420             | ✓       |
-| 6 | `photos`   | Photos             | `Image`                | 880 × 600             | ✓       |
-| 7 | `settings` | System Settings    | `Settings`             | 720 × 560             | ✓       |
+| 6 | `settings` | System Settings    | `Settings`             | 720 × 560             | ✓       |
 
 ¹ `preview` has `hideFromDock: true` — it's launched by [FinderApp](#finderapp-finderapptsx) with a `projectId` payload, not from the dock.
 
@@ -301,46 +300,6 @@ The outer `<div>` is the fake terminal body. `onClick` focuses `inputRef`. Two b
 The form sits at the bottom of the scroll area. Submitting calls `run(input)` and clears the field.
 
 Source content: `ABOUT`, `PROJECTS` from [portfolio-data.ts](../src/lib/portfolio-data.ts).
-
----
-
-## PhotosApp ([PhotosApp.tsx](../src/components/apps/PhotosApp.tsx))
-
-A masonry-ish grid plus a custom lightbox. No HeroUI Modal is used.
-
-### Grid
-
-`grid grid-cols-2 gap-2 p-4 sm:grid-cols-3`. Each cell is a `<button>`:
-
-- Class: `group relative aspect-4/3 overflow-hidden rounded-md border border-field-border`.
-- Inside: an `<img src={p.src} alt={p.alt} loading="lazy" className="object-cover transition-transform group-hover:scale-105">`.
-- If `p.caption` is defined: a bottom gradient overlay (`bg-linear-to-t from-black/60 to-transparent`) that fades in on hover (`opacity-0 transition-opacity group-hover:opacity-100`).
-- `aria-label` is `Open ${p.alt}`.
-- Click → `setActive(i)`.
-
-### Lightbox
-
-When `active !== null`, an additional fixed overlay renders:
-
-```
-<div role="dialog" aria-modal aria-label={photo.alt}
-     className="fixed inset-0 z-60 grid place-items-center bg-black/70 backdrop-blur-sm"
-     onClick={() => setActive(null)}>
-  <div onClick={stopPropagation} className="relative max-h-[85vh] max-w-[90vw]">
-    <button aria-label="Close photo" .../>
-    <img .../>
-    {caption && <p className="mt-2 text-center text-sm text-white/90">{caption}</p>}
-  </div>
-</div>
-```
-
-Behavior:
-
-- Backdrop click closes (`setActive(null)`).
-- Inner click `stopPropagation`s so clicks on the image don't close.
-- An `Escape` key listener (registered when `active !== null`, removed when it goes back to `null`) closes the lightbox.
-
-Source content: `PHOTOS` from [portfolio-data.ts](../src/lib/portfolio-data.ts).
 
 ---
 

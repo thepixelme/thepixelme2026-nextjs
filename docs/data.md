@@ -2,7 +2,7 @@
 
 Static portfolio content is split across two locations:
 
-- **[src/lib/portfolio-data.ts](../src/lib/portfolio-data.ts)** — `ABOUT`, `SOCIALS`, `PHOTOS` and their interfaces.
+- **[src/lib/portfolio-data.ts](../src/lib/portfolio-data.ts)** — `ABOUT`, `SOCIALS` and their interfaces.
 - **[src/lib/projects/](../src/lib/projects/)** — one file per project (`apipeek.ts`, etc.), the `Project` / `Highlight` / `Learning` types in [types.ts](../src/lib/projects/types.ts), and an [index.ts](../src/lib/projects/index.ts) that aggregates the per-project exports into `PROJECTS: Project[]`.
 
 Apps import directly from these — there is no API layer, no CMS, no fetch.
@@ -54,18 +54,6 @@ interface Project {
 ```
 
 Used by: [FinderApp](../src/components/apps/FinderApp.tsx) (grid card uses `id`, `title`, `summary`, `tags`, and `screenshots[0]` as the thumbnail when present, otherwise a gradient-with-initial fallback) and [ProjectDetail](../src/components/apps/ProjectDetail.tsx) (case-study layout — renders any optional fields that are present, including `screenshots` as the hero image plus a gallery section with a shared lightbox). [TerminalApp](../src/components/apps/TerminalApp.tsx) reads `id` and `title` for `ls projects`.
-
-### `Photo`
-
-```ts
-interface Photo {
-  src: string;
-  alt: string;
-  caption?: string;
-}
-```
-
-Used by: [PhotosApp](../src/components/apps/PhotosApp.tsx). The grid uses `alt` for accessibility and shows `caption` on hover and in the lightbox footer.
 
 ### `Social`
 
@@ -122,23 +110,8 @@ To add a new project: create `src/lib/projects/<id>.ts` with `export const <id>:
 
 [FinderApp](../src/components/apps/FinderApp.tsx) derives its sidebar `Tags` filter by uniquing across `PROJECTS`. Adding/removing entries rebuilds the sidebar automatically.
 
-## `PHOTOS: Photo[]`
-
-Six entries pointing at Unsplash CDN URLs (`?w=1200`):
-
-| Index | `alt`                | `caption`              |
-| ----- | -------------------- | ---------------------- |
-| 0     | Soft gradient sky    | Atlas brand visual     |
-| 1     | Geometric abstract   | Harbor pitch deck      |
-| 2     | Coastline aerial     | Voya editorial         |
-| 3     | Desk overhead        | Studio life            |
-| 4     | Neon lights          | Circuit launch         |
-| 5     | Pastel geometry      | Fern marketing site    |
-
-Captions are paired by content with `PROJECTS` entries but the linkage is implicit (string match) — there is no relational join.
-
 ## Notes for editing
 
 - No async/server side; changes appear at the next dev-server hot reload.
-- Consumers import via named exports — `ABOUT`, `SOCIALS`, `PHOTOS` from `@/lib/portfolio-data`; `PROJECTS` and the project types from `@/lib/projects`. Renaming a constant requires updating every consumer; TypeScript will surface them.
+- Consumers import via named exports — `ABOUT`, `SOCIALS` from `@/lib/portfolio-data`; `PROJECTS` and the project types from `@/lib/projects`. Renaming a constant requires updating every consumer; TypeScript will surface them.
 - There are no environment-specific overrides (no dev/prod data switch).

@@ -7,7 +7,6 @@ export type AppId =
   | "about"
   | "contact"
   | "terminal"
-  | "photos"
   | "settings";
 
 export interface WindowBounds {
