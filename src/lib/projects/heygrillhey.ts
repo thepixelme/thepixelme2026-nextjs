@@ -3,7 +3,7 @@ import type { Project } from "./types";
 export const heygrillhey: Project = {
   id: "heygrillhey",
   title: "Hey Grill Hey — Recipe and commerce rebuild",
-  tags: ["Web", "Headless WordPress", "Gatsby", "Shopify", "TypeScript"],
+  tags: ["Web", "WordPress", "Shopify", "TypeScript", "React"],
   link: "https://heygrillhey.com",
   linkLabel: "Visit heygrillhey.com",
   screenshots: [

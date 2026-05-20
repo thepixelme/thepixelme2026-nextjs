@@ -54,23 +54,22 @@ Two-pane layout: a sidebar of saved filters on the left, a project grid on the r
 
 ### State
 
-- `filter: { kind: "all" } | { kind: "tag"; tag: string }` — initial `{ kind: "all" }`.
+- `filter: { kind: "all" } | { kind: "tag"; tag: ProjectTag }` — initial `{ kind: "all" }`. `ProjectTag` is the canonical union from [src/lib/projects/types.ts](../src/lib/projects/types.ts).
 
 ### Derived data (memoized)
 
-- `tags` — alphabetical unique list of all tags across projects.
 - `visible` — `PROJECTS` filtered by the current `filter`.
 
 ### Sidebar
 
 Two sections via the local `<SidebarSection>` helper:
 
-| Section     | Items                                                |
-| ----------- | ---------------------------------------------------- |
+| Section     | Items                                                  |
+| ----------- | ------------------------------------------------------ |
 | Favorites   | `All Projects` (Star icon, sets `filter.kind = "all"`) |
-| Tags        | One row per `tags[i]` (Tag icon)                     |
+| Tags        | One row per tag from `PROJECT_TAGS` (Tag icon)         |
 
-Each row is a `<SidebarItem>` `<button>` with active state `bg-default font-medium` when its kind+key matches the current `filter`.
+The Tags list is **not** derived from `PROJECTS`. It iterates the canonical `PROJECT_TAGS` constant (see [data.md](data.md#canonical-tags)) so the order is deliberate (form factor → language → framework → platform) and the sidebar is stable regardless of project content. Each row is a `<SidebarItem>` `<button>` with active state `bg-default font-medium` when its kind+key matches the current `filter`.
 
 Sidebar background: `bg-surface-secondary px-2 py-3 text-sm`. Outer grid: `grid-cols-[200px_1fr] divide-x divide-separator`.
 

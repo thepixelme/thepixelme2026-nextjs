@@ -2,19 +2,14 @@
 
 import { Star, Tag } from "lucide-react";
 import { useMemo, useState } from "react";
-import { PROJECTS } from "@/lib/projects";
+import { PROJECT_TAGS, PROJECTS, type ProjectTag } from "@/lib/projects";
 import { useWindowsDispatch } from "@/lib/windows-store";
 
-type Filter = { kind: "all" } | { kind: "tag"; tag: string };
+type Filter = { kind: "all" } | { kind: "tag"; tag: ProjectTag };
 
 export default function FinderApp() {
   const [filter, setFilter] = useState<Filter>({ kind: "all" });
   const dispatch = useWindowsDispatch();
-
-  const tags = useMemo(
-    () => Array.from(new Set(PROJECTS.flatMap((p) => p.tags))).sort(),
-    [],
-  );
 
   const visible = useMemo(() => {
     if (filter.kind === "all") return PROJECTS;
@@ -33,7 +28,7 @@ export default function FinderApp() {
           />
         </SidebarSection>
         <SidebarSection label="Tags">
-          {tags.map((t) => (
+          {PROJECT_TAGS.map((t) => (
             <SidebarItem
               key={t}
               icon={<Tag size={14} />}

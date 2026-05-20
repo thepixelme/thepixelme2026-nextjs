@@ -3,7 +3,7 @@ import type { Project } from "./types";
 export const bonnevilleMobile: Project = {
   id: "bonneville-mobile",
   title: "Bonneville News & Sports Mobile",
-  tags: ["Mobile", "React Native", "TypeScript", "Expo", "Native modules"],
+  tags: ["React Native", "TypeScript", "App"],
   orientation: "portrait",
   screenshots: [
     {

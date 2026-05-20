@@ -3,7 +3,7 @@ import type { Project } from "./types";
 export const apipeek: Project = {
   id: "apipeek",
   title: "APIPeek — JSON viewer & API sandbox",
-  tags: ["Browser extension", "TypeScript", "React"],
+  tags: ["React", "TypeScript", "App", "Web"],
   link: "https://chromewebstore.google.com/detail/apipeek/kpndkgphbnjghmaonfhhcmlnamlaegee",
   linkLabel: "Install on Chrome Web Store",
   source: "https://github.com/thepixelme/apipeek",

@@ -3,7 +3,7 @@ import type { Project } from "./types";
 export const claudeswitcher: Project = {
   id: "claudeswitcher",
   title: "ClaudeSwitcher",
-  tags: ["macOS", "Swift", "SwiftUI", "Menu-bar app"],
+  tags: ["Swift", "App"],
   link: "https://github.com/thepixelme/claudeswitcher#install",
   linkLabel: "Install",
   source: "https://github.com/thepixelme/claudeswitcher",

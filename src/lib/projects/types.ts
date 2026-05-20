@@ -1,3 +1,16 @@
+export const PROJECT_TAGS = [
+  "App",
+  "Web",
+  "TypeScript",
+  "Swift",
+  "React",
+  "React Native",
+  "WordPress",
+  "Shopify",
+] as const;
+
+export type ProjectTag = (typeof PROJECT_TAGS)[number];
+
 export interface Highlight {
   title: string;
   body: string;
@@ -17,7 +30,7 @@ export interface Screenshot {
 export interface Project {
   id: string;
   title: string;
-  tags: string[];
+  tags: ProjectTag[];
   summary: string;
   description: string;
   link?: string;
