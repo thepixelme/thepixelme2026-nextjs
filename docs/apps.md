@@ -31,7 +31,7 @@ The `Component` is rendered by [WindowManager](../src/components/window/WindowMa
 | 1 | `finder`   | Finder             | `FolderOpen`           | 880 × 560             | ✓       |
 | 2 | `preview`  | Preview            | `Eye`                  | 1024 × 720            | —¹      |
 | 3 | `about`    | About Me           | `User`                 | 520 × 600             | ✓       |
-| 4 | `contact`  | Contact            | `Mail`                 | 520 × 520             | ✓       |
+| 4 | `contact`  | Contact            | `Mail`                 | 720 × 620             | ✓       |
 | 5 | `terminal` | Terminal           | `Terminal`             | 640 × 420             | ✓       |
 | 6 | `settings` | System Settings    | `Settings`             | 720 × 560             | ✓       |
 
@@ -234,25 +234,33 @@ Source content: `ABOUT` and `SOCIALS` from [portfolio-data.ts](../src/lib/portfo
 
 ## ContactApp ([ContactApp.tsx](../src/components/apps/ContactApp.tsx))
 
-A controlled form with three fields and a submit button. No backend — submission opens the user's mail client.
+A controlled form styled as a Superhuman-inspired compose pane — generous whitespace, hairline-only dividers, a display-weight subject, and a pill Send button anchored bottom-right with a `⌘↵` shortcut hint. No backend — submission opens the user's mail client via `mailto:`.
 
-State: `name`, `email`, `message` — three independent `useState<string>` values.
+State: `name`, `email`, `subject`, `message` — four independent `useState<string>` values. Derived: `canSend = name && email && message` (all trimmed); subject is optional.
 
-`onSubmit` (called from the `<form onSubmit>`):
+`onSubmit` (called from `<form onSubmit>`, the footer Send button, and `⌘+Enter` / `Ctrl+Enter` from anywhere inside the form):
 
 ```
-subject = encodeURIComponent(`Hello from ${name || "your portfolio"}`)
-body    = encodeURIComponent(`${message}\n\n— ${name}${email ? ` (${email})` : ""}`)
-window.location.href = `mailto:${ABOUT.email}?subject=${subject}&body=${body}`
+sub  = encodeURIComponent(subject.trim() || `Hello from ${name.trim()}`)
+body = encodeURIComponent(`${message}\n\n— ${name.trim()} (${email.trim()})`)
+window.location.href = `mailto:${ABOUT.email}?subject=${sub}&body=${body}`
 ```
 
-Layout: `<form className="flex h-full flex-col gap-4 p-8">` containing an intro `<h1> + <p>`, three `<Field>` rows, and a footer `<div className="mt-auto flex justify-end">` with a `<Button type="submit">`.
+Early-returns when `!canSend`. The form's `onKeyDown` intercepts `⌘/Ctrl + Enter`, calls `preventDefault`, and dispatches `requestSubmit()` when sendable.
 
-`<Field>` is a local helper: `<div>` + `<label htmlFor={id}>` + `{children}`. Each field uses `id="contact-name" / "contact-email" / "contact-message"`. Inputs come from `@heroui/react` (`Input`, `TextArea`, `Button`). `TextArea` is `rows={6}`. All three fields are `required`.
+Layout: `<form className="flex h-full flex-col">` containing five stacked regions, each separated from the next by `border-b border-separator`:
 
-There is no client-side validation feedback beyond the browser's native `:invalid` styling, and no success state.
+1. **To row** — a non-editable recipient chip: `bg-surface-secondary` rounded-full pill with a 28px gradient avatar (`bg-linear-to-br from-accent to-accent/70`) showing initials of `ABOUT.name` (up to 2 chars), the name at `text-[15px]`, and the email at `text-[13px] text-foreground/40`.
+2. **From row** — two adjacent borderless `<input>`s: name (flex-1) and email (`type="email"`, fixed `w-60`), separated by a thin `/` glyph in `text-foreground/20`. Both `required`.
+3. **Subject** — a single full-width borderless `<input>` at `text-[20px] font-medium tracking-tight`, with light placeholder styling. No label — the size signals its role.
+4. **Body** — a borderless `<textarea>` with `min-h-0 flex-1 resize-none bg-transparent px-7 py-5 text-[15px] leading-[1.7]`, absorbing remaining vertical space.
+5. **Footer** — `flex items-center justify-end gap-3 px-5 py-3 border-t border-separator`. Contains a `<kbd>` shortcut hint (`⌘ ↵`, hidden below `sm`) and a primary pill button: `rounded-full bg-accent px-5 h-9` with the lucide `Send` icon + "Send" label. Disabled state uses `opacity-40`. Hover applies `brightness-110`.
 
-Source content: `ABOUT.email` from [portfolio-data.ts](../src/lib/portfolio-data.ts).
+A local `FieldRow` helper renders rows 1–2: `flex items-center gap-5 border-b border-separator px-7 py-3.5` with a `w-10` label cell (`text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/40`) followed by a `flex-1` content cell. The subject row is rendered inline (no label).
+
+Inputs are native `<input>` / `<textarea>` rather than HeroUI controls so borders/backgrounds stay flush against the row hairlines. The Send button is a native `<button>` (not HeroUI `Button`) — keeps the pill shape, gradient, and disabled treatment fully token-driven. All fields carry `aria-label`s.
+
+Source content: `ABOUT.name`, `ABOUT.email` from [portfolio-data.ts](../src/lib/portfolio-data.ts).
 
 ---
 

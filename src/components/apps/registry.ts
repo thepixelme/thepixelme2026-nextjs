@@ -41,7 +41,7 @@ export const APPS: AppDef[] = [
     id: "contact",
     title: "Contact",
     icon: Mail,
-    defaultSize: { w: 520, h: 520 },
+    defaultSize: { w: 720, h: 620 },
     Component: ContactApp,
   },
   {
