@@ -29,7 +29,7 @@ export default function MenuBar({ onOpenSpotlight }: Props) {
           className="text-foreground/70 hover:text-foreground rounded px-1 hover:bg-default"
           onClick={() => dispatch({ type: "OPEN", appId: "finder" })}
         >
-          Portfolio
+          Projects
         </button>
         <button
           type="button"
