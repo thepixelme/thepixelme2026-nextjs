@@ -28,20 +28,21 @@ export default function TerminalApp() {
   const [input, setInput] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const printedGreeting = useRef(false);
 
   useEffect(() => {
-    if (printedGreeting.current) return;
-    printedGreeting.current = true;
     let i = 0;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     const tick = () => {
       if (i < GREETING.length) {
         setLines((l) => [...l, { kind: "out", text: GREETING[i] }]);
         i += 1;
-        setTimeout(tick, 220);
+        timeoutId = setTimeout(tick, 220);
       }
     };
     tick();
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, []);
 
   useEffect(() => {
@@ -61,7 +62,10 @@ export default function TerminalApp() {
     else if (cmd === "clear") {
       setLines([]);
       return;
-    } else next.push(`zsh: command not found: ${cmd.split(" ")[0]}`);
+    } else {
+      next.push(`zsh: command not found: ${cmd.split(" ")[0]}`);
+      next.push("Type `help` to see available commands.");
+    }
     setLines((l) => [
       ...l,
       ...next.map((text) => ({ kind: "out" as const, text })),
