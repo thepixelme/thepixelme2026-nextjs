@@ -260,18 +260,18 @@ A local `FieldRow` helper renders rows 1–2: `flex items-center gap-5 border-b 
 
 Inputs are native `<input>` / `<textarea>` rather than HeroUI controls so borders/backgrounds stay flush against the row hairlines. The Send button is a native `<button>` (not HeroUI `Button`) — keeps the pill shape, gradient, and disabled treatment fully token-driven. All fields carry `aria-label`s.
 
-Source content: `ABOUT.name`, `ABOUT.email` from [portfolio-data.ts](../src/lib/portfolio-data.ts).
+Source content: `ABOUT.name` from [portfolio-data.ts](../src/lib/portfolio-data.ts). The destination email is *not* shown in the UI — it lives in the server-only `CONTACT_EMAIL` env var.
 
 ### Route handler ([src/app/api/contact/route.ts](../src/app/api/contact/route.ts))
 
-POST endpoint backing the form. Runs on the `nodejs` runtime (route handlers aren't cached by default for POST). Requires the `RESEND_API_KEY` env var — set in `.env.local` for dev and in the production hosting env. Missing key returns `500 { ok: false, error: "server" }` with a server-side `console.error`.
+POST endpoint backing the form. Runs on the `nodejs` runtime (route handlers aren't cached by default for POST). Requires three env vars: `RESEND_API_KEY` (Resend credential), `CONTACT_EMAIL` (destination address), and `CONTACT_FROM_EMAIL` (sender address — must be on a domain verified in Resend). Set all three in `.env.local` for dev and in the production hosting env. Any missing returns `500 { ok: false, error: "server" }` with a server-side `console.error`.
 
 Flow:
 
 1. Parse `await request.json()` as `unknown` — malformed body → `400 { ok: false, error: "validation", fields: { message: "Invalid request" } }`.
 2. Validate with `typeof === "string"` coercion (no field crashes the handler if a caller sends `{ "name": {} }`). Per-field rules: `name` 1–100, `email` 1–200 + matches `^[^\s@]+@[^\s@]+\.[^\s@]+$`, `subject` ≤ 200 (optional), `message` 1–5000. Any failure → `400 { ok: false, error: "validation", fields }`.
 3. Rate-limit by IP (`x-forwarded-for[0]` → `x-real-ip` → `"unknown"`). Module-scoped `Map<string, number[]>` keeps timestamps within a 10 min window. Limit is 3 submits per IP per window; on each call, expired timestamps are pruned and the map is hard-capped at 5,000 entries (LRU-evict oldest only when inserting a *new* key, so existing IPs never displace strangers). Over the limit → `429 { ok: false, error: "rate_limit" }`. Caveat: per-process state — each serverless instance has its own counter and the limit resets on deploy/restart.
-4. Send via `resend.emails.send(payload, { idempotencyKey: \`contact/${Date.now()}/${crypto.randomUUID()}\` })`. `from: "Portfolio Contact <contact@mail.thepixelme.com>"` (the `mail.thepixelme.com` subdomain is verified in Resend). `to: [ABOUT.email]`. `replyTo: <visitor email>` so Reply in the inbox addresses the visitor — no auto-reply is sent. Subject is `[Portfolio] ${subject || \`Hello from ${name}\`}`. Both `text` and `html` versions are built; the HTML version HTML-escapes every interpolated value via a local `escapeHtml`.
+4. Send via `resend.emails.send(payload, { idempotencyKey: \`contact/${Date.now()}/${crypto.randomUUID()}\` })`. `from: process.env.CONTACT_FROM_EMAIL` (must resolve to a sender on a Resend-verified domain). `to: [process.env.CONTACT_EMAIL]`. `replyTo: <visitor email>` so Reply in the inbox addresses the visitor — no auto-reply is sent. Subject is `[Portfolio] ${subject || \`Hello from ${name}\`}`. Both `text` and `html` versions are built; the HTML version HTML-escapes every interpolated value via a local `escapeHtml`.
 5. Resend's `{ data, error }` is the primary control flow per the SDK's design. The `send` call is wrapped in a single `try/catch` for unexpected runtime/network exceptions so the route always honors its JSON contract: any throw or non-null `error` → `500 { ok: false, error: "server" }` (the error is `console.error`'d but not returned to the client). Success → `200 { ok: true, id }`.
 
 Fake shell. The only window with a non-glass body — full bleed `bg-[oklch(0.18_0.012_260)]/95`, mono font.

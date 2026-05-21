@@ -135,7 +135,6 @@ export default function ContactApp() {
             {initials}
           </span>
           <span className="text-[15px]">{ABOUT.name}</span>
-          <span className="text-[13px] text-foreground/40">{ABOUT.email}</span>
         </span>
       </FieldRow>
 

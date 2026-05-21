@@ -9,7 +9,6 @@ export const ABOUT = {
   handle: "thepixelme",
   title: "Bridging the Gap Between Business Vision and Technical Reality",
   location: "USA, Earth",
-  email: "nhat@thepixelme.com",
   bio: "I am a Full-Stack Engineer and Product Strategist who builds with a commercial mindset. I specialize in architecting systems where technical decisions drive business growth, transforming abstract requirements into robust, high-performance digital ecosystems.",
   skills: [
     {

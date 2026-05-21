@@ -1,6 +1,5 @@
 import type { NextRequest } from "next/server";
 import { Resend } from "resend";
-import { ABOUT } from "@/lib/portfolio-data";
 
 export const runtime = "nodejs";
 
@@ -103,6 +102,18 @@ export async function POST(request: NextRequest) {
     return Response.json({ ok: false, error: "server" }, { status: 500 });
   }
 
+  const contactEmail = process.env.CONTACT_EMAIL;
+  if (!contactEmail) {
+    console.error("[contact] CONTACT_EMAIL is not set");
+    return Response.json({ ok: false, error: "server" }, { status: 500 });
+  }
+
+  const contactFrom = process.env.CONTACT_FROM_EMAIL;
+  if (!contactFrom) {
+    console.error("[contact] CONTACT_FROM_EMAIL is not set");
+    return Response.json({ ok: false, error: "server" }, { status: 500 });
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -140,8 +151,8 @@ export async function POST(request: NextRequest) {
   try {
     const { data, error } = await resend.emails.send(
       {
-        from: "Portfolio Contact <contact@mail.thepixelme.com>",
-        to: [ABOUT.email],
+        from: contactFrom,
+        to: [contactEmail],
         replyTo: email,
         subject: finalSubject,
         text,

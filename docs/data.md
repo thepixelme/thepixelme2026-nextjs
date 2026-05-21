@@ -89,13 +89,14 @@ A plain object (not an interface'd type) with the operator's identity:
 | ---------- | ---------- | ---------------------------------------------------------------------------------------------- |
 | `name`     | `string`   | `"Nhat Nguyen"`                                                                                |
 | `handle`   | `string`   | `"thepixelme"`                                                                                 |
-| `title`    | `string`   | `"Designer & Front-end Engineer"`                                                              |
-| `location` | `string`   | `"Brisbane, Australia"`                                                                        |
-| `email`    | `string`   | `"nhat@thepixelme.com"`                                                                        |
-| `bio`      | `string`   | `"I design and build interfaces that feel as good as they look. I obsess over typography, motion, and the small details — the kind of stuff most people never notice but everyone feels."` |
-| `skills`   | `{ category: string; items: string[] }[]` | 3 groups, 11 entries total: **Core Tech** (TypeScript, React/Next.js, Node.js, PostgreSQL), **Cloud & Scaling** (AWS/DevOps, System Architecture, Scalable Infrastructure), **Business & Product** (Product Strategy, Technical ROI Analysis, Agile Leadership, User-Centric Design) |
+| `title`    | `string`   | `"Bridging the Gap Between Business Vision and Technical Reality"`                             |
+| `location` | `string`   | `"USA, Earth"`                                                                                 |
+| `bio`      | `string`   | `"I am a Full-Stack Engineer and Product Strategist who builds with a commercial mindset. I specialize in architecting systems where technical decisions drive business growth, transforming abstract requirements into robust, high-performance digital ecosystems."` |
+| `skills`   | `{ category: string; items: string[] }[]` | 3 groups, 12 entries total: **Core Tech** (JavaScript, TypeScript, React, React Native, Node.js, PostgreSQL), **Cloud & Scaling** (AWS/DevOps, CI/CD Pipeline, System Architecture), **Business & Product** (Product Strategy & Roadmapping, Agile Leadership, User-Centric Design) |
 
-Read by: [AboutApp](../src/components/apps/AboutApp.tsx) (full object), [ContactApp](../src/components/apps/ContactApp.tsx) (email), [TerminalApp](../src/components/apps/TerminalApp.tsx) (handle, title, bio).
+The destination address for the contact form is *not* in this object — it lives in the server-only `CONTACT_EMAIL` env var (see [.env.example](../.env.example)) so forks set their own and the value never reaches the client bundle.
+
+Read by: [AboutApp](../src/components/apps/AboutApp.tsx) (name, title, location, bio, skills), [ContactApp](../src/components/apps/ContactApp.tsx) (name), [TerminalApp](../src/components/apps/TerminalApp.tsx) (handle, title, bio).
 
 ## `SOCIALS: Social[]`
 

@@ -25,7 +25,7 @@ A personal portfolio for [thepixelme.com](https://thepixelme.com), built as an i
 | Icons            | `lucide-react` for UI icons, `simple-icons` for brand logos via a small `<BrandIcon>` wrapper |
 | Tooling          | Biome 2.2 for lint + format                            |
 
-There is no backend. Contact form opens the user's mail client; everything else is static.
+The only server code is a `/api/contact` route that forwards form submissions via Resend; everything else is static.
 
 ## Getting started
 
@@ -33,6 +33,14 @@ There is no backend. Contact form opens the user's mail client; everything else 
 npm install
 npm run dev          # http://localhost:3000
 ```
+
+Copy `.env.example` to `.env.local` and fill in:
+
+- `RESEND_API_KEY` — get one at https://resend.com/api-keys
+- `CONTACT_EMAIL` — where contact form submissions are delivered
+- `CONTACT_FROM_EMAIL` — the `From:` address; must be on a domain you've [verified in Resend](https://resend.com/docs/dashboard/domains/introduction)
+
+Without these, `npm run dev` works but the contact form returns 500.
 
 Production build:
 
@@ -65,17 +73,17 @@ src/
 public/        # static assets (wallpapers/ is empty; Settings uses Unsplash URLs)
 ```
 
-Editorial content lives in [src/lib/portfolio-data.ts](../src/lib/portfolio-data.ts) — bio, projects, resume entries, photos, social links.
+Editorial content lives in [src/lib/portfolio-data.ts](src/lib/portfolio-data.ts) — bio, projects, resume entries, photos, social links.
 
 ## Reference docs
 
-The rest of this folder describes the codebase in detail:
+The [docs/](docs/) folder describes the codebase in detail:
 
-- [architecture.md](architecture.md) — render tree, data flow, z-index layering, lifecycle.
-- [window-manager.md](window-manager.md) — window state machine, `<Window>`, drag/resize hooks.
-- [desktop-shell.md](desktop-shell.md) — wallpaper, menu bar, dock, Spotlight, context menu, plus `useClock` and `useTheme`.
-- [apps.md](apps.md) — the `AppDef` contract and a section per app.
-- [styling-and-icons.md](styling-and-icons.md) — glass theme tokens, Tailwind v4 patterns, lucide and simple-icons usage.
-- [data.md](data.md) — `portfolio-data.ts` types and current values.
+- [docs/architecture.md](docs/architecture.md) — render tree, data flow, z-index layering, lifecycle.
+- [docs/window-manager.md](docs/window-manager.md) — window state machine, `<Window>`, drag/resize hooks.
+- [docs/desktop-shell.md](docs/desktop-shell.md) — wallpaper, menu bar, dock, Spotlight, context menu, plus `useClock` and `useTheme`.
+- [docs/apps.md](docs/apps.md) — the `AppDef` contract and a section per app.
+- [docs/styling-and-icons.md](docs/styling-and-icons.md) — glass theme tokens, Tailwind v4 patterns, lucide and simple-icons usage.
+- [docs/data.md](docs/data.md) — `portfolio-data.ts` types and current values.
 
-Project-wide design conventions and macOS UI patterns are in [STYLEGUIDE.md](../STYLEGUIDE.md) at the repo root.
+Project-wide design conventions and macOS UI patterns are in [STYLEGUIDE.md](STYLEGUIDE.md) at the repo root.
