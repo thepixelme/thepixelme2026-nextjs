@@ -272,8 +272,7 @@ Fake shell. The only window with a non-glass body — full bleed `bg-[oklch(0.18
 
 - `lines: { kind: "out" | "in"; text: string }[]` — the scrollback. `"in"` lines render in white prefixed with `➜  ~`; `"out"` lines render in `text-emerald-200/90`.
 - `input: string` — the current input value.
-- `inputRef`, `scrollRef` — DOM refs for focus delegation and scroll-to-bottom.
-- `printedGreeting: useRef<boolean>` — guards a one-time greeting.
+- `inputRef`, `scrollRef` — DOM refs for focus delegation and scroll-to-bottom. The scroll effect depends on `lines`, so the viewport sticks to the latest output on every append/clear.
 
 ### Greeting
 
@@ -284,7 +283,7 @@ Last login: <new Date().toDateString()> on ttys001
 Welcome. Type `help` to begin.
 ```
 
-Re-mounts (e.g. closing and reopening the window) reset state and re-print the greeting because `printedGreeting` is per-instance.
+The effect tracks the in-flight `setTimeout` id and clears it on cleanup, so it survives React strict-mode's double-invoke of mount effects. Every fresh mount (open, or close + reopen) re-plays the greeting.
 
 ### Commands
 
@@ -297,7 +296,7 @@ Re-mounts (e.g. closing and reopening the window) reset state and re-print the g
 | `cat about.md`  | `ABOUT.bio` as a single line                                                      |
 | `clear`         | Clears `lines`. No echo.                                                          |
 | `help`          | The static `HELP` array (6 lines).                                                |
-| anything else   | `zsh: command not found: ${first word}`                                           |
+| anything else   | Two lines: `zsh: command not found: ${first word}` then `Type \`help\` to see available commands.` |
 | empty input     | Echoes the empty `"in"` line and produces no output.                              |
 
 ### Surface behavior
