@@ -1,13 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import type { ComponentType } from "react";
 
-export type AppId =
-  | "finder"
-  | "preview"
-  | "about"
-  | "contact"
-  | "terminal"
-  | "settings";
+export type AppId = "finder" | "preview" | "about" | "contact" | "terminal";
 
 export interface WindowBounds {
   x: number;

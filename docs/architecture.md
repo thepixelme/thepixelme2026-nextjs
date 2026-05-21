@@ -40,16 +40,15 @@ user input
           → consumer re-renders (WindowManager, Dock, MenuBar, etc.)
 ```
 
-There is no global event bus for windows — everything goes through the reducer. The one cross-cutting browser event is `portfolio:wallpaper-change`, dispatched from [SettingsApp](../src/components/apps/SettingsApp.tsx) and listened to by [Wallpaper](../src/components/desktop/Wallpaper.tsx). See [desktop-shell.md](desktop-shell.md#wallpaper) for details.
+There is no global event bus for windows — everything goes through the reducer.
 
 ## Persistence
 
-Two values are persisted to `localStorage`:
+One value is persisted to `localStorage`:
 
 | Key                    | Read by                                               | Written by                                              |
 | ---------------------- | ----------------------------------------------------- | ------------------------------------------------------- |
 | `portfolio:theme`      | [src/lib/theme.ts](../src/lib/theme.ts) (`useTheme`)  | [src/lib/theme.ts](../src/lib/theme.ts)                 |
-| `portfolio:wallpaper`  | [Wallpaper.tsx](../src/components/desktop/Wallpaper.tsx) | [SettingsApp.tsx](../src/components/apps/SettingsApp.tsx) |
 
 Window positions, sizes, and open/closed state are **not** persisted — every page load starts with an empty desktop.
 
@@ -71,7 +70,7 @@ Set in CSS classes; do not improvise. Source: [STYLEGUIDE.md §5.1](../STYLEGUID
 ## Lifecycle (first paint → interaction)
 
 1. **Server render** — Next emits HTML for the static layout + `Desktop` shell. Wallpaper renders with the fallback gradient (no `localStorage` available on server).
-2. **Hydration** — `WindowsProvider` initializes with `{ windows: [], topZ: 10, openCount: 0 }`. `useTheme` reads `portfolio:theme` and re-applies the class. `Wallpaper` reads `portfolio:wallpaper` and swaps the background. `useClock` sets initial time and schedules the next-minute tick.
+2. **Hydration** — `WindowsProvider` initializes with `{ windows: [], topZ: 10, openCount: 0 }`. `useTheme` reads `portfolio:theme` and re-applies the class. `useClock` sets initial time and schedules the next-minute tick.
 3. **First user click** — clicking a `<DockIcon>` dispatches `OPEN`. The reducer adds a `WindowState`, increments `topZ`, increments `openCount`. `WindowManager` renders the new `<Window>`.
 4. **Drag / resize** — `<Window>`'s titlebar emits `FOCUS` on `pointerdown`, then `MOVE` on each `pointermove`. The 8 invisible handles in [ResizeHandles.tsx](../src/components/window/ResizeHandles.tsx) emit `RESIZE` (with full bounds, since corner drags can change x/y too).
 5. **Spotlight** — `cmd/ctrl+k` flips `spotlightOpen` to true; `Esc` flips it back. Selecting an item dispatches `OPEN` and closes the palette.

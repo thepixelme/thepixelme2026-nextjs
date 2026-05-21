@@ -1,7 +1,7 @@
 "use client";
 
 import { ContextMenu } from "@heroui-pro/react";
-import { Image as ImageIcon, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import type { ReactNode } from "react";
 import { siGithub } from "simple-icons";
 import BrandIcon from "@/components/BrandIcon";
@@ -22,16 +22,10 @@ export default function DesktopContextMenu({ children }: Props) {
       <ContextMenu.Popover>
         <ContextMenu.Menu
           onAction={(key) => {
-            if (key === "wallpaper")
-              dispatch({ type: "OPEN", appId: "settings" });
             if (key === "about") dispatch({ type: "OPEN", appId: "about" });
             if (key === "github") window.open("https://github.com/", "_blank");
           }}
         >
-          <ContextMenu.Item id="wallpaper" textValue="Change Wallpaper">
-            <ImageIcon size={14} />
-            <span className="ml-2">Change Wallpaper…</span>
-          </ContextMenu.Item>
           <ContextMenu.Item id="about" textValue="About This Mac">
             <Info size={14} />
             <span className="ml-2">About This Mac</span>

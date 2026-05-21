@@ -24,7 +24,7 @@ This file is the canonical style reference. Read it before writing any component
 
 ## 2. Theme — glassmorphism
 
-Default theme is `glass-light` (Big Sur). `glass-dark` is available via the System Settings app and `<html className>` swap. Theme variables come from HeroUI Pro's glass theme — **never hardcode colors**, always reference tokens.
+Default theme is `glass-light` (Big Sur). The theme is applied via `<html className>` (`"glass-light"` or `"glass-dark"`) and persisted by the `useTheme` hook in [src/lib/theme.ts](src/lib/theme.ts). Theme variables come from HeroUI Pro's glass theme — **never hardcode colors**, always reference tokens.
 
 ### 2.1 Setting the theme
 
@@ -114,7 +114,6 @@ Antialiasing: `antialiased` is set on `<html>` in layout. Don't override.
 | About Me — Find me / socials section | `Link2` |
 | Contact             | `Mail`          |
 | Terminal            | `Terminal`      |
-| System Settings     | `Settings`      |
 | Wifi (menu bar)     | `Wifi`          |
 | Battery (menu bar)  | `Battery` / `BatteryFull` |
 | Spotlight (menu bar)| `Search`        |

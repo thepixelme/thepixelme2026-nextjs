@@ -33,7 +33,6 @@ The `Component` is rendered by [WindowManager](../src/components/window/WindowMa
 | 3 | `about`    | About Me           | `User`                 | 520 × 600             | ✓       |
 | 4 | `contact`  | Contact            | `Mail`                 | 720 × 620             | ✓       |
 | 5 | `terminal` | Terminal           | `Terminal`             | 640 × 420             | ✓       |
-| 6 | `settings` | System Settings    | `Settings`             | 720 × 560             | ✓       |
 
 ¹ `preview` has `hideFromDock: true` — it's launched by [FinderApp](#finderapp-finderapptsx) with a `projectId` payload, not from the dock.
 
@@ -316,57 +315,8 @@ Source content: `ABOUT`, `PROJECTS` from [portfolio-data.ts](../src/lib/portfoli
 
 ---
 
-## SettingsApp ([SettingsApp.tsx](../src/components/apps/SettingsApp.tsx))
-
-Two-pane settings layout, but with a single panel ("Appearance"). Only the right pane has actual content.
-
-Outer grid: `grid h-full grid-cols-[180px_1fr] divide-x divide-separator`.
-
-### Sidebar (left, decorative)
-
-`<aside className="bg-surface-secondary px-3 py-4">` showing a `System` heading and a single highlighted "Appearance" row. There is no navigation logic — the sidebar reflects the only available panel.
-
-### Right pane
-
-Two sections inside an `overflow-auto p-6` container:
-
-#### Theme
-
-A flex row of two `<ThemeCard>`s (local helper):
-
-| Card  | Active when                | Click effect             | Icon (lucide) | Swatch                                                  |
-| ----- | -------------------------- | ------------------------ | ------------- | -------------------------------------------------------- |
-| Light | `theme === "glass-light"`  | `setTheme("glass-light")` | `Sun`         | `bg-linear-to-br from-white to-zinc-200`                |
-| Dark  | `theme === "glass-dark"`   | `setTheme("glass-dark")`  | `Moon`        | `bg-linear-to-br from-zinc-800 to-zinc-950`             |
-
-`theme` and `setTheme` come from `useTheme()` (see [desktop-shell.md](desktop-shell.md#usetheme)). Active card has `border-accent`.
-
-#### Wallpaper
-
-`<section>` containing a `grid grid-cols-2 gap-3 sm:grid-cols-4` of `<button>` tiles. The tile list is a local constant `WALLPAPERS`:
-
-| `id`        | `label`              | `src`                                                                            |
-| ----------- | -------------------- | -------------------------------------------------------------------------------- |
-| `gradient`  | `Gradient (default)` | `null`                                                                           |
-| `bigsur`    | `Big Sur`            | `https://images.unsplash.com/photo-1545239351-1141bd82e8a6?w=2400`               |
-| `monterey`  | `Monterey`           | `https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=2400`               |
-| `sequoia`   | `Sequoia`            | `https://images.unsplash.com/photo-1517816743773-6e0fd518b4a6?w=2400`            |
-
-Click on a tile calls `updateWallpaper(src)`, which:
-
-1. Sets `localStorage["portfolio:wallpaper"]` to `src` (or removes the key when `src === null`).
-2. Updates local `wallpaper` state.
-3. Dispatches a `new Event("portfolio:wallpaper-change")` on `window` so [Wallpaper](../src/components/desktop/Wallpaper.tsx) re-reads.
-
-Active tile has `border-accent shadow-overlay`. Tiles with no `src` show only the gradient background; tiles with a `src` overlay an `<img>`.
-
-This is the only app that mutates anything outside its own state.
-
----
-
 ## Cross-references
 
 - The window types and store these apps depend on — [window-manager.md](window-manager.md).
-- The `Wallpaper`/`SettingsApp` event contract — [desktop-shell.md](desktop-shell.md#wallpaper).
 - All static content powering apps — [data.md](data.md).
 - Brand-icon rendering used in About and the desktop context menu — [styling-and-icons.md](styling-and-icons.md#brandicon).

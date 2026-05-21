@@ -2,7 +2,6 @@ import {
   Eye,
   FolderOpen,
   Mail,
-  Settings,
   Terminal as TerminalIcon,
   User,
 } from "lucide-react";
@@ -11,7 +10,6 @@ import AboutApp from "./AboutApp";
 import ContactApp from "./ContactApp";
 import FinderApp from "./FinderApp";
 import PreviewApp from "./PreviewApp";
-import SettingsApp from "./SettingsApp";
 import TerminalApp from "./TerminalApp";
 
 export const APPS: AppDef[] = [
@@ -50,12 +48,5 @@ export const APPS: AppDef[] = [
     icon: TerminalIcon,
     defaultSize: { w: 640, h: 420 },
     Component: TerminalApp,
-  },
-  {
-    id: "settings",
-    title: "System Settings",
-    icon: Settings,
-    defaultSize: { w: 720, h: 560 },
-    Component: SettingsApp,
   },
 ];

@@ -21,24 +21,11 @@ The only state Desktop owns is `spotlightOpen: boolean`.
 
 ## Wallpaper ([Wallpaper.tsx](../src/components/desktop/Wallpaper.tsx))
 
-Sits behind everything as a fixed, full-viewport background.
+Sits behind everything as a fixed, full-viewport background. Stateless — renders the bundled Oleg Laptev wallpaper via a responsive `<picture>`:
 
-State: a single `src: string | null`, initialized to `null` (so the SSR pass renders the default).
-
-Effects:
-
-- On mount, reads `localStorage["portfolio:wallpaper"]` into `src`.
-- Adds a `window` listener for the custom `portfolio:wallpaper-change` event and re-reads `localStorage` whenever it fires. The listener is removed on unmount.
-
-Render:
-
-- When `src` is `null` (default) → a `<picture>` with two art-direction sources for the bundled Oleg Laptev wallpaper:
-  - `<source media="(orientation: portrait)" srcSet="/wallpapers/oleg-laptev-7jQh3EiS8Bs-unsplash-768x1280.jpg" />` (768×1280 portrait crop, ~46KB)
-  - `<img src="/wallpapers/oleg-laptev-7jQh3EiS8Bs-unsplash-1980x1320.jpg" />` (1980×1320 landscape crop, ~187KB) as the default
-  - The `<img>` carries `alt=""` + `aria-hidden="true"` (decorative) and `fixed inset-0 -z-10 h-full w-full object-cover` for the full-bleed backdrop.
-- When `src` is a string (custom wallpaper) → a `fixed inset-0 -z-10 bg-cover bg-center` div with inline `backgroundImage: url(<src>)`.
-
-The writer is [SettingsApp](../src/components/apps/SettingsApp.tsx), which sets the localStorage key and dispatches the custom event. Picking the "Default" tile in Settings removes the key so the responsive `<picture>` takes over.
+- `<source media="(orientation: portrait)" srcSet="/wallpapers/oleg-laptev-7jQh3EiS8Bs-unsplash-768x1280.jpg" />` (768×1280 portrait crop, ~46KB)
+- `<img src="/wallpapers/oleg-laptev-7jQh3EiS8Bs-unsplash-1980x1320.jpg" />` (1980×1320 landscape crop, ~187KB) as the default
+- The `<img>` carries `alt=""` + `aria-hidden="true"` (decorative) and `fixed inset-0 -z-10 h-full w-full object-cover` for the full-bleed backdrop.
 
 ## MenuBar ([MenuBar.tsx](../src/components/desktop/MenuBar.tsx))
 
@@ -150,7 +137,6 @@ Items, in order:
 
 | `id`         | Glyph                              | Label                  | Action on select                                         |
 | ------------ | ---------------------------------- | ---------------------- | -------------------------------------------------------- |
-| `wallpaper`  | `<Image size={14}>` (lucide)        | `Change Wallpaper…`    | Dispatches `OPEN { appId: "settings" }`.                 |
 | `about`      | `<Info size={14}>` (lucide)         | `About This Mac`       | Dispatches `OPEN { appId: "about" }`.                    |
 | —            | `<ContextMenu.Separator />`         | —                      | —                                                        |
 | `github`     | `<BrandIcon icon={siGithub} size={14} />` | `View on GitHub` | `window.open("https://github.com/", "_blank")`.          |
