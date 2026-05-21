@@ -26,8 +26,11 @@ const GREETING = [
 export default function TerminalApp() {
   const [lines, setLines] = useState<Line[]>([]);
   const [input, setInput] = useState("");
+  const [history, setHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const draftRef = useRef("");
 
   useEffect(() => {
     let i = 0;
@@ -53,6 +56,9 @@ export default function TerminalApp() {
     const cmd = raw.trim();
     setLines((l) => [...l, { kind: "in", text: cmd }]);
     if (!cmd) return;
+    setHistory((h) => [...h, cmd]);
+    setHistoryIndex(-1);
+    draftRef.current = "";
     const next: string[] = [];
     if (cmd === "help") next.push(...HELP);
     else if (cmd === "whoami") next.push(`${ABOUT.handle} — ${ABOUT.title}`);
@@ -103,6 +109,27 @@ export default function TerminalApp() {
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowUp") {
+                if (history.length === 0) return;
+                e.preventDefault();
+                if (historyIndex === -1) draftRef.current = input;
+                const nextIdx = Math.min(historyIndex + 1, history.length - 1);
+                setHistoryIndex(nextIdx);
+                setInput(history[history.length - 1 - nextIdx]);
+              } else if (e.key === "ArrowDown") {
+                if (historyIndex === -1) return;
+                e.preventDefault();
+                const nextIdx = historyIndex - 1;
+                if (nextIdx < 0) {
+                  setHistoryIndex(-1);
+                  setInput(draftRef.current);
+                } else {
+                  setHistoryIndex(nextIdx);
+                  setInput(history[history.length - 1 - nextIdx]);
+                }
+              }
+            }}
             spellCheck={false}
             autoCorrect="off"
             autoCapitalize="off"

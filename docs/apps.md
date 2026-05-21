@@ -272,7 +272,10 @@ Fake shell. The only window with a non-glass body — full bleed `bg-[oklch(0.18
 
 - `lines: { kind: "out" | "in"; text: string }[]` — the scrollback. `"in"` lines render in white prefixed with `➜  ~`; `"out"` lines render in `text-emerald-200/90`.
 - `input: string` — the current input value.
+- `history: string[]` — submitted commands, oldest-first. Populated by `run` after the empty-input guard, so empty submissions are not recorded.
+- `historyIndex: number` — browse cursor, offset from the end of `history` (`0` = most recent, `-1` = not browsing).
 - `inputRef`, `scrollRef` — DOM refs for focus delegation and scroll-to-bottom. The scroll effect depends on `lines`, so the viewport sticks to the latest output on every append/clear.
+- `draftRef: useRef<string>` — preserves the in-progress input when the user starts browsing history with ↑, so ↓ past the most recent entry restores it.
 
 ### Greeting
 
@@ -284,6 +287,10 @@ Welcome. Type `help` to begin.
 ```
 
 The effect tracks the in-flight `setTimeout` id and clears it on cleanup, so it survives React strict-mode's double-invoke of mount effects. Every fresh mount (open, or close + reopen) re-plays the greeting.
+
+### History
+
+The `<input>` handles `ArrowUp` / `ArrowDown` to walk through `history` (most-recent-first on ↑). The first ↑ press snapshots the current `input` into `draftRef`; pressing ↓ past the most recent entry restores that draft. Holding ↑ at the oldest entry stays there; ↓ when `historyIndex === -1` is a no-op. Both keys call `preventDefault()` so the caret lands at the end of the replaced text. History is per-instance and resets on remount.
 
 ### Commands
 
