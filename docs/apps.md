@@ -233,19 +233,20 @@ Source content: `ABOUT` and `SOCIALS` from [portfolio-data.ts](../src/lib/portfo
 
 ## ContactApp ([ContactApp.tsx](../src/components/apps/ContactApp.tsx))
 
-A controlled form styled as a Superhuman-inspired compose pane — generous whitespace, hairline-only dividers, a display-weight subject, and a pill Send button anchored bottom-right with a `⌘↵` shortcut hint. No backend — submission opens the user's mail client via `mailto:`.
+A controlled form styled as a Superhuman-inspired compose pane — generous whitespace, hairline-only dividers, a display-weight subject, and a pill Send button anchored bottom-right with a `⌘↵` shortcut hint. Submission POSTs to a [Resend](https://resend.com/)-backed route handler at [`/api/contact`](../src/app/api/contact/route.ts).
 
-State: `name`, `email`, `subject`, `message` — four independent `useState<string>` values. Derived: `canSend = name && email && message` (all trimmed); subject is optional.
+State: `name`, `email`, `subject`, `message` — four independent `useState<string>` values, plus `status: "idle" | "sending" | "sent" | "error"` and `errorMsg: string | null`. Derived: `canSend = name && email && message && status !== "sending"` (all trimmed); subject is optional. A `sentTimerRef` (cleaned up on unmount) flips `status` from `"sent"` back to `"idle"` after 4 s.
 
-`onSubmit` (called from `<form onSubmit>`, the footer Send button, and `⌘+Enter` / `Ctrl+Enter` from anywhere inside the form):
+`onSubmit` (called from `<form onSubmit>`, the footer Send button, and `⌘+Enter` / `Ctrl+Enter` from anywhere inside the form) sets `status = "sending"`, posts the four fields as JSON to `/api/contact`, then parses the response defensively. The expected shape is decoded through a local `ContactResponse` discriminated union + `isContactResponse` type guard; both `res.ok` and the body shape must agree before the success branch runs, so a network failure, non-JSON body, or unexpected shape all fall through to the generic error branch:
 
-```
-sub  = encodeURIComponent(subject.trim() || `Hello from ${name.trim()}`)
-body = encodeURIComponent(`${message}\n\n— ${name.trim()} (${email.trim()})`)
-window.location.href = `mailto:${ABOUT.email}?subject=${sub}&body=${body}`
-```
+| Server outcome | Client behavior |
+| --- | --- |
+| `200 { ok: true }` | `status = "sent"`, clear `subject` + `message` (keep `name` + `email`), auto-revert to `idle` after 4 s |
+| `429 { ok: false, error: "rate_limit" }` | `errorMsg = "Too many messages — try again in a few minutes."`, `status = "error"` |
+| `400 { ok: false, error: "validation" }` | `errorMsg = "Please check the form fields."`, `status = "error"` |
+| anything else (incl. network/parse failure, `500`) | `errorMsg = "Couldn't send. Please try again."`, `status = "error"` |
 
-Early-returns when `!canSend`. The form's `onKeyDown` intercepts `⌘/Ctrl + Enter`, calls `preventDefault`, and dispatches `requestSubmit()` when sendable.
+Early-returns when `!canSend`. The form's `onKeyDown` intercepts `⌘/Ctrl + Enter`, calls `preventDefault`, and dispatches `requestSubmit()` when sendable. While `status === "sending"`, every input/textarea gets `readOnly` so the form can't be edited mid-submit (kept as `readOnly` rather than `disabled` to preserve the visual treatment and the keyboard-shortcut path).
 
 Layout: `<form className="flex h-full flex-col">` containing five stacked regions, each separated from the next by `border-b border-separator`:
 
@@ -253,7 +254,7 @@ Layout: `<form className="flex h-full flex-col">` containing five stacked region
 2. **From row** — two adjacent borderless `<input>`s: name (flex-1) and email (`type="email"`, fixed `w-60`), separated by a thin `/` glyph in `text-foreground/20`. Both `required`.
 3. **Subject** — a single full-width borderless `<input>` at `text-[20px] font-medium tracking-tight`, with light placeholder styling. No label — the size signals its role.
 4. **Body** — a borderless `<textarea>` with `min-h-0 flex-1 resize-none bg-transparent px-7 py-5 text-[15px] leading-[1.7]`, absorbing remaining vertical space.
-5. **Footer** — `flex items-center justify-end gap-3 px-5 py-3 border-t border-separator`. Contains a `<kbd>` shortcut hint (`⌘ ↵`, hidden below `sm`) and a primary pill button: `rounded-full bg-accent px-5 h-9` with the lucide `Send` icon + "Send" label. Disabled state uses `opacity-40`. Hover applies `brightness-110`.
+5. **Footer** — `flex items-center justify-end gap-3 px-5 py-3 border-t border-separator`. Contains, in order: an `<output aria-live="polite">` status line pushed to the left via `mr-auto` (shows "Message sent — thanks!" in `text-foreground/70` when `status === "sent"`, or `errorMsg` in `text-red-500` when `status === "error"`; collapses via `empty:hidden` otherwise — note that `text-red-500` is a one-off semantic status color, **not** a theme token, because no danger token is defined in [globals.css](../src/app/globals.css) or [STYLEGUIDE.md](../STYLEGUIDE.md)); a `<kbd>` shortcut hint (`⌘ ↵`, hidden below `sm`); and a primary pill button: `rounded-full bg-accent px-5 h-9`. The button's icon + label switch on status — `Loader2` with `animate-spin` + "Sending…" while `sending`, `Check` + "Sent" while `sent` (also `disabled` so it can't re-submit during the 4 s auto-revert), otherwise lucide `Send` + "Send". Disabled state uses `opacity-40`. Hover applies `brightness-110`.
 
 A local `FieldRow` helper renders rows 1–2: `flex items-center gap-5 border-b border-separator px-7 py-3.5` with a `w-10` label cell (`text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/40`) followed by a `flex-1` content cell. The subject row is rendered inline (no label).
 
@@ -261,9 +262,17 @@ Inputs are native `<input>` / `<textarea>` rather than HeroUI controls so border
 
 Source content: `ABOUT.name`, `ABOUT.email` from [portfolio-data.ts](../src/lib/portfolio-data.ts).
 
----
+### Route handler ([src/app/api/contact/route.ts](../src/app/api/contact/route.ts))
 
-## TerminalApp ([TerminalApp.tsx](../src/components/apps/TerminalApp.tsx))
+POST endpoint backing the form. Runs on the `nodejs` runtime (route handlers aren't cached by default for POST). Requires the `RESEND_API_KEY` env var — set in `.env.local` for dev and in the production hosting env. Missing key returns `500 { ok: false, error: "server" }` with a server-side `console.error`.
+
+Flow:
+
+1. Parse `await request.json()` as `unknown` — malformed body → `400 { ok: false, error: "validation", fields: { message: "Invalid request" } }`.
+2. Validate with `typeof === "string"` coercion (no field crashes the handler if a caller sends `{ "name": {} }`). Per-field rules: `name` 1–100, `email` 1–200 + matches `^[^\s@]+@[^\s@]+\.[^\s@]+$`, `subject` ≤ 200 (optional), `message` 1–5000. Any failure → `400 { ok: false, error: "validation", fields }`.
+3. Rate-limit by IP (`x-forwarded-for[0]` → `x-real-ip` → `"unknown"`). Module-scoped `Map<string, number[]>` keeps timestamps within a 10 min window. Limit is 3 submits per IP per window; on each call, expired timestamps are pruned and the map is hard-capped at 5,000 entries (LRU-evict oldest only when inserting a *new* key, so existing IPs never displace strangers). Over the limit → `429 { ok: false, error: "rate_limit" }`. Caveat: per-process state — each serverless instance has its own counter and the limit resets on deploy/restart.
+4. Send via `resend.emails.send(payload, { idempotencyKey: \`contact/${Date.now()}/${crypto.randomUUID()}\` })`. `from: "Portfolio Contact <contact@mail.thepixelme.com>"` (the `mail.thepixelme.com` subdomain is verified in Resend). `to: [ABOUT.email]`. `replyTo: <visitor email>` so Reply in the inbox addresses the visitor — no auto-reply is sent. Subject is `[Portfolio] ${subject || \`Hello from ${name}\`}`. Both `text` and `html` versions are built; the HTML version HTML-escapes every interpolated value via a local `escapeHtml`.
+5. Resend's `{ data, error }` is the primary control flow per the SDK's design. The `send` call is wrapped in a single `try/catch` for unexpected runtime/network exceptions so the route always honors its JSON contract: any throw or non-null `error` → `500 { ok: false, error: "server" }` (the error is `console.error`'d but not returned to the client). Success → `200 { ok: true, id }`.
 
 Fake shell. The only window with a non-glass body — full bleed `bg-[oklch(0.18_0.012_260)]/95`, mono font.
 
