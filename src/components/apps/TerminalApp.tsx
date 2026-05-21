@@ -47,7 +47,7 @@ export default function TerminalApp() {
 
   useEffect(() => {
     scrollRef.current?.scrollTo(0, scrollRef.current.scrollHeight);
-  }, []);
+  }, [lines]);
 
   const run = (raw: string) => {
     const cmd = raw.trim();
