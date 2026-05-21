@@ -13,9 +13,12 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Nhat Nguyen — Portfolio",
+  title: "Nhat Nguyen - Bridging the Gap Between Business Vision and Technical Reality",
   description:
-    "Portfolio of Nhat Nguyen, presented as a macOS desktop. Click around — it's all real.",
+    "Nhat's little home on the web.",
+  appleWebApp: {
+    title: "ThePixelMe",
+  },
 };
 
 export default function RootLayout({
