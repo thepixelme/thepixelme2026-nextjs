@@ -74,7 +74,8 @@ Mobile shell adds its own layers (only present when `useIsMobile()` is true):
 | Layer              | z-index | Owner                                                       |
 | ------------------ | ------- | ----------------------------------------------------------- |
 | AppSheet (per win) | `30 + stackIndex` (dynamic inline, range 30–34 for the current 5-app registry) | [AppSheet.tsx](../src/components/mobile/AppSheet.tsx) |
-| HomeIndicator      | `z-40`  | [HomeIndicator.tsx](../src/components/mobile/HomeIndicator.tsx) |
+| MobileDock         | `z-40`  | [MobileDock.tsx](../src/components/mobile/MobileDock.tsx); slides off-screen and goes `inert` when any sheet is visible |
+| HomeIndicator      | `z-40`  | [HomeIndicator.tsx](../src/components/mobile/HomeIndicator.tsx); `pointer-events-none` while disabled (home state) |
 | MobileStatusBar    | `z-50`  | [MobileStatusBar.tsx](../src/components/mobile/MobileStatusBar.tsx) |
 | Spotlight          | `z-60`  | (same component as desktop)                                 |
 

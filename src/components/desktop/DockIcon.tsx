@@ -10,6 +10,7 @@ interface Props {
   label: string;
   open: boolean;
   onClick: () => void;
+  compact?: boolean;
 }
 
 export default function DockIcon({
@@ -18,8 +19,12 @@ export default function DockIcon({
   label,
   open,
   onClick,
+  compact = false,
 }: Props) {
   const ref = useRegisterDockIcon(appId);
+  const tileClasses = compact
+    ? "grid h-14 w-14 place-items-center rounded-2xl border border-field-border bg-linear-to-b from-white/40 to-white/10 shadow-surface"
+    : "grid h-14 w-14 place-items-center rounded-2xl border border-field-border bg-linear-to-b from-white/40 to-white/10 shadow-surface transition-transform duration-150 ease-out group-hover:-translate-y-2 group-hover:scale-110";
   return (
     <button
       ref={ref}
@@ -28,10 +33,12 @@ export default function DockIcon({
       onClick={onClick}
       className="group relative flex flex-col items-center justify-end"
     >
-      <span className="absolute -top-9 hidden whitespace-nowrap rounded-md border border-separator bg-overlay px-2 py-1 text-xs font-medium shadow-overlay backdrop-blur-(--glass-blur) group-hover:block">
-        {label}
-      </span>
-      <span className="grid h-14 w-14 place-items-center rounded-2xl border border-field-border bg-linear-to-b from-white/40 to-white/10 shadow-surface transition-transform duration-150 ease-out group-hover:-translate-y-2 group-hover:scale-110">
+      {!compact && (
+        <span className="absolute -top-9 hidden whitespace-nowrap rounded-md border border-separator bg-overlay px-2 py-1 text-xs font-medium shadow-overlay backdrop-blur-(--glass-blur) group-hover:block">
+          {label}
+        </span>
+      )}
+      <span className={tileClasses}>
         <Icon size={32} strokeWidth={1.5} className="text-foreground" />
       </span>
       <span

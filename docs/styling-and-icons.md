@@ -119,7 +119,7 @@ pb-[max(env(safe-area-inset-bottom),12px)]
 bottom-[max(env(safe-area-inset-bottom),8px)]
 ```
 
-Used by [MobileStatusBar](../src/components/mobile/MobileStatusBar.tsx), [HomeScreen](../src/components/mobile/HomeScreen.tsx), [AppSheet](../src/components/mobile/AppSheet.tsx), [HomeIndicator](../src/components/mobile/HomeIndicator.tsx).
+Used by [MobileStatusBar](../src/components/mobile/MobileStatusBar.tsx), [MobileDock](../src/components/mobile/MobileDock.tsx), [AppSheet](../src/components/mobile/AppSheet.tsx), [HomeIndicator](../src/components/mobile/HomeIndicator.tsx).
 
 ### Mobile z-index band
 
@@ -128,27 +128,10 @@ The mobile shell adds layers on top of the desktop hierarchy in [STYLEGUIDE.md Â
 | Layer              | z-index | Notes |
 | ------------------ | --- | --- |
 | `AppSheet`         | `30 + stackIndex` (dynamic inline, range 30â€“34 for current 5-app registry) | Sorted ascending by `z`. |
+| `MobileDock`       | `z-40` | Bottom pill launcher; goes `inert` and slides off-screen when any sheet is visible. |
 | `HomeIndicator`    | `z-40` | Interactive button above sheets; pointer-events suppressed when `disabled`. |
 | `MobileStatusBar`  | `z-50` | Persistent iOS-style status chrome above sheets. |
 | `Spotlight`        | `z-60` | Same modal as desktop. |
-
-### Mobile home-icon tile
-
-iOS-style square tile + label:
-
-```tsx
-<span className="grid aspect-square w-16 place-items-center rounded-[18px]
-                 border border-field-border bg-surface shadow-surface
-                 backdrop-blur-(--glass-blur)">
-  <Icon size={28} className="text-foreground/85" />
-</span>
-<span className="text-[11px] font-medium text-white
-                 drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
-  {label}
-</span>
-```
-
-White label + drop shadow keeps the title readable on light wallpapers.
 
 ### Fonts
 

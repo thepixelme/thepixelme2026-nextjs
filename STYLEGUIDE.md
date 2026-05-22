@@ -145,6 +145,7 @@ Use these named layers. Do not improvise z values.
 | Layer              | z-index | Purpose |
 | ------------------ | --- | --- |
 | AppSheet (per win) | `30 + stackIndex` (dynamic inline, current range 30–34) | One sheet per non-closed window record; sorted ascending by `z`. |
+| MobileDock         | `z-40` | Bottom pill launcher; goes `inert` and slides off-screen when any sheet is visible. |
 | HomeIndicator      | `z-40` | iOS-style pill, tappable to minimize all visible sheets. |
 | MobileStatusBar    | `z-50` | Persistent system chrome above sheets. |
 | Spotlight          | `z-60` | Same modal as desktop. |
@@ -154,7 +155,7 @@ Use these named layers. Do not improvise z values.
 - **Breakpoint:** 1024 px (Tailwind `lg`). ≥ 1024 → desktop, < 1024 → mobile. Driven by [`useIsMobile()`](src/lib/useIsMobile.ts) using `matchMedia("(max-width: 1023.98px)")`.
 - **Touch targets:** minimum 44 × 44 pt for any interactive element. Use `h-11` (44 px) on buttons; for icon-only buttons, wrap a smaller visual element in a sized `<button>` (see HomeIndicator's `h-11 w-32` hit area around a `h-1.5 w-32` visible pill).
 - **Safe-area insets:** all top/bottom mobile chrome uses `env(safe-area-inset-*)`. Static formulas live in Tailwind arbitrary utilities, not inline `style` — see [docs/styling-and-icons.md](docs/styling-and-icons.md#safe-area-insets-mobile-shell).
-- **Focus rings:** never suppress (§10). Programmatic focus on mobile lands on a real focusable element (e.g. the first HomeIcon button) so the native focus ring is visible.
+- **Focus rings:** never suppress (§10). Programmatic focus on mobile lands on a real focusable element (e.g. the first MobileDock button) so the native focus ring is visible.
 
 ### 5.2 Chrome dimensions (macOS-canonical)
 
@@ -164,7 +165,7 @@ Use these named layers. Do not improvise z values.
 | Window titlebar | h-9 (36px)                                |
 | Traffic light dot | 12px diameter, 8px gap between           |
 | Dock pill height | 64px content + 8px padding (`p-2`)       |
-| Dock icon | 56px square, scales to 1.25 on hover           |
+| Dock icon | 56px square. Desktop dock scales to 1.25 on hover; mobile dock (`<MobileDock>`) passes `compact` to suppress hover lift/scale and tooltip. |
 | Desktop body padding | `pt-7 pb-24` (clears menu bar + dock) |
 
 ### 5.3 Window stacking
@@ -182,7 +183,8 @@ Use these named layers. Do not improvise z values.
 - **Window close**: opacity `1 → 0`, ~180ms, `ease-in`. No scale or translate.
 - **Window minimize**: animate to dock icon position, scale `1 → 0.1`, opacity `1 → 0`. ~300ms `ease-in-out`. Unminimize is the reverse, ~300ms `ease-out`.
 - **Window maximize / restore**: bounds (`left/top/width/height`) interpolated via a transient CSS transition. ~220ms `ease-out`. The transition is only applied while toggling so drag/resize stay instant.
-- **Dock magnify**: pure CSS `transition-transform duration-150 ease-out`. No JS — keep it cheap.
+- **Dock magnify** (desktop only): pure CSS `transition-transform duration-150 ease-out`. No JS — keep it cheap. The mobile dock (`<MobileDock>`) opts out via the `compact` prop on `<DockIcon>`.
+- **Mobile dock show/hide**: `motion/react` spring (`stiffness 320, damping 32`) on `{ y, opacity }`. Reduced motion collapses to `duration: 0`.
 - **Spotlight**: backdrop fade 100ms, dialog scale `0.97 → 1` 150ms.
 - **Traffic light hover**: glyphs `opacity-0 → opacity-100` on `.group:hover`, 80ms.
 
@@ -270,10 +272,16 @@ Never write multi-paragraph docstrings.
 
 ### 9.3 Dock
 
-- Bottom-center, `bottom-3`.
+Two variants share [`DockIcon`](src/components/desktop/DockIcon.tsx):
+
+- **Desktop `<Dock>`**: bottom-center at `bottom-3`. Icons render with the default `DockIcon` behavior — hover tooltip and `scale-110 -translate-y-2` magnify.
+- **Mobile `<MobileDock>`**: bottom-center at `bottom-[calc(env(safe-area-inset-bottom)+3.25rem)]` (clears the full home-indicator hit area; `env(...)` falls back to `0` when no safe area is defined). Icons render with `compact` — no tooltip, no hover lift/scale, since hover is unreliable on touch. The dock slides off-screen and goes `inert` while any sheet is visible.
+
+Shared rules:
+
 - Icons left-to-right in registry order.
-- Tiny dot (3px) below an icon if its app has any open (non-minimized) window.
-- Right-clicking an open app's icon should show a mini context menu with at least "Quit" (closes all windows of that app). MVP can defer this.
+- Tiny dot (3px) below an icon if its app has any window record (including minimized).
+- Right-clicking an open app's icon should show a mini context menu with at least "Quit" (closes all windows of that app). MVP can defer this. Desktop only — mobile has no right-click.
 
 ### 9.4 Spotlight
 
@@ -295,7 +303,7 @@ Never write multi-paragraph docstrings.
 - All interactive elements reachable by keyboard. HeroUI handles most of this.
 - `aria-label` on icon-only buttons (traffic lights, dock icons, menu-bar icons).
 - Focus rings: don't suppress. Use `--accent` for the ring color (already the default in glass theme).
-- `prefers-reduced-motion`: respect via `motion/react`'s `useReducedMotion()`. Window transitions become instant; dock magnify becomes static.
+- `prefers-reduced-motion`: respect via `motion/react`'s `useReducedMotion()`. Window transitions become instant; desktop dock magnify becomes static (it's a pure CSS transition with no `motion/react` involvement, so it's effectively unchanged); mobile dock show/hide collapses to a duration of 0.
 
 ---
 

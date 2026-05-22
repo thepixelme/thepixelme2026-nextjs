@@ -33,7 +33,7 @@ Structure:
 
 ## Mobile shell ([src/components/mobile/](../src/components/mobile/))
 
-Below 1024 px, `<MobileShell />` replaces the entire desktop chrome with an iOS-style home screen + sheet stack. See dedicated sections below.
+Below 1024 px, `<MobileShell />` replaces the entire desktop chrome with a bottom-dock home state + sheet stack. See dedicated sections below.
 
 ## Wallpaper ([Wallpaper.tsx](../src/components/desktop/Wallpaper.tsx))
 
@@ -89,19 +89,21 @@ Note: `OPEN` on an already-open app focuses (and unminimizes) it, per the reduce
 
 ## DockIcon ([DockIcon.tsx](../src/components/desktop/DockIcon.tsx))
 
-A single dock entry. Props:
+A single dock entry, shared by the desktop `<Dock>` and the mobile `<MobileDock>`. Props:
 
 | Prop      | Type         | Notes                                                      |
 | --------- | ------------ | ---------------------------------------------------------- |
+| `appId`   | `AppId`      | Registers the rendered element via `useRegisterDockIcon` for window-open/minimize animations. No-ops when no `DockIconPositionsProvider` is mounted (e.g. inside `MobileDock`). |
 | `icon`    | `LucideIcon` | The lucide component (not an instance).                    |
 | `label`   | `string`     | Used for both the hover tooltip and `aria-label`.          |
 | `open`    | `boolean`    | Controls the visibility of the indicator dot below.        |
 | `onClick` | `() => void` |                                                            |
+| `compact` | `boolean?`   | Default `false`. When `true`: hides the hover tooltip and removes the hover lift/scale transform. Passed by `MobileDock` to avoid sticky `:hover` artifacts on touch devices and remove the desktop-only tooltip convention. |
 
 Structure (single `<button>`, three `<span>`s):
 
-1. **Tooltip** (above the icon) — `absolute -top-9 hidden ... group-hover:block`, glass-styled chip showing `label`.
-2. **Icon tile** — `h-14 w-14 rounded-2xl border border-field-border bg-linear-to-b from-white/40 to-white/10 shadow-surface`. Hover transform: `transition-transform duration-150 ease-out group-hover:-translate-y-2 group-hover:scale-110`. Renders `<Icon size={32} strokeWidth={1.5}>`.
+1. **Tooltip** (above the icon) — `absolute -top-9 hidden ... group-hover:block`, glass-styled chip showing `label`. Only rendered when `compact` is `false`.
+2. **Icon tile** — `h-14 w-14 rounded-2xl border border-field-border bg-linear-to-b from-white/40 to-white/10 shadow-surface`. When `compact` is `false`, also `transition-transform duration-150 ease-out group-hover:-translate-y-2 group-hover:scale-110`. Renders `<Icon size={32} strokeWidth={1.5}>`.
 3. **Indicator dot** — `mt-1 h-1 w-1 rounded-full bg-foreground/70`, `opacity-100` when `open`, else `opacity-0`.
 
 There is no right-click handling on dock icons.
@@ -204,7 +206,7 @@ Renders, in this order:
 
 1. `<Wallpaper />` (reused as-is).
 2. `<MobileStatusBar onOpenSpotlight={...} />` — top, z-50.
-3. `<HomeScreen inert={hasVisible} />` — the launcher, default-z.
+3. `<MobileDock hidden={hasVisible} />` — the launcher, z-40, visible on the home state, slides off-screen when any sheet is visible.
 4. `<AnimatePresence>` wrapping a `.map` over every window record (regardless of `minimized`), each rendered as an `<AppSheet>` with `isActive` and `stackIndex` props.
 5. `<HomeIndicator onGoHome={goHome} disabled={!hasVisible} />` — z-40 above sheets.
 6. `<Spotlight open={spotlightOpen} onOpenChange={setSpotlightOpen} />` — reused.
@@ -220,15 +222,24 @@ Fixed top, `z-50`. Height `calc(2.75rem + env(safe-area-inset-top))` with `pt-[e
 - Left: `useNow()` formatted as `h:mm a`.
 - Right: `<Wifi size={14}/>`, `<Battery size={16}/>`, and a `<Search size={14}/>` button (`h-11 w-11` hit area) that calls `onOpenSpotlight()`.
 
-## HomeScreen ([src/components/mobile/HomeScreen.tsx](../src/components/mobile/HomeScreen.tsx))
+## MobileDock ([src/components/mobile/MobileDock.tsx](../src/components/mobile/MobileDock.tsx))
 
-Wallpaper showthrough (no opaque bg). Renders `APPS.filter(a => !a.hideFromDock)` as a 4-column grid of `<HomeIcon>`. Padding-top clears the status bar.
+The mobile counterpart of the desktop `<Dock>`. Single bottom pill that mirrors the desktop's glass styling and reuses [`DockIcon`](../src/components/desktop/DockIcon.tsx) with `compact` enabled (no hover tooltip, no hover lift/scale).
 
-Receives an `inert: boolean` prop. When `inert` flips from `true → false` (last sheet closed, or all minimized via the home indicator), focuses the first `HomeIcon` button via `gridRef.current?.querySelector("button")?.focus({ preventScroll: true })` — keyboard users land on a real focusable launchable target with a visible native focus ring.
+Props: `{ hidden: boolean }` — driven by whether any non-minimized sheet is visible.
 
-## HomeIcon ([src/components/mobile/HomeIcon.tsx](../src/components/mobile/HomeIcon.tsx))
+Structure:
 
-`<motion.button>` with `whileTap={{ scale: 0.92 }}` (respects `useReducedMotion`). Outer min-height `min-h-22` (88 px) for ≥ 44 pt touch target including the label. Inner tile: `aspect-square w-16 rounded-[18px]` with `shadow-surface backdrop-blur-(--glass-blur)` and the app's lucide icon at `size={28}`. Label: `text-[11px] text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]` for legibility on light wallpapers.
+- Outer `<motion.nav aria-label="Dock">` — `pointer-events-none fixed inset-x-0 z-40 flex justify-center bottom-[calc(env(safe-area-inset-bottom)+3.25rem)]`. The bottom offset clears the full 44 pt `HomeIndicator` hit area on devices both with and without a bottom safe area (`env(safe-area-inset-bottom)` falls back to `0` per CSS spec).
+- Inner pill — same classes as the desktop dock (`pointer-events-auto flex items-end gap-3 rounded-2xl border border-separator bg-surface-secondary px-3 pb-2 pt-3 shadow-overlay backdrop-blur-(--glass-blur)`).
+- Iterates `APPS.filter(app => !app.hideFromDock)` in registry order; each item is `<DockIcon ... compact />`. Indicator dots light up for any window record (including minimized).
+
+Animation:
+
+- `animate={{ y: hidden ? 120 : 0, opacity: hidden ? 0 : 1 }}` with a `spring (stiffness 320, damping 32)`. Reduced motion (`useReducedMotion()`) collapses the transition to `{ duration: 0 }`.
+- `inert={hidden}` + `aria-hidden={hidden}` suppress pointer/keyboard/AT on the offscreen pill.
+
+Focus restoration: when `hidden` flips `true → false` (last sheet closed, or all minimized via the home indicator), focuses the first dock button via `pillRef.current?.querySelector("button")?.focus({ preventScroll: true })` — required by [STYLEGUIDE.md §5.1.1](../STYLEGUIDE.md) so keyboard users land on a real focusable target with the native focus ring visible.
 
 ## AppSheet ([src/components/mobile/AppSheet.tsx](../src/components/mobile/AppSheet.tsx))
 

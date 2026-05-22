@@ -48,7 +48,8 @@ Sizes are clamped at OPEN time to `vw - 80` and `vh - 160` (see [window-manager.
 The registry is consumed by:
 
 - [WindowManager.tsx](../src/components/window/WindowManager.tsx) — to find a window's Component.
-- [Dock.tsx](../src/components/desktop/Dock.tsx) — to render dock icons in order.
+- [Dock.tsx](../src/components/desktop/Dock.tsx) — to render dock icons in order (desktop).
+- [MobileDock.tsx](../src/components/mobile/MobileDock.tsx) — to render dock icons in order (mobile).
 - [Spotlight.tsx](../src/components/desktop/Spotlight.tsx) — to populate the Apps group.
 - [windows-store.ts](../src/lib/windows-store.ts) — to look up `defaultSize` on `OPEN`.
 
