@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -13,12 +13,16 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Nhat Nguyen - Bridging the Gap Between Business Vision and Technical Reality",
-  description:
-    "Nhat's little home on the web.",
+  title:
+    "Nhat Nguyen - Bridging the Gap Between Business Vision and Technical Reality",
+  description: "Nhat's little home on the web.",
   appleWebApp: {
     title: "ThePixelMe",
   },
+};
+
+export const viewport: Viewport = {
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

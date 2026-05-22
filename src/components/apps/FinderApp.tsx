@@ -17,8 +17,8 @@ export default function FinderApp() {
   }, [filter]);
 
   return (
-    <div className="grid h-full grid-cols-[200px_1fr] divide-x divide-separator">
-      <aside className="overflow-auto bg-surface-secondary px-2 py-3 text-sm">
+    <div className="grid h-full grid-cols-1 grid-rows-[auto_1fr] divide-y divide-separator lg:grid-cols-[200px_1fr] lg:grid-rows-1 lg:divide-x lg:divide-y-0">
+      <aside className="flex shrink-0 gap-2 overflow-x-auto bg-surface-secondary px-3 py-2 text-sm lg:block lg:overflow-auto lg:px-2 lg:py-3">
         <SidebarSection label="Favorites">
           <SidebarItem
             icon={<Star size={14} />}
@@ -41,7 +41,7 @@ export default function FinderApp() {
       </aside>
 
       <div className="overflow-auto p-4">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {visible.map((p) => (
             <button
               key={p.id}
@@ -110,8 +110,8 @@ function SidebarSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mb-4">
-      <p className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-wide text-foreground/50">
+    <div className="contents lg:mb-4 lg:block">
+      <p className="hidden lg:mb-1 lg:block lg:px-2 lg:text-[10px] lg:font-semibold lg:uppercase lg:tracking-wide lg:text-foreground/50">
         {label}
       </p>
       {children}
@@ -134,7 +134,7 @@ function SidebarItem({
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm ${
+      className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-md px-2 py-1.5 text-sm lg:w-full ${
         active ? "bg-default font-medium" : "hover:bg-default/60"
       }`}
     >

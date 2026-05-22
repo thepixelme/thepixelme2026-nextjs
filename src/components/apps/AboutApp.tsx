@@ -12,7 +12,7 @@ const BRANDS = {
 
 export default function AboutApp() {
   return (
-    <div className="flex flex-col gap-6 p-8">
+    <div className="flex flex-col gap-6 p-5 sm:p-8">
       <header className="flex flex-col gap-1">
         <h1 className="text-3xl font-semibold tracking-tight">{ABOUT.name}</h1>
         <p className="text-sm leading-relaxed text-foreground/70">

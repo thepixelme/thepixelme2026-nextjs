@@ -8,22 +8,26 @@ The Next.js root layout ([src/app/layout.tsx](../src/app/layout.tsx)) sets `<htm
 
 The page ([src/app/page.tsx](../src/app/page.tsx)) is a server component that renders nothing but `<Desktop />`. All interactivity lives below the `Desktop` boundary.
 
-[src/components/desktop/Desktop.tsx](../src/components/desktop/Desktop.tsx) is a client component (`"use client"`). It mounts the desktop shell in this order, all inside `<WindowsProvider>`:
+[src/components/desktop/Desktop.tsx](../src/components/desktop/Desktop.tsx) is a client component (`"use client"`). It mounts `<WindowsProvider>` and then a viewport switch (`useIsMobile()`) that picks between the desktop tree and the mobile tree:
 
 ```
 <WindowsProvider>
-  <div class="relative h-full w-full overflow-hidden">
-    <Wallpaper />              z=-10  fixed bg
-    <MenuBar />                z=50   fixed top
-    <DesktopContextMenu />     covers desktop area, right-click trigger
-    <WindowManager />          renders open <Window>s, dynamic z (≥10)
-    <Dock />                   z=40   fixed bottom-center
-    <Spotlight />              z=60   modal (HeroUI Pro Command)
-  </div>
+  ShellSwitch (useIsMobile)
+    isMobile === null  →  <Wallpaper /> only (pre-hydration; avoids mismatch)
+    isMobile === false →  <DesktopBody />:
+                            <Wallpaper />              z=-10
+                            <MenuBar />                z=50
+                            <DesktopContextMenu />     covers desktop area
+                            <WindowManager />          dynamic z (≥10)
+                            <Dock />                   z=40
+                            <Spotlight />              z=60
+    isMobile === true  →  <MobileShell />              (see desktop-shell.md)
 </WindowsProvider>
 ```
 
-`Desktop` owns one piece of local state: `spotlightOpen` (boolean), passed to both `<MenuBar>` (so the search icon can open the palette) and `<Spotlight>` (controlled via `open` / `onOpenChange`).
+`<WindowsProvider>` lives above the switch so window state survives a viewport resize across the breakpoint. `spotlightOpen` is local state in each branch (`DesktopBody` owns its own; `MobileShell` owns its own).
+
+The breakpoint is `1024px` (Tailwind `lg`): ≥ 1024 → desktop, < 1024 → mobile. See [src/lib/useIsMobile.ts](../src/lib/useIsMobile.ts).
 
 ## Data flow
 
@@ -65,6 +69,15 @@ Set in CSS classes; do not improvise. Source: [STYLEGUIDE.md §5.1](../STYLEGUID
 | Menu bar           | `z-50`  | [MenuBar.tsx](../src/components/desktop/MenuBar.tsx)        |
 | Spotlight          | `z-60`  | [Spotlight.tsx](../src/components/desktop/Spotlight.tsx)    |
 
+Mobile shell adds its own layers (only present when `useIsMobile()` is true):
+
+| Layer              | z-index | Owner                                                       |
+| ------------------ | ------- | ----------------------------------------------------------- |
+| AppSheet (per win) | `30 + stackIndex` (dynamic inline, range 30–34 for the current 5-app registry) | [AppSheet.tsx](../src/components/mobile/AppSheet.tsx) |
+| HomeIndicator      | `z-40`  | [HomeIndicator.tsx](../src/components/mobile/HomeIndicator.tsx) |
+| MobileStatusBar    | `z-50`  | [MobileStatusBar.tsx](../src/components/mobile/MobileStatusBar.tsx) |
+| Spotlight          | `z-60`  | (same component as desktop)                                 |
+
 `BASE_Z = 10` and `topZ` start at 10 in [windows-store.ts](../src/lib/windows-store.ts); each `OPEN` / `FOCUS` / `UNMINIMIZE` / `MAXIMIZE`-restore action increments `topZ` and assigns it to the affected window.
 
 ## Lifecycle (first paint → interaction)
@@ -90,6 +103,9 @@ Set in CSS classes; do not improvise. Source: [STYLEGUIDE.md §5.1](../STYLEGUID
 | Clock                | [src/lib/clock.ts](../src/lib/clock.ts)                     |
 | Static portfolio data | [src/lib/portfolio-data.ts](../src/lib/portfolio-data.ts) |
 | Brand-icon SVG       | [src/components/BrandIcon.tsx](../src/components/BrandIcon.tsx) |
+| Mobile shell         | [src/components/mobile/](../src/components/mobile/)         |
+| Viewport switch hook | [src/lib/useIsMobile.ts](../src/lib/useIsMobile.ts)         |
+| Shared clock + raw-Date hook | [src/lib/clock.ts](../src/lib/clock.ts) (`useClock`, `useNow`) |
 
 ## Stack notes
 

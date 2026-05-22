@@ -48,6 +48,7 @@ export default function TerminalApp() {
     };
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `lines` is the change trigger; effect body only reads a ref.
   useEffect(() => {
     scrollRef.current?.scrollTo(0, scrollRef.current.scrollHeight);
   }, [lines]);

@@ -149,7 +149,10 @@ export default function ContactApp() {
           className={fieldInputClass}
           aria-label="Your name"
         />
-        <span className="text-foreground/20" aria-hidden="true">
+        <span
+          className="hidden text-foreground/20 sm:inline"
+          aria-hidden="true"
+        >
           /
         </span>
         <input
@@ -160,7 +163,7 @@ export default function ContactApp() {
           required
           readOnly={sending}
           autoComplete="email"
-          className={`${fieldInputClass} w-60 flex-none`}
+          className={`${fieldInputClass} w-full sm:w-60 sm:flex-none`}
           aria-label="Your email"
         />
       </FieldRow>
@@ -229,7 +232,7 @@ export default function ContactApp() {
 
 function FieldRow({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex items-center gap-5 border-b border-separator px-7 py-3.5">
+    <div className="flex flex-wrap items-center gap-5 border-b border-separator px-7 py-3.5">
       <span className="w-10 shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/40">
         {label}
       </span>

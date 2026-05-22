@@ -39,7 +39,10 @@ function PreviewContent({
   const screenshots = project.screenshots ?? [];
   const isPortrait = project.orientation === "portrait";
   const [view, setView] = useState<View>("info");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.innerWidth >= 1024;
+  });
 
   useEffect(() => {
     if (screenshots.length === 0) return;

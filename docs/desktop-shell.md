@@ -6,9 +6,21 @@ The shell components are children of `<WindowsProvider>` (mounted by [Desktop.ts
 
 ## Desktop ([Desktop.tsx](../src/components/desktop/Desktop.tsx))
 
-Top-level client component mounted by [page.tsx](../src/app/page.tsx).
+Top-level client component mounted by [page.tsx](../src/app/page.tsx). It is also the **viewport router**: based on [`useIsMobile()`](../src/lib/useIsMobile.ts), it picks between the desktop tree (≥ 1024 px) and the mobile tree (< 1024 px).
 
-Renders, inside `<WindowsProvider>`, a `relative h-full w-full overflow-hidden` div containing:
+Structure:
+
+```
+<WindowsProvider>
+  <ShellSwitch>
+    isMobile === null  → only <Wallpaper /> (pre-hydration, no mismatch)
+    isMobile === false → <DesktopBody />
+    isMobile === true  → <MobileShell />
+```
+
+`<WindowsProvider>` lives outside the switch so window state persists across a viewport resize.
+
+`<DesktopBody />` (a local component inside the same file) renders the classic desktop tree:
 
 1. `<Wallpaper />`
 2. `<MenuBar onOpenSpotlight={() => setSpotlightOpen(true)} />`
@@ -17,7 +29,11 @@ Renders, inside `<WindowsProvider>`, a `relative h-full w-full overflow-hidden` 
 5. `<Dock />`
 6. `<Spotlight open={spotlightOpen} onOpenChange={setSpotlightOpen} />`
 
-The only state Desktop owns is `spotlightOpen: boolean`.
+`DesktopBody` owns its own `spotlightOpen: boolean`.
+
+## Mobile shell ([src/components/mobile/](../src/components/mobile/))
+
+Below 1024 px, `<MobileShell />` replaces the entire desktop chrome with an iOS-style home screen + sheet stack. See dedicated sections below.
 
 ## Wallpaper ([Wallpaper.tsx](../src/components/desktop/Wallpaper.tsx))
 
@@ -143,19 +159,14 @@ Items, in order:
 
 Actions are dispatched from a single `onAction={(key) => { ... }}` handler on `<ContextMenu.Menu>`.
 
-## useClock ([src/lib/clock.ts](../src/lib/clock.ts))
+## useClock and useNow ([src/lib/clock.ts](../src/lib/clock.ts))
 
-`useClock(): string`. Returns a localized formatted time string using `Intl.DateTimeFormat(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" })` (e.g. `"Sat 3:42 PM"`).
+Two hooks live in this module:
 
-State: `now: Date | null`, initially `null` so SSR returns an empty string and avoids hydration mismatch.
+- **`useNow(): Date | null`** — the source-of-truth ticker. Returns `null` on first render (SSR-safe) and a `Date` after mount. Schedules a `setTimeout` aligned to the next minute boundary, then a 60-second `setInterval`. Both timer ids are tracked in closure-scoped variables and cleared in the effect's cleanup return.
+- **`useClock(): string`** — consumes `useNow()` and formats with `Intl.DateTimeFormat(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" })` (e.g. `"Sat 3:42 PM"`). Used by [MenuBar.tsx](../src/components/desktop/MenuBar.tsx).
 
-Effect:
-
-- On mount, sets `now = new Date()`.
-- Schedules the first tick via `setTimeout` aligned to the next minute boundary: `60_000 - (Date.now() % 60_000)` ms.
-- On the first tick, sets up a `setInterval(tick, 60_000)`.
-
-Both timers are cleaned up via the effect's cleanup return.
+[MobileStatusBar.tsx](../src/components/mobile/MobileStatusBar.tsx) consumes `useNow()` directly and formats a shorter `h:mm a` locally — no second timer.
 
 ## useTheme ([src/lib/theme.ts](../src/lib/theme.ts))
 
@@ -175,8 +186,79 @@ Updater (`update(m)`):
 
 `applyTheme(mode)` removes both classes from `document.documentElement` and adds the chosen one. The HTML element starts at `glass-light` from the SSR markup in [layout.tsx](../src/app/layout.tsx); the effect upgrades to whatever's stored.
 
+## useIsMobile ([src/lib/useIsMobile.ts](../src/lib/useIsMobile.ts))
+
+`useIsMobile(): boolean | null`. Single source of truth for the viewport switch in `Desktop.tsx`.
+
+- Initial state `null` — both SSR and the first client render get the same value, so there's no hydration mismatch.
+- `useLayoutEffect` reads `window.matchMedia("(max-width: 1023.98px)").matches` and subscribes to its `change` event. Cleanup removes the listener.
+- Breakpoint `1023.98px` matches Tailwind's `lg` boundary: 1024 px and up = desktop, 1023.98 px and below = mobile.
+
+Consumers should treat `null` as "render minimal fallback content" (Desktop.tsx renders only the wallpaper).
+
+## MobileShell ([src/components/mobile/MobileShell.tsx](../src/components/mobile/MobileShell.tsx))
+
+The mobile counterpart of `<DesktopBody>`. Mounted when `useIsMobile()` returns `true`. Owns `spotlightOpen: boolean` and a `goHome` callback.
+
+Renders, in this order:
+
+1. `<Wallpaper />` (reused as-is).
+2. `<MobileStatusBar onOpenSpotlight={...} />` — top, z-50.
+3. `<HomeScreen inert={hasVisible} />` — the launcher, default-z.
+4. `<AnimatePresence>` wrapping a `.map` over every window record (regardless of `minimized`), each rendered as an `<AppSheet>` with `isActive` and `stackIndex` props.
+5. `<HomeIndicator onGoHome={goHome} disabled={!hasVisible} />` — z-40 above sheets.
+6. `<Spotlight open={spotlightOpen} onOpenChange={setSpotlightOpen} />` — reused.
+
+Sheet stack is sorted **ascending by `z`** so the highest-z sheet renders last (and visually stacks on top). `key={win.id}` preserves component identity across reorders (state survives raising/lowering).
+
+`goHome` loops through non-minimized windows and dispatches `MINIMIZE` for each. Sheets slide off-screen via their `animate` prop; their app state stays mounted.
+
+## MobileStatusBar ([src/components/mobile/MobileStatusBar.tsx](../src/components/mobile/MobileStatusBar.tsx))
+
+Fixed top, `z-50`. Height `calc(2.75rem + env(safe-area-inset-top))` with `pt-[env(safe-area-inset-top)]` so the 44 pt content sits below the notch.
+
+- Left: `useNow()` formatted as `h:mm a`.
+- Right: `<Wifi size={14}/>`, `<Battery size={16}/>`, and a `<Search size={14}/>` button (`h-11 w-11` hit area) that calls `onOpenSpotlight()`.
+
+## HomeScreen ([src/components/mobile/HomeScreen.tsx](../src/components/mobile/HomeScreen.tsx))
+
+Wallpaper showthrough (no opaque bg). Renders `APPS.filter(a => !a.hideFromDock)` as a 4-column grid of `<HomeIcon>`. Padding-top clears the status bar.
+
+Receives an `inert: boolean` prop. When `inert` flips from `true → false` (last sheet closed, or all minimized via the home indicator), focuses the first `HomeIcon` button via `gridRef.current?.querySelector("button")?.focus({ preventScroll: true })` — keyboard users land on a real focusable launchable target with a visible native focus ring.
+
+## HomeIcon ([src/components/mobile/HomeIcon.tsx](../src/components/mobile/HomeIcon.tsx))
+
+`<motion.button>` with `whileTap={{ scale: 0.92 }}` (respects `useReducedMotion`). Outer min-height `min-h-22` (88 px) for ≥ 44 pt touch target including the label. Inner tile: `aspect-square w-16 rounded-[18px]` with `shadow-surface backdrop-blur-(--glass-blur)` and the app's lucide icon at `size={28}`. Label: `text-[11px] text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]` for legibility on light wallpapers.
+
+## AppSheet ([src/components/mobile/AppSheet.tsx](../src/components/mobile/AppSheet.tsx))
+
+Full-screen `motion.section` with dynamic `style={{ zIndex: 30 + stackIndex }}`. Mounted for the entire life of the window record (unmounts only on `CLOSE`), so app-local state survives minimize/restore and sheet reordering.
+
+Animation:
+- `initial={{ y: "100%", opacity: 0.6 }}`
+- `animate={ win.minimized ? { y: "100%", opacity: 0.6 } : { y: 0, opacity: 1 } }` — slides off-screen on minimize, back on restore.
+- `exit={{ y: "100%", opacity: 0.6 }}` — slides down before unmount on CLOSE (inside `MobileShell`'s `<AnimatePresence>`).
+- `transition: spring { stiffness: 320, damping: 32 }`; reduced motion → `{ duration: 0 }`.
+
+Accessibility:
+- `inert={!isActive}` + `aria-hidden={!isActive}` on inactive sheets. Native `inert` suppresses pointer events, tab order, and AT.
+- On `isActive` becoming true, focuses the Done button via a `useEffect`.
+
+Layout: `pt-[calc(2.75rem+env(safe-area-inset-top))]` reserves the status bar; `pb-[max(env(safe-area-inset-bottom),12px)]` reserves the home indicator. Body is `min-h-0 flex-1 overflow-auto` with an inner `h-full` wrapper so app components that rely on `h-full` (Terminal especially) keep working.
+
+Header has a left `<button>` ("Done" + `ChevronLeft size={16}`) dispatching `{ type: "CLOSE", id: win.id }`. The window title is centered and `pointer-events-none`.
+
+Defensive guard: if no matching app exists in `APPS`, returns `null` (mirrors `WindowManager.tsx`).
+
+## HomeIndicator ([src/components/mobile/HomeIndicator.tsx](../src/components/mobile/HomeIndicator.tsx))
+
+A `<button>` at z-40, fixed bottom, `h-11 w-32` (44 pt hit area). Visible portion is just the inner `h-1.5 w-32 rounded-full bg-white/80` pill at the bottom. Tapping calls `onGoHome` (which minimizes every visible sheet). `disabled={!hasVisible}` greys out the pill when no apps are open.
+
+The hit area overlaps the bottom ~44 pt of the active sheet — acceptable per iOS convention (apps avoid critical UI in the bottom strip).
+
 ## Cross-references
 
 - Theme tokens (`--surface`, `--separator`, `--glass-blur`, etc.) are defined by `@heroui-pro/react/themes/glass` — see [styling-and-icons.md](styling-and-icons.md#glass-theme).
 - Brand-icon rendering — [styling-and-icons.md](styling-and-icons.md#brandicon).
 - Window state machine that all dispatches feed into — [window-manager.md](window-manager.md#actions).
+- How apps are rendered inside either `<Window>` or `<AppSheet>` — [apps.md](apps.md).

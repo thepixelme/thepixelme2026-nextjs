@@ -140,6 +140,22 @@ Use these named layers. Do not improvise z values.
 | Menu bar         | `z-50`        | Always above dock and windows          |
 | Spotlight / modals | `z-60`      | Above everything                       |
 
+**Mobile shell (< 1024 px)** adds its own band — these layers only exist when `useIsMobile()` returns true:
+
+| Layer              | z-index | Purpose |
+| ------------------ | --- | --- |
+| AppSheet (per win) | `30 + stackIndex` (dynamic inline, current range 30–34) | One sheet per non-closed window record; sorted ascending by `z`. |
+| HomeIndicator      | `z-40` | iOS-style pill, tappable to minimize all visible sheets. |
+| MobileStatusBar    | `z-50` | Persistent system chrome above sheets. |
+| Spotlight          | `z-60` | Same modal as desktop. |
+
+### 5.1.1 Mobile chrome conventions
+
+- **Breakpoint:** 1024 px (Tailwind `lg`). ≥ 1024 → desktop, < 1024 → mobile. Driven by [`useIsMobile()`](src/lib/useIsMobile.ts) using `matchMedia("(max-width: 1023.98px)")`.
+- **Touch targets:** minimum 44 × 44 pt for any interactive element. Use `h-11` (44 px) on buttons; for icon-only buttons, wrap a smaller visual element in a sized `<button>` (see HomeIndicator's `h-11 w-32` hit area around a `h-1.5 w-32` visible pill).
+- **Safe-area insets:** all top/bottom mobile chrome uses `env(safe-area-inset-*)`. Static formulas live in Tailwind arbitrary utilities, not inline `style` — see [docs/styling-and-icons.md](docs/styling-and-icons.md#safe-area-insets-mobile-shell).
+- **Focus rings:** never suppress (§10). Programmatic focus on mobile lands on a real focusable element (e.g. the first HomeIcon button) so the native focus ring is visible.
+
 ### 5.2 Chrome dimensions (macOS-canonical)
 
 | Element     | Size                                         |
@@ -304,5 +320,5 @@ Before claiming a feature done:
 1. `npm run lint` — zero errors.
 2. `npm run dev` — open localhost, exercise the feature including its keyboard path.
 3. For chrome (menu bar / dock / window manager): test in both `glass-light` and `glass-dark`.
-4. Resize browser to 600px wide — confirm the mobile fallback still works.
+4. Resize browser across the 1024 px boundary — confirm the desktop tree mounts at ≥ 1024 and the iOS-style mobile shell mounts at < 1024. App state should survive the switch (window records persist via the shared `<WindowsProvider>`).
 5. `npm run build` — clean build before merging anything significant.

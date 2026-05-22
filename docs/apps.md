@@ -18,7 +18,14 @@ An "app" is anything that satisfies the `AppDef` shape ([src/types/window.ts](..
 }
 ```
 
-The `Component` is rendered by [WindowManager](../src/components/window/WindowManager.tsx) inside a `<Window>` whose body is `flex-1 overflow-auto`. Apps therefore receive a fixed-height container and should size themselves with `h-full`, `flex flex-col`, or scrollable layouts — not assume infinite height.
+The `Component` is rendered in one of two places depending on viewport:
+
+- **Desktop (≥ 1024 px):** inside a `<Window>` (rendered by [WindowManager](../src/components/window/WindowManager.tsx)) whose body is `flex-1 overflow-auto`.
+- **Mobile (< 1024 px):** inside an `<AppSheet>` (rendered by [MobileShell](../src/components/mobile/MobileShell.tsx)) whose body is `min-h-0 flex-1 overflow-auto` with an inner `h-full` wrapper.
+
+In both cases the app receives a fixed-height container and should size itself with `h-full`, `flex flex-col`, or scrollable layouts — not assume infinite height. The `windowId` prop is the same in both contexts.
+
+**On mobile, every non-closed window stays mounted** (in a stacked `<AppSheet>` per window record) so local app state survives minimize/restore and sheet reordering. Only the topmost non-minimized sheet is interactive; others are `inert`. See [desktop-shell.md → AppSheet](desktop-shell.md#appsheet).
 
 `Component` receives a `windowId` prop so it can later participate in window-level features (e.g. dispatching `CLOSE` from inside the app). None of the current apps use this prop.
 
