@@ -58,7 +58,7 @@ Persisted in `localStorage` under `portfolio:theme`. Read on mount via [src/lib/
 Any surface that should look like macOS frosted glass:
 
 ```tsx
-className="bg-surface backdrop-blur-[var(--glass-blur)] border border-field-border shadow-[var(--overlay-shadow)] rounded-xl"
+className="bg-surface backdrop-blur-(--glass-blur) border border-field-border shadow-overlay rounded-xl"
 ```
 
 For deeper / darker surfaces (e.g. dock), swap `bg-surface` → `bg-surface-secondary`. For the most translucent (e.g. menu bar), keep `bg-surface` but use a thinner border (`border-b border-separator`).
