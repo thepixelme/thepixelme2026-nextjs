@@ -230,7 +230,7 @@ Sections, top to bottom:
 
 1. **Header row** — initials avatar (computed by splitting `ABOUT.name` on spaces and taking each first character) inside an 80×80 circle with a blue→purple gradient. Right of it: `<h1>` name, `<p>` title, location with `<MapPin size={12}>`.
 2. **Bio** — `<p>` of `ABOUT.bio`.
-3. **Skills** — heading + flex-wrap of `<Chip size="sm" variant="secondary">` per `ABOUT.skills[i]`. `Chip` is from `@heroui/react`.
+3. **Skills** — heading + flex-wrap of pill-shaped `<span>` tags per `ABOUT.skills[i]` (`inline-flex shrink-0 items-center gap-0.5 rounded-2xl bg-default px-1 py-0 text-xs leading-5 font-medium`).
 4. **Find me** — heading + flex-wrap of social links. Each link is an `<a>` with `target="_blank" rel="noopener noreferrer"`, rendering `<BrandIcon icon={BRANDS[s.brand]} size={14} />` and `s.label`.
 
 `BRANDS` is a local mapping from the `brand` literal to a `simple-icons` constant: `github → siGithub`. The `Social.brand` union and the `BRANDS` map must be kept in sync.

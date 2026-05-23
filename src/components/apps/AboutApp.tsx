@@ -1,6 +1,5 @@
 "use client";
 
-import { Chip } from "@heroui/react";
 import { Link2, MapPin, Wrench } from "lucide-react";
 import { siGithub } from "simple-icons";
 import BrandIcon from "@/components/BrandIcon";
@@ -38,9 +37,12 @@ export default function AboutApp() {
               </p>
               <div className="flex flex-wrap gap-2">
                 {group.items.map((s) => (
-                  <Chip key={s} size="sm" variant="secondary">
+                  <span
+                    key={s}
+                    className="inline-flex shrink-0 items-center gap-0.5 rounded-2xl bg-default px-1 py-0 text-xs leading-5 font-medium"
+                  >
                     {s}
-                  </Chip>
+                  </span>
                 ))}
               </div>
             </div>

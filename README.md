@@ -20,7 +20,7 @@ A personal portfolio for [thepixelme.com](https://thepixelme.com), built as an i
 | Framework        | Next.js 16.2.4 (App Router, Turbopack)                 |
 | Runtime          | React 19.2                                             |
 | Styling          | Tailwind CSS v4 via `@tailwindcss/postcss`             |
-| Component library | HeroUI v3 — `@heroui/react` (OSS) + `@heroui-pro/react` (Pro), glass theme |
+| Component library | HeroUI v3 — `@heroui-pro/react` (Pro) for `Command`, glass theme tokens via `@heroui/styles`. `@heroui/react` is installed only as a Pro peer dep; app code does not import from it. Most UI is plain React + Tailwind. |
 | Animation peer   | `motion` (Framer Motion under new name)                |
 | Icons            | `lucide-react` for UI icons, `simple-icons` for brand logos via a small `<BrandIcon>` wrapper |
 | Tooling          | Biome 2.2 for lint + format                            |

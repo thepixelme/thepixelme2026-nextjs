@@ -11,12 +11,14 @@ This file is the canonical style reference. Read it before writing any component
 - **Next.js 16.2.4** — App Router only. APIs differ from training data; consult [node_modules/next/dist/docs/01-app/](node_modules/next/dist/docs/01-app/) before writing Next-API-touching code.
 - **React 19** — `"use client"` directive on every interactive component. Default to server components for static content (apps that don't use state/events).
 - **Tailwind CSS v4** — configured via `@tailwindcss/postcss`. Use `@theme` block in CSS, not `tailwind.config.js`. Arbitrary values via `[var(--token)]` are fine and encouraged for glass tokens.
-- **HeroUI v3** — split across two packages:
-  - `@heroui/react` (OSS): `Button`, `Card`, `Modal`, `Input`, `Textarea`, `Chip`, `Menu`, etc.
-  - `@heroui-pro/react` (Pro): `Sheet`, `Command`, `Sidebar`, `ItemCard`, `Carousel`, `HoverCard`, `Widget`, etc.
+- **HeroUI v3** — only one Pro component is used at runtime:
+  - `@heroui-pro/react` (Pro): only `Command` (Cmd+K spotlight). Other Pro components are not in use; do not introduce them without discussion.
+  - `@heroui/react` (OSS): installed only as a peer dependency of `@heroui-pro/react` (Pro's `Command` imports `CloseButton` from it). **App code must not import from `@heroui/react`** — use plain elements + Tailwind instead.
+  - `@heroui/styles`: theme infrastructure only — provides the `@theme inline` mappings (`bg-surface`, `text-foreground`, `border-separator`, etc.) and base CSS variables. Not used for components.
   - **No `<HeroUIProvider>`** — v3 components work directly without a provider.
-  - Use **compound dot-notation** (e.g. `<Sheet.Trigger>`, `<Command.Backdrop>`). Never guess the structure — call `mcp__heroui-pro__get_component_docs` first.
+  - For HeroUI components, use **compound dot-notation** (e.g. `<Command.Backdrop>`). Never guess the structure — call `mcp__heroui-pro__get_component_docs` first.
   - Use **`onPress`** not `onClick` on HeroUI interactive elements.
+  - Everything else (chips, buttons, etc.) is plain `<span>`/`<a>`/`<button>` + Tailwind classes against the glass theme tokens.
 - **lucide-react ^1.11.0** — the only icon library. Do not introduce another.
 - **Biome 2.2** — both linter and formatter. `npm run lint` (check) and `npm run format` (write).
 
@@ -214,7 +216,7 @@ Never animate `width`/`height`/`left`/`top` directly during drag/resize — thos
 
 Order (Biome enforces, but write them this way to begin with):
 1. React / Next
-2. Third-party (`@heroui/react`, `@heroui-pro/react`, `lucide-react`, `motion/react`)
+2. Third-party (`@heroui-pro/react`, `lucide-react`, `motion/react`) — note: do not import from `@heroui/react`; it is only a Pro peer dep, not an app dependency.
 3. Internal absolute (`@/lib/...`, `@/components/...`)
 4. Relative (`./...`)
 5. Type-only imports last, with `import type`.

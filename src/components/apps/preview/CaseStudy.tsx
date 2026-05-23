@@ -1,11 +1,15 @@
 "use client";
 
-import { buttonVariants } from "@heroui/styles";
 import { ExternalLink } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
 import { siGithub } from "simple-icons";
 import BrandIcon from "@/components/BrandIcon";
 import type { Highlight, Project } from "@/lib/projects";
+
+const buttonBase =
+  "relative isolate inline-flex h-10 w-fit origin-center items-center justify-center gap-2 rounded-3xl px-4 text-sm font-medium whitespace-nowrap select-none no-underline transition-colors duration-100 active:scale-[0.97] motion-reduce:transition-none md:h-9";
+const buttonSecondary = `${buttonBase} bg-default text-accent-soft-foreground hover:bg-default-hover`;
+const buttonTertiary = `${buttonBase} bg-default hover:bg-default-hover`;
 
 export function CaseStudy({
   project,
@@ -81,7 +85,7 @@ export function CaseStudy({
               href={project.link}
               target="_blank"
               rel="noopener noreferrer"
-              className={`${buttonVariants({ variant: "secondary" })} no-underline`}
+              className={buttonSecondary}
             >
               {linkLabel}
               <ExternalLink size={14} className="ml-1.5" />
@@ -92,7 +96,7 @@ export function CaseStudy({
               href={project.source}
               target="_blank"
               rel="noopener noreferrer"
-              className={`${buttonVariants({ variant: "tertiary" })} no-underline`}
+              className={buttonTertiary}
             >
               <BrandIcon icon={siGithub} size={14} className="mr-1.5" />
               View source
