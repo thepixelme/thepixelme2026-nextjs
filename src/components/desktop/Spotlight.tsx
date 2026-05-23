@@ -1,8 +1,7 @@
 "use client";
 
-import { Command } from "@heroui-pro/react";
 import { Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { APPS } from "@/components/apps/registry";
 import { useWindowsDispatch } from "@/lib/windows-store";
 import type { AppId } from "@/types/window";
@@ -15,6 +14,9 @@ interface Props {
 export default function Spotlight({ open, onOpenChange }: Props) {
   const dispatch = useWindowsDispatch();
   const [query, setQuery] = useState("");
+  const [activeIndex, setActiveIndex] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -28,50 +30,121 @@ export default function Spotlight({ open, onOpenChange }: Props) {
     return () => window.removeEventListener("keydown", handler);
   }, [onOpenChange]);
 
+  useEffect(() => {
+    if (open) {
+      previouslyFocusedRef.current =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null;
+      requestAnimationFrame(() => inputRef.current?.focus());
+    } else {
+      setQuery("");
+      setActiveIndex(0);
+      previouslyFocusedRef.current?.focus();
+      previouslyFocusedRef.current = null;
+    }
+  }, [open]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return APPS;
+    return APPS.filter((a) => a.title.toLowerCase().includes(q));
+  }, [query]);
+
+  const onQueryChange = (value: string) => {
+    setQuery(value);
+    setActiveIndex(0);
+  };
+
   const launch = (id: AppId) => {
     dispatch({ type: "OPEN", appId: id });
     onOpenChange(false);
-    setQuery("");
   };
 
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (filtered.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((i) => (i + 1) % filtered.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((i) => (i - 1 + filtered.length) % filtered.length);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const app = filtered[activeIndex];
+      if (app) launch(app.id);
+    }
+  };
+
+  if (!open) return null;
+
   return (
-    <Command>
-      <Command.Backdrop isOpen={open} onOpenChange={onOpenChange}>
-        <Command.Container>
-          <Command.Dialog>
-            <Command.InputGroup
-              value={query}
-              onChange={setQuery}
-              aria-label="Spotlight search"
-            >
-              <Command.InputGroup.Prefix>
-                <Search size={16} />
-              </Command.InputGroup.Prefix>
-              <Command.InputGroup.Input placeholder="Spotlight Search" />
-            </Command.InputGroup>
-            <Command.List
-              aria-label="Apps"
-              onAction={(key) => launch(key as AppId)}
-            >
-              <Command.Group heading="Apps">
-                {APPS.map((app) => {
-                  const Icon = app.icon;
-                  return (
-                    <Command.Item
-                      key={app.id}
-                      id={app.id}
-                      textValue={app.title}
-                    >
-                      <Icon size={16} />
-                      <span className="ml-2">{app.title}</span>
-                    </Command.Item>
-                  );
-                })}
-              </Command.Group>
-            </Command.List>
-          </Command.Dialog>
-        </Command.Container>
-      </Command.Backdrop>
-    </Command>
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
+      <button
+        type="button"
+        aria-label="Close spotlight"
+        onClick={() => onOpenChange(false)}
+        className="absolute inset-0 cursor-default bg-backdrop"
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Spotlight search"
+        className="relative w-[min(640px,calc(100%-32px))] overflow-hidden rounded-2xl border border-separator bg-overlay shadow-overlay backdrop-blur-(--glass-blur)"
+      >
+        <div className="flex items-center gap-3 border-b border-separator px-4 py-3">
+          <Search size={16} className="text-foreground/50" />
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => onQueryChange(e.target.value)}
+            onKeyDown={onKeyDown}
+            placeholder="Spotlight Search"
+            aria-label="Spotlight search"
+            aria-controls="spotlight-list"
+            aria-activedescendant={
+              filtered[activeIndex]
+                ? `spotlight-item-${filtered[activeIndex].id}`
+                : undefined
+            }
+            className="flex-1 bg-transparent text-base outline-none placeholder:text-foreground/40"
+          />
+        </div>
+        <div
+          id="spotlight-list"
+          role="listbox"
+          aria-label="Apps"
+          className="max-h-[50vh] overflow-y-auto p-1"
+        >
+          {filtered.length === 0 && (
+            <div className="px-3 py-2 text-sm text-foreground/50">
+              No results
+            </div>
+          )}
+          {filtered.map((app, i) => {
+            const Icon = app.icon;
+            const isActive = i === activeIndex;
+            return (
+              <button
+                key={app.id}
+                id={`spotlight-item-${app.id}`}
+                type="button"
+                role="option"
+                aria-selected={isActive}
+                tabIndex={-1}
+                onMouseMove={() => setActiveIndex(i)}
+                onClick={() => launch(app.id)}
+                className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm ${
+                  isActive ? "bg-default" : ""
+                }`}
+              >
+                <Icon size={16} />
+                <span>{app.title}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }

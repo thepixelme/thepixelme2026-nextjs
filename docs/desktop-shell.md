@@ -109,38 +109,47 @@ There is no right-click handling on dock icons.
 
 ## Spotlight ([Spotlight.tsx](../src/components/desktop/Spotlight.tsx))
 
-Controlled command palette built on the HeroUI Pro `Command` compound component. Props: `{ open: boolean; onOpenChange: (open: boolean) => void }`.
+Hand-rolled command palette. Props: `{ open: boolean; onOpenChange: (open: boolean) => void }`.
 
-Internal state: `query: string` (the input value).
+Internal state: `query: string` (the input value), `activeIndex: number` (the highlighted result). Refs: `inputRef` (focus target), `previouslyFocusedRef` (focus return target).
 
-Keyboard listener (added on mount, removed on unmount):
+Window keyboard listener (added on mount, removed on unmount):
 
 - `Cmd+K` or `Ctrl+K` → `e.preventDefault()` and `onOpenChange(true)`.
 - `Escape` → `onOpenChange(false)`.
 
-Composition:
+Open/close effect:
+
+- On open → captures `document.activeElement` and focuses the input on the next animation frame.
+- On close → resets `query` and `activeIndex`, then returns focus to the previously focused element.
+
+Filtering and navigation:
+
+- `filtered = APPS.filter(a => a.title.toLowerCase().includes(query.trim().toLowerCase()))` (no query → all apps).
+- Input `onKeyDown`: `ArrowDown` / `ArrowUp` cycle `activeIndex`; `Enter` calls `launch(filtered[activeIndex].id)`.
+- List item `onMouseMove` sets `activeIndex` to its position; `onClick` launches.
+
+Structure (when `open` is true):
 
 ```
-<Command>
-  <Command.Backdrop isOpen={open} onOpenChange={onOpenChange}>
-    <Command.Container>
-      <Command.Dialog>
-        <Command.InputGroup value={query} onChange={setQuery} aria-label="Spotlight search">
-          <Command.InputGroup.Prefix><Search size={16} /></Command.InputGroup.Prefix>
-          <Command.InputGroup.Input placeholder="Spotlight Search" />
-        </Command.InputGroup>
-        <Command.List aria-label="Apps" onAction={(key) => launch(key as AppId)}>
-          <Command.Group heading="Apps">
-            {APPS.map(app => <Command.Item id={app.id} textValue={app.title}>...</Command.Item>)}
-          </Command.Group>
-        </Command.List>
-      </Command.Dialog>
-    </Command.Container>
-  </Command.Backdrop>
-</Command>
+<div role="dialog" aria-modal className="fixed inset-0 z-50 ... bg-backdrop pt-[15vh]"> {/* backdrop, click-outside closes */}
+  <div className="w-[min(640px,...)] rounded-2xl border border-separator bg-overlay shadow-overlay backdrop-blur-(--glass-blur)">
+    <div className="... border-b border-separator">
+      <Search size={16} />
+      <input ref={inputRef} ... aria-controls="spotlight-list" aria-activedescendant=... />
+    </div>
+    <ul id="spotlight-list" role="listbox">
+      {filtered.map((app, i) => (
+        <li role="option" aria-selected={i === activeIndex} className={i === activeIndex ? "bg-default" : ""}>
+          <Icon size={16} /> <span>{app.title}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+</div>
 ```
 
-`launch(appId)` dispatches `OPEN { appId }`, calls `onOpenChange(false)`, and resets `query` to `""`. Items render `<app.icon size={16}>` followed by `<span className="ml-2">{app.title}</span>`.
+`launch(appId)` dispatches `OPEN { appId }` and calls `onOpenChange(false)` (the close effect resets `query` and `activeIndex`).
 
 The list contains only apps. There are no project entries, recent searches, or other groups.
 
@@ -252,7 +261,7 @@ The hit area overlaps the bottom ~44 pt of the active sheet — acceptable per i
 
 ## Cross-references
 
-- Theme tokens (`--surface`, `--separator`, `--glass-blur`, etc.) are defined by `@heroui-pro/react/themes/glass` — see [styling-and-icons.md](styling-and-icons.md#glass-theme).
+- Theme tokens (`--surface`, `--separator`, `--glass-blur`, etc.) are defined locally in [globals.css](../src/app/globals.css) — see [styling-and-icons.md](styling-and-icons.md#glass-theme).
 - Brand-icon rendering — [styling-and-icons.md](styling-and-icons.md#brandicon).
 - Window state machine that all dispatches feed into — [window-manager.md](window-manager.md#actions).
 - How apps are rendered inside either `<Window>` or `<AppSheet>` — [apps.md](apps.md).

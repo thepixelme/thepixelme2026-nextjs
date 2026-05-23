@@ -97,7 +97,7 @@ Mobile shell adds its own layers (only present when `useIsMobile()` is true):
 | Desktop chrome       | [src/components/desktop/](../src/components/desktop/)       |
 | App content          | [src/components/apps/](../src/components/apps/)             |
 | App registration     | [src/components/apps/registry.ts](../src/components/apps/registry.ts) |
-| Theme tokens         | Imported via `@heroui-pro/react/themes/glass` in [globals.css](../src/app/globals.css) |
+| Theme tokens         | Defined locally in [globals.css](../src/app/globals.css) under `:root`, `html.glass-light`, `html.glass-dark` |
 | Theme switching      | [src/lib/theme.ts](../src/lib/theme.ts)                     |
 | Clock                | [src/lib/clock.ts](../src/lib/clock.ts)                     |
 | Static portfolio data | [src/lib/portfolio-data.ts](../src/lib/portfolio-data.ts) |
@@ -109,6 +109,6 @@ Mobile shell adds its own layers (only present when `useIsMobile()` is true):
 ## Stack notes
 
 - Next.js 16 App Router with Turbopack. Read the matching guide under [node_modules/next/dist/docs/01-app/](../node_modules/next/dist/docs/01-app/) before touching Next-API surfaces — see [AGENTS.md](../AGENTS.md).
-- HeroUI v3 has **no `<HeroUIProvider>`**. Components are used directly. Use `onPress` (not `onClick`) on HeroUI interactive elements; native `<button>` elements still use `onClick`.
-- Tailwind CSS v4 is wired through `@tailwindcss/postcss`. There is no `tailwind.config.js` — design tokens live in `@heroui-pro/react/themes/glass` (imported in [globals.css](../src/app/globals.css)).
+- No React component library — UI is plain elements + Tailwind utilities. Use native `onClick` on `<button>` / `<a>`.
+- Tailwind CSS v4 is wired through `@tailwindcss/postcss`. There is no `tailwind.config.js` — design tokens and the `@theme inline` mappings live entirely in [globals.css](../src/app/globals.css) (originally forked from HeroUI Pro's glass theme).
 - Biome 2.2 handles both lint (`npm run lint`) and format (`npm run format`).

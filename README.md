@@ -20,7 +20,7 @@ A personal portfolio for [thepixelme.com](https://thepixelme.com), built as an i
 | Framework        | Next.js 16.2.4 (App Router, Turbopack)                 |
 | Runtime          | React 19.2                                             |
 | Styling          | Tailwind CSS v4 via `@tailwindcss/postcss`             |
-| Component library | HeroUI v3 — `@heroui-pro/react` (Pro) for `Command`, glass theme tokens via `@heroui/styles`. `@heroui/react` is installed only as a Pro peer dep; app code does not import from it. Most UI is plain React + Tailwind. |
+| Component library | Plain React + Tailwind. Theme tokens (surfaces, separators, shadows, easing) are defined locally in [src/app/globals.css](src/app/globals.css) — originally forked from HeroUI Pro's glass theme. |
 | Animation peer   | `motion` (Framer Motion under new name)                |
 | Icons            | `lucide-react` for UI icons, `simple-icons` for brand logos via a small `<BrandIcon>` wrapper |
 | Tooling          | Biome 2.2 for lint + format                            |
@@ -55,8 +55,6 @@ Lint and format:
 npm run lint
 npm run format
 ```
-
-HeroUI Pro requires a license — `npx heroui-pro@latest status` to check, `npx heroui-pro login` to authenticate. The first `npm install` after cloning expects either an interactive session or a `HEROUI_AUTH_TOKEN` env var.
 
 ## Project layout
 

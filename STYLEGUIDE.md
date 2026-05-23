@@ -11,14 +11,9 @@ This file is the canonical style reference. Read it before writing any component
 - **Next.js 16.2.4** — App Router only. APIs differ from training data; consult [node_modules/next/dist/docs/01-app/](node_modules/next/dist/docs/01-app/) before writing Next-API-touching code.
 - **React 19** — `"use client"` directive on every interactive component. Default to server components for static content (apps that don't use state/events).
 - **Tailwind CSS v4** — configured via `@tailwindcss/postcss`. Use `@theme` block in CSS, not `tailwind.config.js`. Arbitrary values via `[var(--token)]` are fine and encouraged for glass tokens.
-- **HeroUI v3** — only one Pro component is used at runtime:
-  - `@heroui-pro/react` (Pro): only `Command` (Cmd+K spotlight). Other Pro components are not in use; do not introduce them without discussion.
-  - `@heroui/react` (OSS): installed only as a peer dependency of `@heroui-pro/react` (Pro's `Command` imports `CloseButton` from it). **App code must not import from `@heroui/react`** — use plain elements + Tailwind instead.
-  - `@heroui/styles`: theme infrastructure only — provides the `@theme inline` mappings (`bg-surface`, `text-foreground`, `border-separator`, etc.) and base CSS variables. Not used for components.
-  - **No `<HeroUIProvider>`** — v3 components work directly without a provider.
-  - For HeroUI components, use **compound dot-notation** (e.g. `<Command.Backdrop>`). Never guess the structure — call `mcp__heroui-pro__get_component_docs` first.
-  - Use **`onPress`** not `onClick` on HeroUI interactive elements.
-  - Everything else (chips, buttons, etc.) is plain `<span>`/`<a>`/`<button>` + Tailwind classes against the glass theme tokens.
+- **No component library** — UI is built from plain React elements + Tailwind utilities. The design tokens (surfaces, separators, shadows, easing curves) and Tailwind `@theme inline` mappings live in [src/app/globals.css](src/app/globals.css). They were originally forked from HeroUI Pro's glass theme; the dependency is gone but the token names (`bg-surface`, `text-foreground`, `border-separator`, etc.) are preserved.
+  - Keep theme values centralised in `globals.css` — do not redefine them per-component.
+  - Use native `onClick` on `<button>` / `<a>` elements (the previous `onPress` convention was a HeroUI-ism and no longer applies).
 - **lucide-react ^1.11.0** — the only icon library. Do not introduce another.
 - **Biome 2.2** — both linter and formatter. `npm run lint` (check) and `npm run format` (write).
 
@@ -26,7 +21,7 @@ This file is the canonical style reference. Read it before writing any component
 
 ## 2. Theme — glassmorphism
 
-Default theme is `glass-light` (Big Sur). The theme is applied via `<html className>` (`"glass-light"` or `"glass-dark"`) and persisted by the `useTheme` hook in [src/lib/theme.ts](src/lib/theme.ts). Theme variables come from HeroUI Pro's glass theme — **never hardcode colors**, always reference tokens.
+Default theme is `glass-light` (Big Sur). The theme is applied via `<html className>` (`"glass-light"` or `"glass-dark"`) and persisted by the `useTheme` hook in [src/lib/theme.ts](src/lib/theme.ts). Theme variables live in [src/app/globals.css](src/app/globals.css) under the `html.glass-light` and `html.glass-dark` selectors — **never hardcode colors**, always reference tokens.
 
 ### 2.1 Setting the theme
 
@@ -180,7 +175,7 @@ Use these named layers. Do not improvise z values.
 
 ## 6. Animation
 
-- **Library**: `motion/react` (Framer Motion under the new name; HeroUI Pro peer dep). Do not pull in another animation lib.
+- **Library**: `motion/react` (Framer Motion under the new name). Do not pull in another animation lib.
 - **Window open**: scale `0.6 → 1`, opacity `0 → 1`, origin = position of the dock icon that opened it. ~250ms, `ease-out`.
 - **Window close**: opacity `1 → 0`, ~180ms, `ease-in`. No scale or translate.
 - **Window minimize**: animate to dock icon position, scale `1 → 0.1`, opacity `1 → 0`. ~300ms `ease-in-out`. Unminimize is the reverse, ~300ms `ease-out`.
@@ -216,7 +211,7 @@ Never animate `width`/`height`/`left`/`top` directly during drag/resize — thos
 
 Order (Biome enforces, but write them this way to begin with):
 1. React / Next
-2. Third-party (`@heroui-pro/react`, `lucide-react`, `motion/react`) — note: do not import from `@heroui/react`; it is only a Pro peer dep, not an app dependency.
+2. Third-party (`lucide-react`, `motion/react`, etc.)
 3. Internal absolute (`@/lib/...`, `@/components/...`)
 4. Relative (`./...`)
 5. Type-only imports last, with `import type`.
@@ -301,7 +296,7 @@ Shared rules:
 
 ## 10. Accessibility minimums
 
-- All interactive elements reachable by keyboard. HeroUI handles most of this.
+- All interactive elements reachable by keyboard. Add `tabIndex`, `aria-*`, and focus styles to plain elements explicitly.
 - `aria-label` on icon-only buttons (traffic lights, dock icons, menu-bar icons).
 - Focus rings: don't suppress. Use `--accent` for the ring color (already the default in glass theme).
 - `prefers-reduced-motion`: respect via `motion/react`'s `useReducedMotion()`. Window transitions become instant; desktop dock magnify becomes static (it's a pure CSS transition with no `motion/react` involvement, so it's effectively unchanged); mobile dock show/hide collapses to a duration of 0.

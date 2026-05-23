@@ -4,37 +4,35 @@ CSS architecture, the glass theme, common Tailwind utility patterns, and the two
 
 ## CSS pipeline
 
-[src/app/globals.css](../src/app/globals.css) is the single CSS entry point. Import order matters:
+[src/app/globals.css](../src/app/globals.css) is the single CSS entry point. It is fully local — no third-party imports beyond Tailwind:
 
 ```css
 @import "tailwindcss";
-@import "@heroui/styles";
-@import "@heroui-pro/react/css";
-@import "@heroui-pro/react/themes/glass";
+/* :root, html.glass-light, html.glass-dark, @theme inline, base behaviour */
 ```
 
-1. `tailwindcss` — Tailwind v4 base + utilities.
-2. `@heroui/styles` — HeroUI OSS base CSS variables and component styles.
-3. `@heroui-pro/react/css` — HeroUI Pro component CSS (BEM-style).
-4. `@heroui-pro/react/themes/glass` — overrides the variables and adds `backdrop-blur` to surface-using components, scoped under `html.glass-light` and `html.glass-dark`.
+Source order inside the file:
 
-There is **no** `tailwind.config.js`; configuration lives in `@theme` blocks shipped by HeroUI. Tailwind v4 picks them up via the `@tailwindcss/postcss` plugin.
+1. `:root` — cross-theme primitives (`--white`, `--snow`, `--eclipse`, `--radius`, `--spacing`, etc.) **plus** the light theme defaults (`--background`, `--surface`, `--accent`, all soft/hover variants).
+2. `html.glass-dark, html[data-theme="glass-dark"]` — dark theme overrides for the variables that differ from light defaults.
+3. `html.glass-light, html[data-theme="glass-light"]` — Pro "glass" overrides for light (translucent surfaces, `--glass-blur: 20px`, gradient backdrop).
+4. `html.glass-dark, html[data-theme="glass-dark"]` — Pro "glass" overrides for dark (`--glass-blur: 36px`, inverted translucency).
+5. `@theme inline { … }` — Tailwind v4 utility mappings (`--color-surface → var(--surface)`, `--shadow-overlay → var(--overlay-shadow)`, easing curves, `@keyframes`).
+6. Base behaviour: global border-colour inheritance, `body` font/background/overflow, `::selection` highlight.
 
-The CSS file also defines:
+There is **no** `tailwind.config.js`; the `@theme inline` block at the bottom of `globals.css` is the only configuration. Tailwind v4 picks it up via the `@tailwindcss/postcss` plugin.
 
-- `html, body { height: 100% }`
-- `body` font (`var(--font-sans)`), background (`var(--background)`), color (`var(--foreground)`), and `overflow: hidden` so the desktop is the only scroll container.
-- `::selection { background: color-mix(in oklab, var(--accent) 30%, transparent) }`.
+These tokens and the surrounding glass values were originally extracted from HeroUI Pro's glass theme (`@heroui-pro/react/themes/glass`). The dependency has been removed; the file is now the single source of truth. If you need to compare against the original, see `git log -- src/app/globals.css`.
 
 ## Theme application
 
 The theme class lives on `<html>`. SSR markup ([src/app/layout.tsx](../src/app/layout.tsx)) ships `glass-light` by default. After hydration, [useTheme](../src/lib/theme.ts) may swap to `glass-dark` based on `localStorage["portfolio:theme"]`. Both classes are managed exclusively through `applyTheme(mode)` which removes both before adding the new one.
 
-The CSS shipped by `@heroui-pro/react/themes/glass` provides separate variable blocks for `html.glass-light` and `html.glass-dark`, so swapping the class re-themes everything that consumes the tokens.
+The `html.glass-light` and `html.glass-dark` blocks in [globals.css](../src/app/globals.css) supply separate variable values, so swapping the class re-themes everything that consumes the tokens. CSS specificity (`html.glass-*` beats `:root`) ensures the active theme wins.
 
 ## Glass theme tokens
 
-These are CSS custom properties defined by the glass theme. Use them via Tailwind's color tokens (e.g. `bg-surface`, `border-separator`) or arbitrary-value syntax (`backdrop-blur-(--glass-blur)`).
+These are CSS custom properties defined in [globals.css](../src/app/globals.css). Use them via Tailwind utility classes (e.g. `bg-surface`, `border-separator`) or arbitrary-value syntax (`backdrop-blur-(--glass-blur)`).
 
 | Token                     | Used for                                                              |
 | ------------------------- | --------------------------------------------------------------------- |
@@ -42,7 +40,7 @@ These are CSS custom properties defined by the glass theme. Use them via Tailwin
 | `--surface-secondary`     | Dock pill, Finder sidebar, Settings sidebar (`bg-surface-secondary`). |
 | `--surface-tertiary`      | Reserved for hover/pressed deep surfaces.                             |
 | `--overlay`               | Spotlight, popovers, tooltips (`bg-overlay`).                         |
-| `--field-background`      | Form inputs (HeroUI sets this internally).                            |
+| `--field-background`      | Form inputs.                                                          |
 | `--field-border`          | Subtle borders on cards/windows (`border-field-border`).              |
 | `--separator`             | Hairlines (`border-separator`, `divide-separator`).                   |
 | `--background`            | Body background fallback when no wallpaper is set.                    |
@@ -51,12 +49,12 @@ These are CSS custom properties defined by the glass theme. Use them via Tailwin
 | `--accent-foreground`     | Foreground color used on top of `--accent` surfaces.                  |
 | `--default`               | Neutral interactive bg (`bg-default`, `hover:bg-default`).            |
 | `--glass-blur`            | The `backdrop-filter` blur radius (20px in light, 36px in dark).      |
-| `--glass-pinned-surface`  | Fully opaque surface. Used by `Window` when `win.maximized` is true (and originally by HeroUI Pro for pinned data-grid cells). Has both light/dark variants. |
+| `--glass-pinned-surface`  | Fully opaque surface. Used by `Window` when `win.maximized` is true. Has both light/dark variants. |
 | `--surface-shadow`        | `shadow-surface` (transparent in glass — kept as a token so other themes can populate it). |
 | `--overlay-shadow`        | `shadow-overlay` — the layered drop shadow used by windows, modals, tooltips. |
 | `--field-shadow`          | Optional shadow on form fields.                                       |
 
-Run `mcp__heroui-pro__get_css({ theme: "glass" })` to see the full source if you need exact values.
+See the `html.glass-light` / `html.glass-dark` blocks in [globals.css](../src/app/globals.css) for the exact values.
 
 ### Hardcoded colors (allowed)
 

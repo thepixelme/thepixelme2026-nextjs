@@ -266,7 +266,7 @@ Layout: `<form className="flex h-full flex-col">` containing five stacked region
 
 A local `FieldRow` helper renders rows 1–2: `flex items-center gap-5 border-b border-separator px-7 py-3.5` with a `w-10` label cell (`text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/40`) followed by a `flex-1` content cell. The subject row is rendered inline (no label).
 
-Inputs are native `<input>` / `<textarea>` rather than HeroUI controls so borders/backgrounds stay flush against the row hairlines. The Send button is a native `<button>` (not HeroUI `Button`) — keeps the pill shape, gradient, and disabled treatment fully token-driven. All fields carry `aria-label`s.
+Inputs are native `<input>` / `<textarea>` so borders/backgrounds stay flush against the row hairlines, with the pill-shaped Send `<button>` keeping its shape, gradient, and disabled treatment fully token-driven. All fields carry `aria-label`s.
 
 Source content: `ABOUT.name` from [portfolio-data.ts](../src/lib/portfolio-data.ts). The destination email is *not* shown in the UI — it lives in the server-only `CONTACT_EMAIL` env var.
 
