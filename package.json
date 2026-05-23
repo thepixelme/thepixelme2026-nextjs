@@ -16,8 +16,6 @@
     "@number-flow/react": "^0.6.0",
     "embla-carousel": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
-    "heroui-native": "^1.0.2",
-    "heroui-native-pro": "^1.0.0-beta.1",
     "lucide-react": "^1.11.0",
     "motion": "^12.38.0",
     "next": "16.2.4",
