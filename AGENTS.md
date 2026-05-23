@@ -28,3 +28,14 @@ Before working on any feature, **read the relevant doc(s) in [docs/](docs/)** to
 - Changed `portfolio-data.ts` shapes or constants → update [docs/data.md](docs/data.md).
 
 The docs are reference material — describe what exists, not what's planned. No TODO/roadmap language.
+
+# Open source / secrets
+
+This repo is public. Treat every change as if a stranger will read the diff and `git log`.
+
+- **Never commit secrets.** API keys, tokens, passwords, signed URLs, and anything that grants access to a paid or private service go in `.env.local` (gitignored by [.gitignore](.gitignore)) — never in source, comments, docs, commit messages, or test fixtures.
+- **New env var? Update [.env.example](.env.example) and the "Getting started" section of [README.md](README.md) in the same PR.** Add the variable name with an empty value and a comment explaining what it is, where to obtain it, and whether it is required. If the app degrades without it, say how (e.g., "without this, the contact form returns 500").
+- **Server-only secrets must NOT use the `NEXT_PUBLIC_` prefix.** Next.js inlines `NEXT_PUBLIC_*` into the client bundle, where any visitor can read it. Read server-only env vars only from server code (Route Handlers, Server Components, server actions). The only server code in this repo today is [src/app/api/contact/route.ts](src/app/api/contact/route.ts) — follow its pattern: read `process.env.FOO` inside the handler, fail closed with a 500 if missing.
+- **Don't log secret values.** When erroring on a missing or malformed env var, log the variable name only. See [src/app/api/contact/route.ts](src/app/api/contact/route.ts) for the pattern (`console.error("[contact] RESEND_API_KEY is not set")` — name only, never the value).
+- **If a secret is ever committed, rotate it immediately at the provider.** Removing the file in a follow-up commit does not undo the leak — the key remains in git history (and any clone, fork, or mirror). Rotate first, then scrub.
+- **No real values in `.env.example`.** Placeholders and comments only. The file is tracked in git.
