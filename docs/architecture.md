@@ -17,7 +17,6 @@ The page ([src/app/page.tsx](../src/app/page.tsx)) is a server component that re
     isMobile === false →  <DesktopBody />:
                             <Wallpaper />              z=-10
                             <MenuBar />                z=50
-                            <DesktopContextMenu />     covers desktop area
                             <WindowManager />          dynamic z (≥10)
                             <Dock />                   z=40
                             <Spotlight />              z=60
@@ -63,7 +62,6 @@ Set in CSS classes; do not improvise. Source: [STYLEGUIDE.md §5.1](../STYLEGUID
 | Layer              | z-index | Owner                                                       |
 | ------------------ | ------- | ----------------------------------------------------------- |
 | Wallpaper          | `-z-10` | [Wallpaper.tsx](../src/components/desktop/Wallpaper.tsx)    |
-| Desktop body       | (auto)  | `<DesktopContextMenu.Trigger>` covering the desktop         |
 | Window (base)      | `≥ 10`  | Reducer's `topZ`, increments on `OPEN` / `FOCUS`            |
 | Dock               | `z-40`  | [Dock.tsx](../src/components/desktop/Dock.tsx)              |
 | Menu bar           | `z-50`  | [MenuBar.tsx](../src/components/desktop/MenuBar.tsx)        |

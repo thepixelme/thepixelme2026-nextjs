@@ -13,7 +13,7 @@ This file is the canonical style reference. Read it before writing any component
 - **Tailwind CSS v4** — configured via `@tailwindcss/postcss`. Use `@theme` block in CSS, not `tailwind.config.js`. Arbitrary values via `[var(--token)]` are fine and encouraged for glass tokens.
 - **HeroUI v3** — split across two packages:
   - `@heroui/react` (OSS): `Button`, `Card`, `Modal`, `Input`, `Textarea`, `Chip`, `Menu`, etc.
-  - `@heroui-pro/react` (Pro): `Sheet`, `Command`, `ContextMenu`, `Sidebar`, `ItemCard`, `Carousel`, `HoverCard`, `Widget`, etc.
+  - `@heroui-pro/react` (Pro): `Sheet`, `Command`, `Sidebar`, `ItemCard`, `Carousel`, `HoverCard`, `Widget`, etc.
   - **No `<HeroUIProvider>`** — v3 components work directly without a provider.
   - Use **compound dot-notation** (e.g. `<Sheet.Trigger>`, `<Command.Backdrop>`). Never guess the structure — call `mcp__heroui-pro__get_component_docs` first.
   - Use **`onPress`** not `onClick` on HeroUI interactive elements.
@@ -293,8 +293,7 @@ Shared rules:
 
 ### 9.5 Right-click context menu
 
-- macOS uses both touchpad two-finger-click and `ctrl+click`. The browser sends `contextmenu` events for both — use that.
-- Always offset the menu so its top-left starts at the click point.
+- The desktop does not intercept `contextmenu`. The browser's default right-click menu applies everywhere.
 
 ---
 

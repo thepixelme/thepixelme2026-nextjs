@@ -336,4 +336,4 @@ Source content: `ABOUT`, `PROJECTS` from [portfolio-data.ts](../src/lib/portfoli
 
 - The window types and store these apps depend on — [window-manager.md](window-manager.md).
 - All static content powering apps — [data.md](data.md).
-- Brand-icon rendering used in About and the desktop context menu — [styling-and-icons.md](styling-and-icons.md#brandicon).
+- Brand-icon rendering used in About — [styling-and-icons.md](styling-and-icons.md#brandicon).

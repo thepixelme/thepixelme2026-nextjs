@@ -1,6 +1,6 @@
 # Desktop Shell
 
-Everything that's always on screen: wallpaper, menu bar, dock, Spotlight palette, and the right-click context menu. Plus the two helper modules they depend on (`useClock`, `useTheme`).
+Everything that's always on screen: wallpaper, menu bar, dock, and Spotlight palette. Plus the two helper modules they depend on (`useClock`, `useTheme`).
 
 The shell components are children of `<WindowsProvider>` (mounted by [Desktop.tsx](../src/components/desktop/Desktop.tsx)) and freely call `useWindows()` / `useWindowsDispatch()` to read state and emit actions.
 
@@ -24,10 +24,9 @@ Structure:
 
 1. `<Wallpaper />`
 2. `<MenuBar onOpenSpotlight={() => setSpotlightOpen(true)} />`
-3. `<DesktopContextMenu>` wrapping a screen-reader-only "Desktop" label
-4. `<WindowManager />`
-5. `<Dock />`
-6. `<Spotlight open={spotlightOpen} onOpenChange={setSpotlightOpen} />`
+3. `<WindowManager />`
+4. `<Dock />`
+5. `<Spotlight open={spotlightOpen} onOpenChange={setSpotlightOpen} />`
 
 `DesktopBody` owns its own `spotlightOpen: boolean`.
 
@@ -144,22 +143,6 @@ Composition:
 `launch(appId)` dispatches `OPEN { appId }`, calls `onOpenChange(false)`, and resets `query` to `""`. Items render `<app.icon size={16}>` followed by `<span className="ml-2">{app.title}</span>`.
 
 The list contains only apps. There are no project entries, recent searches, or other groups.
-
-## DesktopContextMenu ([DesktopContextMenu.tsx](../src/components/desktop/DesktopContextMenu.tsx))
-
-Right-click trigger covering the desktop area, built on HeroUI Pro `ContextMenu`.
-
-Props: `{ children: ReactNode }`. The trigger element is a `<ContextMenu.Trigger className="absolute inset-0 pt-7 pb-24">` so its hit area covers the desktop minus the menu bar (top 28px) and dock zone (bottom 96px).
-
-Items, in order:
-
-| `id`         | Glyph                              | Label                  | Action on select                                         |
-| ------------ | ---------------------------------- | ---------------------- | -------------------------------------------------------- |
-| `about`      | `<Info size={14}>` (lucide)         | `About This Mac`       | Dispatches `OPEN { appId: "about" }`.                    |
-| —            | `<ContextMenu.Separator />`         | —                      | —                                                        |
-| `github`     | `<BrandIcon icon={siGithub} size={14} />` | `View on GitHub` | `window.open("https://github.com/", "_blank")`.          |
-
-Actions are dispatched from a single `onAction={(key) => { ... }}` handler on `<ContextMenu.Menu>`.
 
 ## useClock and useNow ([src/lib/clock.ts](../src/lib/clock.ts))
 
