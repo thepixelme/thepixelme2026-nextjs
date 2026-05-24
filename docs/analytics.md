@@ -6,8 +6,8 @@ Google Analytics 4, mounted via [`@next/third-parties/google`](https://nextjs.or
 
 `NEXT_PUBLIC_GA_ID` — GA4 Measurement ID (`G-XXXXXXXXXX`). Optional.
 
-- When **unset**, no analytics script loads, no consent banner is shown, and `trackEvent()` is a no-op.
-- When **set**, the consent banner appears on first visit. GA only loads after Accept.
+- When **unset**, no analytics script loads, no consent prompt is shown, and `trackEvent()` is a no-op. The desktop Notification Center shell still mounts (so the menu-bar clock can open an empty NC); it just contains no notifications.
+- When **set**, the consent prompt appears on first visit. On desktop the [Notification Center](desktop-shell.md#notification-center-srccomponentsnotificationsnotificationcentertsx) panel auto-opens with the consent notification inside; on mobile a standalone notification card appears top-center. GA only loads after Accept.
 - `NEXT_PUBLIC_*` values are **inlined into the client bundle at `next build` time**. Changing this var after a build does not change the deployed bundle — you must rebuild. If runtime configurability is ever needed, expose the ID from a server route and read it from the client instead.
 - This is a deliberate `NEXT_PUBLIC_*` exception (see [AGENTS.md](../AGENTS.md)) because GA4 must run in the browser; there is no way to keep the measurement ID server-side.
 
@@ -15,15 +15,15 @@ Documented placeholder in [.env.example](../.env.example).
 
 ## Consent contract
 
-[src/lib/analytics.ts](../src/lib/analytics.ts) exports `GA_CONSENT_STORAGE_KEY = "ga-consent"`.
+[src/lib/analytics.ts](../src/lib/analytics.ts) exports `GA_CONSENT_STORAGE_KEY = "ga-consent"`. The session-state machine lives in the [`useAnalyticsConsent()`](../src/lib/useAnalyticsConsent.ts) hook, which is the **single owner** of consent state — it must be called only once, inside [`AnalyticsConsent`](../src/components/analytics/AnalyticsConsent.tsx). Notification surfaces (`NotificationCenter`, `MobileConsentNotification`) receive `accept` / `decline` / `promptVisible` as props.
 
 | `localStorage["ga-consent"]` | Effect |
 |---|---|
 | `"granted"` | `<GoogleAnalytics>` mounts. `trackEvent()` sends events. |
-| `"denied"`  | No script, no events. Banner does not return. |
-| absent      | Banner shown. No script until the visitor decides. |
+| `"denied"`  | No script, no events. Prompt does not return. |
+| absent      | Consent prompt shown (auto-opens NC on desktop). No script until the visitor decides. |
 
-`readConsent()` and `writeConsent()` both wrap `localStorage` access in try/catch — failures return `null`/`false` rather than throwing. On Accept-with-storage-failure the banner hides for the session but consent stays non-granted (fail closed); on Decline-with-storage-failure the banner also hides. Neither failure persists, so a fresh tab/reload re-prompts.
+`readConsent()` and `writeConsent()` both wrap `localStorage` access in try/catch — failures return `null`/`false` rather than throwing. On Accept-with-storage-failure the card hides for the session but consent stays non-granted (fail closed); on Decline-with-storage-failure the card also hides. Neither failure persists, so a fresh tab/reload re-prompts.
 
 To reset for testing: open DevTools → Application → Local Storage → delete `ga-consent`.
 

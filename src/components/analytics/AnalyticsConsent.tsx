@@ -1,72 +1,69 @@
 "use client";
 
 import { GoogleAnalytics } from "@next/third-parties/google";
-import { useEffect, useState } from "react";
-import { type ConsentValue, readConsent, writeConsent } from "@/lib/analytics";
-
-const buttonBase =
-  "inline-flex h-11 items-center justify-center rounded-lg px-4 text-sm font-medium select-none transition-colors duration-100 active:scale-[0.97] motion-reduce:transition-none lg:h-9";
+import { BarChart3 } from "lucide-react";
+import { useEffect, useRef } from "react";
+import MobileConsentNotification from "@/components/notifications/MobileConsentNotification";
+import NotificationCard from "@/components/notifications/NotificationCard";
+import NotificationCenter from "@/components/notifications/NotificationCenter";
+import { useNotificationCenter } from "@/lib/notification-center";
+import { useAnalyticsConsent } from "@/lib/useAnalyticsConsent";
+import { useIsMobile } from "@/lib/useIsMobile";
 
 export default function AnalyticsConsent() {
+  const consent = useAnalyticsConsent();
+  const isMobile = useIsMobile();
+  const { setOpen } = useNotificationCenter();
+  const declineRef = useRef<HTMLButtonElement>(null);
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
-  const [consent, setConsent] = useState<ConsentValue | null>(null);
-  const [bannerVisible, setBannerVisible] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
+  // Auto-open the desktop Notification Center when the prompt becomes visible.
+  // Desktop-only: mobile must not mutate shared NC state, otherwise a later
+  // resize from mobile to desktop would reveal an already-open panel.
   useEffect(() => {
-    setMounted(true);
-    if (!gaId) return;
-    const stored = readConsent();
-    setConsent(stored);
-    setBannerVisible(stored === null);
-  }, [gaId]);
+    if (isMobile === false && consent.promptVisible) {
+      setOpen(true);
+    }
+  }, [isMobile, consent.promptVisible, setOpen]);
 
-  if (!mounted || !gaId) return null;
+  if (!consent.mounted || isMobile === null) return null;
 
-  const handleAccept = () => {
-    const ok = writeConsent("granted");
-    setBannerVisible(false);
-    if (ok) setConsent("granted");
-  };
+  const gaMount =
+    consent.analyticsEnabled && gaId ? <GoogleAnalytics gaId={gaId} /> : null;
 
-  const handleDecline = () => {
-    writeConsent("denied");
-    setBannerVisible(false);
-    setConsent("denied");
-  };
+  if (isMobile) {
+    return (
+      <>
+        {gaMount}
+        {consent.promptVisible && (
+          <MobileConsentNotification
+            accept={consent.accept}
+            decline={consent.decline}
+          />
+        )}
+      </>
+    );
+  }
 
   return (
     <>
-      {consent === "granted" && <GoogleAnalytics gaId={gaId} />}
-      {bannerVisible && (
-        <section
-          aria-label="Analytics consent"
-          className="fixed z-50 inset-x-3 top-[calc(env(safe-area-inset-top)+3.25rem)] mx-auto max-w-md overflow-hidden rounded-xl border border-separator bg-overlay shadow-overlay backdrop-blur-(--glass-blur) lg:inset-auto lg:right-4 lg:top-12 lg:mx-0 lg:max-w-sm"
-        >
-          <div className="px-4 py-3">
-            <p className="text-sm">
-              This site uses Google Analytics to understand which apps and links
-              visitors engage with. No personal data is sold or shared.
-            </p>
-            <div className="mt-3 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={handleDecline}
-                className={`${buttonBase} bg-default hover:bg-default-hover`}
-              >
-                Decline
-              </button>
-              <button
-                type="button"
-                onClick={handleAccept}
-                className={`${buttonBase} bg-default text-accent-soft-foreground hover:bg-default-hover`}
-              >
-                Accept
-              </button>
-            </div>
-          </div>
-        </section>
-      )}
+      {gaMount}
+      <NotificationCenter initialFocusRef={declineRef}>
+        {consent.promptVisible && (
+          <NotificationCard
+            icon={<BarChart3 size={16} />}
+            iconTileClassName="bg-accent text-accent-foreground"
+            appLabel="Analytics"
+            timestamp="now"
+            title="Allow Analytics?"
+            body="This site uses Google Analytics to understand which apps and links visitors engage with. No personal data is sold or shared."
+            actions={[
+              { label: "Decline", onClick: consent.decline, ref: declineRef },
+              { label: "Allow", onClick: consent.accept },
+            ]}
+          />
+        )}
+      </NotificationCenter>
     </>
   );
 }
