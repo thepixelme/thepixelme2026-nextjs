@@ -3,11 +3,17 @@
 import { Battery, Search, Wifi } from "lucide-react";
 import { useMemo } from "react";
 import { useNow } from "@/lib/clock";
+import { useNotificationCenter } from "@/lib/notification-center";
 
 const SHORT_FORMAT = new Intl.DateTimeFormat(undefined, {
   hour: "numeric",
   minute: "2-digit",
 });
+
+// Inlined at build time (NEXT_PUBLIC_*). When unset, the clock stays plain
+// text — mobile has no NC panel to open empty, so making it a button would
+// be an invisible no-op.
+const ANALYTICS_ENABLED = Boolean(process.env.NEXT_PUBLIC_GA_ID);
 
 interface Props {
   onOpenSpotlight: () => void;
@@ -16,6 +22,7 @@ interface Props {
 export default function MobileStatusBar({ onOpenSpotlight }: Props) {
   const now = useNow();
   const shortTime = useMemo(() => (now ? SHORT_FORMAT.format(now) : ""), [now]);
+  const { toggle: toggleNotificationCenter } = useNotificationCenter();
 
   return (
     <header
@@ -24,7 +31,18 @@ export default function MobileStatusBar({ onOpenSpotlight }: Props) {
                  h-[calc(2.75rem+env(safe-area-inset-top))]
                  pt-[env(safe-area-inset-top)]"
     >
-      <span className="text-xs font-medium tabular-nums">{shortTime}</span>
+      {ANALYTICS_ENABLED ? (
+        <button
+          type="button"
+          aria-label="Toggle Analytics preference"
+          onClick={toggleNotificationCenter}
+          className="-ml-1.5 rounded-md px-1.5 py-0.5 text-xs font-medium tabular-nums hover:bg-surface-tertiary"
+        >
+          {shortTime}
+        </button>
+      ) : (
+        <span className="text-xs font-medium tabular-nums">{shortTime}</span>
+      )}
       <div className="-mr-2 flex items-center gap-3">
         <Wifi size={14} />
         <Battery size={16} />

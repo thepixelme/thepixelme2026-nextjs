@@ -15,7 +15,7 @@ export default function NotificationCenter({
   initialFocusRef,
   children,
 }: Props) {
-  const { open, setOpen } = useNotificationCenter();
+  const { open, setOpen, locked } = useNotificationCenter();
   const reduceMotion = useReducedMotion();
   const headingId = useId();
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
@@ -78,15 +78,17 @@ export default function NotificationCenter({
               <h2 id={headingId} className="text-sm font-semibold">
                 Notification Center
               </h2>
-              <button
-                ref={closeButtonRef}
-                type="button"
-                aria-label="Close Notification Center"
-                onClick={() => setOpen(false)}
-                className="grid h-7 w-7 place-items-center rounded-md text-foreground/60 hover:bg-surface-tertiary hover:text-foreground"
-              >
-                <X size={14} />
-              </button>
+              {!locked && (
+                <button
+                  ref={closeButtonRef}
+                  type="button"
+                  aria-label="Close Notification Center"
+                  onClick={() => setOpen(false)}
+                  className="grid h-7 w-7 place-items-center rounded-md text-foreground/60 hover:bg-surface-tertiary hover:text-foreground"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </header>
             {isEmpty ? (
               <p className="px-1 text-xs text-foreground/50">

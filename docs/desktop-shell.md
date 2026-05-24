@@ -211,7 +211,7 @@ Sheet stack is sorted **ascending by `z`** so the highest-z sheet renders last (
 
 Fixed top, `z-50`. Height `calc(2.75rem + env(safe-area-inset-top))` with `pt-[env(safe-area-inset-top)]` so the 44 pt content sits below the notch.
 
-- Left: `useNow()` formatted as `h:mm a`.
+- Left: `useNow()` formatted as `h:mm a`. **When `NEXT_PUBLIC_GA_ID` is set (R8)**, renders as a `<button>` calling `toggle()` from `useNotificationCenter()` — this is the mobile re-decide path for analytics consent (open the standalone consent card). When env is unset, stays plain `<span>` (no NC panel on mobile, so a toggle would have no visible effect).
 - Right: `<Wifi size={14}/>`, `<Battery size={16}/>`, and a `<Search size={14}/>` button (`h-11 w-11` hit area) that calls `onOpenSpotlight()`.
 
 ## MobileDock ([src/components/mobile/MobileDock.tsx](../src/components/mobile/MobileDock.tsx))
@@ -263,12 +263,13 @@ The hit area overlaps the bottom ~44 pt of the active sheet — acceptable per i
 
 A macOS-style notification panel that slides in from the right edge when the menu-bar clock is clicked. Generic surface — it knows about open/closed state and the panel chrome (header + close X + animation) but **not** about analytics or any specific notification. Notifications are passed in as `children`.
 
-- **Provider:** [`NotificationCenterProvider`](../src/lib/notification-center.ts) wraps the tree in `layout.tsx` and exposes `{ open, toggle, setOpen }` via `useNotificationCenter()`. Always mounted — the panel and clock work even when no notifications exist.
+- **Provider:** [`NotificationCenterProvider`](../src/lib/notification-center.ts) wraps the tree in `layout.tsx` and exposes `{ open, toggle, setOpen, locked, setLocked }` via `useNotificationCenter()`. Always mounted — the panel and clock work even when no notifications exist.
 - **Placement (R7 liquid glass):** `fixed right-3 top-10 bottom-3 z-50 w-90` (360px wide, detached from viewport edges with ~12px margins). Rounded on all corners. Starts at `top-10` so the menu bar (`top-0 h-7`) — including the clock — stays clickable while the panel is open.
 - **Surface (R7 liquid glass):** `bg-liquid-glass-surface shadow-liquid-glass backdrop-blur-(--liquid-glass-blur) backdrop-saturate-(--liquid-glass-saturate)` — translucent panel with macOS-Vibrancy-style saturation boost, deeper outer shadow, and a 1px inset specular top highlight. See [STYLEGUIDE.md §2.4](../STYLEGUIDE.md) for the recipe.
 - **Animation:** spring slide-in from the right using `motion/react` (`stiffness: 320, damping: 32`, matching `AppSheet`). Respects `useReducedMotion`.
 - **Close:** Esc / click backdrop / click X / call `setOpen(false)`. Backdrop is transparent (no dim) — matches real macOS.
-- **Focus:** captures `document.activeElement` on open and restores it on close. Initial focus moves to the `initialFocusRef` consumer-provided element (e.g. the Decline button on the consent card) or the close X if not provided. Non-modal — Tab can leave the panel naturally.
+- **Modal lock (R8):** when a consumer (currently `<AnalyticsConsent>`) calls `setLocked(true)`, all close-attempts (`setOpen(false)`, `toggle()` while open) become no-ops at the context level. Open-attempts still work. The close X button is **hidden** (not rendered) while locked — keeps macOS-style "no broken affordance." Used to force a forced explicit Allow/Decline before the NC can be dismissed.
+- **Focus:** captures `document.activeElement` on open and restores it on close. Initial focus moves to the `initialFocusRef` consumer-provided element (e.g. the Decline button on the consent card) or the close X if not provided (and not hidden by the lock). Non-modal — Tab can leave the panel naturally.
 - **Empty state:** when `Children.count(children) === 0`, renders a muted "No new notifications" line.
 
 ## NotificationCard ([src/components/notifications/NotificationCard.tsx](../src/components/notifications/NotificationCard.tsx))
@@ -282,17 +283,22 @@ Generic visual primitive for a single macOS notification. Props: `icon`, `iconTi
 
 ## AnalyticsConsent ([src/components/analytics/AnalyticsConsent.tsx](../src/components/analytics/AnalyticsConsent.tsx))
 
-The single owner of consent state. Calls [`useAnalyticsConsent()`](../src/lib/useAnalyticsConsent.ts) once and renders three things:
+The single owner of consent state. Calls [`useAnalyticsConsent()`](../src/lib/useAnalyticsConsent.ts) once and owns the modal lock, the editing flag, and the card-content matrix.
 
-1. `<GoogleAnalytics>` from `@next/third-parties/google` when `analyticsEnabled` (consent granted + env var set).
-2. On desktop: `<NotificationCenter>` is always rendered (even when env var is unset, so the clock can open an empty NC). The consent card is a conditional `<NotificationCard>` child, shown only while `promptVisible` is true.
-3. On mobile: `<MobileConsentNotification>` is rendered standalone when `promptVisible` is true — no NC wrapper, no clock interaction (mobile clock stays non-interactive).
-
-- **Auto-open is desktop-only.** A `useEffect` calls `setOpen(true)` only when `!isMobile && promptVisible`, so mobile never mutates shared NC state.
+- **Persistent card (R8):** the desktop card stays in the NC permanently when env var is set. Three content modes based on `(consent, editing)`:
+  - `consent === null` OR `editing`: title "Allow Analytics?" + body + `[Decline, Allow]` buttons.
+  - `consent === "granted"` + `!editing`: title "Analytics enabled" + body + `[Change preference]` action that flips `editing` to `true`.
+  - `consent === "denied"` + `!editing`: title "Analytics disabled" + body + `[Change preference]` action.
+- **Modal lock (R8):** a `useEffect` calls `setLocked(consent.enabled && consent.consent === null)`. While undecided the NC cannot be dismissed; user must Decline or Allow. Decline is equally available — this is a forced explicit choice, not a forced consent.
+- **Deferred close (R8):** action handlers don't call `setOpen(false)` directly. They set `closeAfterChoiceRef.current = (isMobile || consent === null)` and let a third `useEffect` (declared after the lock effect) issue the close once `consent` flips to non-null. Effect declaration order matters: the lock effect runs first and releases the lock synchronously via `lockedRef.current = false`, so the deferred close is honored. Desktop closes only on first-time decision; change-preference picks keep NC open showing the new status. Mobile closes on every pick.
+- **Auto-open (desktop only):** a `useEffect` calls `setOpen(true)` only when `!isMobile && enabled && consent === null`.
+- **Mobile branch:** `<MobileConsentNotification>` renders when `enabled && (consent === null || open)`. The `consent === null` clause keeps the card visible the entire undecided period — including after a failed Accept where `promptVisible` flips false but `consent` stays null. `open` covers the post-decision clock-toggle re-decide path.
 - **Storage key:** `ga-consent` (`"granted"` \| `"denied"`; absent → undecided). Read/written through `readConsent` / `writeConsent` in [src/lib/analytics.ts](../src/lib/analytics.ts), which wrap `localStorage` in try/catch.
-- **Env-var gate:** if `NEXT_PUBLIC_GA_ID` is unset, no `<GoogleAnalytics>` mounts and no consent card renders. The desktop NC shell still mounts.
-- **Hydration:** renders `null` on first render. Reads consent from `localStorage` inside `useEffect`. Banner visibility and `<GoogleAnalytics>` mount are both client-only decisions.
-- **Accept/Decline:** on Accept-with-success the card hides and `<GoogleAnalytics>` mounts in the same render. On Accept-with-storage-failure the card hides for the session but consent stays non-granted (fail closed; reload re-prompts because nothing persisted). On Decline the card hides; the choice persists if storage succeeds.
+- **`ga-disable` flag (R8):** [`useAnalyticsConsent`](../src/lib/useAnalyticsConsent.ts) writes `window['ga-disable-' + gaId]` from inside `accept()` / `decline()` synchronously (before consent state updates) and from a `useEffect` backstop. Without this, already-loaded gtag.js keeps sending after Decline; with it, the flag is correctly `false` by the time GA re-mounts on Denied → Allow so the first page_view isn't dropped.
+- **Env-var gate:** if `NEXT_PUBLIC_GA_ID` is unset, no `<GoogleAnalytics>` mounts and no consent card renders. The desktop NC shell still mounts (clock opens an empty panel). On mobile the clock stays plain text — no NC, no toggle target.
+- **Hydration:** renders `null` on first render. Reads consent from `localStorage` inside `useEffect`.
+
+The single-owner rule is strict: `useAnalyticsConsent()` must appear **only** in `AnalyticsConsent`. `setLocked` from the NC context must only be called from `AnalyticsConsent`. NotificationCenter and MobileConsentNotification consume `accept`/`decline` as props.
 
 The single-owner rule is strict: `useAnalyticsConsent()` must appear **only** in `AnalyticsConsent`. Calling it independently from `NotificationCenter` or `MobileConsentNotification` would create separate state instances and the GA mount would never see the click.
 

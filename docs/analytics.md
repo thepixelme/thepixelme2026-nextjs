@@ -15,19 +15,25 @@ Documented placeholder in [.env.example](../.env.example).
 
 ## Consent contract
 
-[src/lib/analytics.ts](../src/lib/analytics.ts) exports `GA_CONSENT_STORAGE_KEY = "ga-consent"`. The session-state machine lives in the [`useAnalyticsConsent()`](../src/lib/useAnalyticsConsent.ts) hook, which is the **single owner** of consent state — it must be called only once, inside [`AnalyticsConsent`](../src/components/analytics/AnalyticsConsent.tsx). Notification surfaces (`NotificationCenter`, `MobileConsentNotification`) receive `accept` / `decline` / `promptVisible` as props.
+[src/lib/analytics.ts](../src/lib/analytics.ts) exports `GA_CONSENT_STORAGE_KEY = "ga-consent"`. The session-state machine lives in the [`useAnalyticsConsent()`](../src/lib/useAnalyticsConsent.ts) hook, which is the **single owner** of consent state — it must be called only once, inside [`AnalyticsConsent`](../src/components/analytics/AnalyticsConsent.tsx). Notification surfaces receive `accept` / `decline` as props.
 
 | `localStorage["ga-consent"]` | Effect |
 |---|---|
-| `"granted"` | `<GoogleAnalytics>` mounts. `trackEvent()` sends events. |
-| `"denied"`  | No script, no events. Prompt does not return. |
-| absent      | Consent prompt shown (auto-opens NC on desktop). No script until the visitor decides. |
+| `"granted"` | `<GoogleAnalytics>` mounts. `trackEvent()` sends events. `window['ga-disable-' + gaId]` is `false`. |
+| `"denied"`  | No script mount, no `trackEvent()`. `window['ga-disable-' + gaId]` is `true` so any previously-loaded gtag.js also stops sending. |
+| absent      | Consent card shown. Desktop NC auto-opens and is **modal-locked** (Esc / X / backdrop / clock-toggle-to-close are all blocked); mobile shows a top-center card that can't be dismissed without a choice. No GA until the visitor decides. |
 
-`readConsent()` and `writeConsent()` both wrap `localStorage` access in try/catch — failures return `null`/`false` rather than throwing. On Accept-with-storage-failure the card hides for the session but consent stays non-granted (fail closed); on Decline-with-storage-failure the card also hides. Neither failure persists, so a fresh tab/reload re-prompts.
+`readConsent()` and `writeConsent()` both wrap `localStorage` access in try/catch — failures return `null`/`false` rather than throwing. On Accept-with-storage-failure, in-memory `consent` stays `null` (fail closed — `<GoogleAnalytics>` does not mount and NC stays locked); user must Decline to escape. On Decline-with-storage-failure, in-memory `consent` flips to `"denied"` for the session even though it didn't persist; reload re-prompts.
+
+**Re-decide (R8)**: the desktop card is persistent — after a decision it switches to a "Analytics enabled/disabled · Change preference" status form. Clicking "Change preference" swaps back to Decline/Allow buttons without resetting persisted consent. Desktop change-preference picks keep NC open showing the new status. Mobile re-opens via the MobileStatusBar clock toggle (clock is interactive only when env is set); mobile re-decide picks close the card.
+
+**`ga-disable` flag (R8)**: written synchronously from `accept()` and `decline()` *before* the consent state update, so on Denied → Allow `next/script` mounts gtag.js with the flag already cleared and the first `page_view` fires; on Granted → Decline the flag is set before unmount, so any in-flight gtag activity stops. A `useEffect` keyed on `analyticsEnabled` is a backstop for mount / hydration / cross-tab cases. See Google's docs: <https://developers.google.com/analytics/devguides/collection/analyticsjs/user-opt-out>.
+
+**Cookie limitation**: existing `_ga` / `_gid` cookies aren't actively cleared on Decline. They remain until expiry; the disable flag prevents further writes. Cookie cleanup would belong to a future CMP integration.
 
 To reset for testing: open DevTools → Application → Local Storage → delete `ga-consent`.
 
-**This is a consent gate, not a CMP.** No full GDPR/UK ePrivacy compliance is claimed: no preference granularity, no withdraw-consent UX, no records of consent, no policy copy. If full compliance becomes a goal, swap [AnalyticsConsent](../src/components/analytics/AnalyticsConsent.tsx) for a real CMP without touching the rest.
+**This is a consent gate, not a CMP.** No full GDPR/UK ePrivacy compliance is claimed: no preference granularity, no records of consent, no policy copy, no cookie cleanup, no Consent Mode v2. What R8 does cover: forced explicit decision before dismissal (Decline is equally available) + withdrawable lifecycle on both viewports + reliable per-property disable. If full compliance becomes a goal, swap [AnalyticsConsent](../src/components/analytics/AnalyticsConsent.tsx) for a real CMP without touching the rest.
 
 ## Event catalog
 
