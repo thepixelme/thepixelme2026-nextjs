@@ -47,11 +47,14 @@ There is no global event bus for windows — everything goes through the reducer
 
 ## Persistence
 
-One value is persisted to `localStorage`:
+Two values are persisted to `localStorage`:
 
 | Key                    | Read by                                               | Written by                                              |
 | ---------------------- | ----------------------------------------------------- | ------------------------------------------------------- |
 | `portfolio:theme`      | [src/lib/theme.ts](../src/lib/theme.ts) (`useTheme`)  | [src/lib/theme.ts](../src/lib/theme.ts)                 |
+| `ga-consent`           | [src/lib/analytics.ts](../src/lib/analytics.ts) (`readConsent`) | [src/lib/analytics.ts](../src/lib/analytics.ts) (`writeConsent`) |
+
+`ga-consent` holds the Google Analytics consent choice (`"granted"` \| `"denied"`); absent means undecided and the consent banner is shown. See [docs/analytics.md](analytics.md).
 
 Window positions, sizes, and open/closed state are **not** persisted — every page load starts with an empty desktop.
 

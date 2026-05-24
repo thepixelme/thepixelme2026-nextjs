@@ -4,6 +4,7 @@ import { ExternalLink } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
 import { siGithub } from "simple-icons";
 import BrandIcon from "@/components/BrandIcon";
+import { trackEvent } from "@/lib/analytics";
 import type { Highlight, Project } from "@/lib/projects";
 
 const buttonBase =
@@ -85,6 +86,13 @@ export function CaseStudy({
               href={project.link}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() =>
+                trackEvent({
+                  name: "outbound_click",
+                  href: project.link as string,
+                  surface: "project_link",
+                })
+              }
               className={buttonSecondary}
             >
               {linkLabel}
@@ -96,6 +104,13 @@ export function CaseStudy({
               href={project.source}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() =>
+                trackEvent({
+                  name: "outbound_click",
+                  href: project.source as string,
+                  surface: "project_source",
+                })
+              }
               className={buttonTertiary}
             >
               <BrandIcon icon={siGithub} size={14} className="mr-1.5" />

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import AnalyticsConsent from "@/components/analytics/AnalyticsConsent";
 import "./globals.css";
 
 const inter = Inter({
@@ -35,7 +36,10 @@ export default function RootLayout({
       lang="en"
       className={`glass-light h-full antialiased ${inter.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="h-full">{children}</body>
+      <body className="h-full">
+        {children}
+        <AnalyticsConsent />
+      </body>
     </html>
   );
 }

@@ -259,9 +259,23 @@ A `<button>` at z-40, fixed bottom, `h-11 w-32` (44 pt hit area). Visible portio
 
 The hit area overlaps the bottom ~44 pt of the active sheet — acceptable per iOS convention (apps avoid critical UI in the bottom strip).
 
+## AnalyticsConsent ([src/components/analytics/AnalyticsConsent.tsx](../src/components/analytics/AnalyticsConsent.tsx))
+
+A `"use client"` overlay mounted once in [src/app/layout.tsx](../src/app/layout.tsx) after `{children}`. Owns both the consent banner UI and the conditional `<GoogleAnalytics>` mount from `@next/third-parties/google`.
+
+- **Storage key:** `ga-consent` (`"granted"` \| `"denied"`; absent → undecided). Read/written through `readConsent` / `writeConsent` in [src/lib/analytics.ts](../src/lib/analytics.ts), which wrap `localStorage` in try/catch.
+- **Env-var gate:** if `NEXT_PUBLIC_GA_ID` is unset, the component renders nothing — no banner, no script.
+- **Z-index:** `z-50` (above Dock/MobileDock at `z-40`; below Spotlight/modals at `z-60`).
+- **Placement:** desktop — `fixed right-4 top-12 max-w-sm` (under the menu bar). Mobile — `fixed inset-x-3 top-[calc(env(safe-area-inset-top)+3.25rem)] mx-auto max-w-md` (below MobileStatusBar).
+- **Hydration:** renders `null` on first render; reads consent from `localStorage` inside `useEffect`. Banner visibility and `<GoogleAnalytics>` mount are both client-only decisions.
+- **Accept/Decline:** writes the choice with `writeConsent`. On Accept-with-success the banner hides and `<GoogleAnalytics>` mounts in the same render. On Accept-with-storage-failure the banner hides for the session but consent stays non-granted (fail closed). On Decline the banner hides.
+
+For the event catalog and `trackEvent` contract, see [analytics.md](analytics.md).
+
 ## Cross-references
 
 - Theme tokens (`--surface`, `--separator`, `--glass-blur`, etc.) are defined locally in [globals.css](../src/app/globals.css) — see [styling-and-icons.md](styling-and-icons.md#glass-theme).
 - Brand-icon rendering — [styling-and-icons.md](styling-and-icons.md#brandicon).
 - Window state machine that all dispatches feed into — [window-manager.md](window-manager.md#actions).
 - How apps are rendered inside either `<Window>` or `<AppSheet>` — [apps.md](apps.md).
+- Analytics events fired from the shell — [analytics.md](analytics.md).

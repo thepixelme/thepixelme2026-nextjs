@@ -39,8 +39,9 @@ Copy `.env.example` to `.env.local` and fill in:
 - `RESEND_API_KEY` — get one at https://resend.com/api-keys
 - `CONTACT_EMAIL` — where contact form submissions are delivered
 - `CONTACT_FROM_EMAIL` — the `From:` address; must be on a domain you've [verified in Resend](https://resend.com/docs/dashboard/domains/introduction)
+- `NEXT_PUBLIC_GA_ID` — optional. Google Analytics 4 Measurement ID (`G-XXXXXXXXXX`). When unset, no analytics script loads and the consent banner is suppressed. Inlined into the client bundle at `next build` time, so changing it requires a rebuild — see [docs/analytics.md](docs/analytics.md).
 
-Without these, `npm run dev` works but the contact form returns 500.
+Without `RESEND_API_KEY` / `CONTACT_EMAIL` / `CONTACT_FROM_EMAIL`, `npm run dev` works but the contact form returns 500.
 
 Production build:
 
@@ -83,5 +84,6 @@ The [docs/](docs/) folder describes the codebase in detail:
 - [docs/apps.md](docs/apps.md) — the `AppDef` contract and a section per app.
 - [docs/styling-and-icons.md](docs/styling-and-icons.md) — glass theme tokens, Tailwind v4 patterns, lucide and simple-icons usage.
 - [docs/data.md](docs/data.md) — `portfolio-data.ts` types and current values.
+- [docs/analytics.md](docs/analytics.md) — `NEXT_PUBLIC_GA_ID`, consent banner, event catalog.
 
 Project-wide design conventions and macOS UI patterns are in [STYLEGUIDE.md](STYLEGUIDE.md) at the repo root.

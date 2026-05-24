@@ -3,6 +3,7 @@
 import { Link2, MapPin, Wrench } from "lucide-react";
 import { siGithub } from "simple-icons";
 import BrandIcon from "@/components/BrandIcon";
+import { trackEvent } from "@/lib/analytics";
 import { ABOUT, SOCIALS } from "@/lib/portfolio-data";
 
 const BRANDS = {
@@ -62,6 +63,13 @@ export default function AboutApp() {
               href={s.href}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() =>
+                trackEvent({
+                  name: "outbound_click",
+                  href: s.href,
+                  surface: "about_social",
+                })
+              }
               className="flex items-center gap-2 rounded-md border border-field-border bg-field-background px-3 py-1.5 text-xs hover:bg-default"
             >
               <BrandIcon icon={BRANDS[s.brand]} size={14} />

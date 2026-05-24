@@ -5,11 +5,13 @@ import {
   createElement,
   type Dispatch,
   type ReactNode,
+  useCallback,
   useContext,
   useMemo,
   useReducer,
 } from "react";
 import { APPS } from "@/components/apps/registry";
+import { trackEvent } from "@/lib/analytics";
 import type { AppId, WindowBounds, WindowState } from "@/types/window";
 
 interface State {
@@ -203,8 +205,16 @@ const StateContext = createContext<State | null>(null);
 const DispatchContext = createContext<Dispatch<Action> | null>(null);
 
 export function WindowsProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, rawDispatch] = useReducer(reducer, initialState);
   const memoState = useMemo(() => state, [state]);
+
+  const dispatch = useCallback<Dispatch<Action>>((action) => {
+    if (action.type === "OPEN") {
+      trackEvent({ name: "app_open", app_id: action.appId });
+    }
+    rawDispatch(action);
+  }, []);
+
   return createElement(
     StateContext.Provider,
     { value: memoState },

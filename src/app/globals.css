@@ -410,6 +410,8 @@ html[data-theme="glass-dark"] {
   --color-border-secondary: var(--border-secondary);
   --color-border-tertiary: var(--border-tertiary);
 
+  --z-index-60: 60;
+
   --radius-xs: calc(var(--radius) * 0.25);
   --radius-sm: calc(var(--radius) * 0.5);
   --radius-md: calc(var(--radius) * 0.75);

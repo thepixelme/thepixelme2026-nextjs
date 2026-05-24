@@ -82,6 +82,8 @@ There is no separate "minimize-to-dock-with-animation" action and no `MINIMIZE_T
 
 The state value is memoized with `useMemo(() => state, [state])`, which is effectively a pass-through but keeps a stable identity check pattern in place.
 
+The dispatch exposed by `useWindowsDispatch()` is a `useCallback` wrapper around `useReducer`'s raw dispatch. The wrapper fires the consent-gated `app_open` analytics event ([src/lib/analytics.ts](../src/lib/analytics.ts)) on `OPEN` actions before delegating, so every launch surface (Dock, MenuBar, Spotlight, Finder, mobile) is captured through one chokepoint. `reducer()` itself remains pure — no side effects inside the reducer.
+
 ### Initial-position math (OPEN)
 
 ```

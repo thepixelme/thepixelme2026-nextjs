@@ -3,6 +3,7 @@
 import { Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { APPS } from "@/components/apps/registry";
+import { trackEvent } from "@/lib/analytics";
 import { useWindowsDispatch } from "@/lib/windows-store";
 import type { AppId } from "@/types/window";
 
@@ -57,6 +58,11 @@ export default function Spotlight({ open, onOpenChange }: Props) {
   };
 
   const launch = (id: AppId) => {
+    trackEvent({
+      name: "spotlight_select",
+      app_id: id,
+      query_length: query.trim().length,
+    });
     dispatch({ type: "OPEN", appId: id });
     onOpenChange(false);
   };
@@ -79,7 +85,7 @@ export default function Spotlight({ open, onOpenChange }: Props) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
+    <div className="fixed inset-0 z-60 flex items-start justify-center pt-[15vh]">
       <button
         type="button"
         aria-label="Close spotlight"

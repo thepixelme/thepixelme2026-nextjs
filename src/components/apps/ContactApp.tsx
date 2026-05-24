@@ -2,6 +2,7 @@
 
 import { Check, Loader2, Send } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { ABOUT } from "@/lib/portfolio-data";
 
 const fieldInputClass =
@@ -78,6 +79,10 @@ export default function ContactApp() {
     }
 
     if (resOk && isContactResponse(payload) && payload.ok === true) {
+      trackEvent({
+        name: "contact_form_submit",
+        subject_length: subject.trim().length,
+      });
       setStatus("sent");
       setSubject("");
       setMessage("");
