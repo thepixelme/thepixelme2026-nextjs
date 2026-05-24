@@ -31,7 +31,7 @@ Documented placeholder in [.env.example](../.env.example).
 
 **Cookie limitation**: existing `_ga` / `_gid` cookies aren't actively cleared on Decline. They remain until expiry; the disable flag prevents further writes. Cookie cleanup would belong to a future CMP integration.
 
-To reset for testing: open DevTools → Application → Local Storage → delete `ga-consent`.
+To reset for testing: open DevTools → Application → Local Storage → delete `ga-consent`. For full end-to-end QA of every consent state transition, see **[docs/analytics-testing.md](analytics-testing.md)**.
 
 **This is a consent gate, not a CMP.** No full GDPR/UK ePrivacy compliance is claimed: no preference granularity, no records of consent, no policy copy, no cookie cleanup, no Consent Mode v2. What R8 does cover: forced explicit decision before dismissal (Decline is equally available) + withdrawable lifecycle on both viewports + reliable per-property disable. If full compliance becomes a goal, swap [AnalyticsConsent](../src/components/analytics/AnalyticsConsent.tsx) for a real CMP without touching the rest.
 
