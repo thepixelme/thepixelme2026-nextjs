@@ -64,7 +64,7 @@ export default function NotificationCenter({
           />
           <motion.aside
             aria-labelledby={headingId}
-            className="fixed right-0 top-7 bottom-0 z-50 flex w-90 flex-col gap-3 overflow-y-auto border-l border-separator bg-overlay p-3 shadow-overlay backdrop-blur-(--glass-blur)"
+            className="fixed right-3 top-10 bottom-3 z-50 flex w-90 flex-col gap-3 overflow-y-auto p-3"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}

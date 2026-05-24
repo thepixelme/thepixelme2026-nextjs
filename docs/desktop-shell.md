@@ -264,7 +264,8 @@ The hit area overlaps the bottom ~44 pt of the active sheet — acceptable per i
 A macOS-style notification panel that slides in from the right edge when the menu-bar clock is clicked. Generic surface — it knows about open/closed state and the panel chrome (header + close X + animation) but **not** about analytics or any specific notification. Notifications are passed in as `children`.
 
 - **Provider:** [`NotificationCenterProvider`](../src/lib/notification-center.ts) wraps the tree in `layout.tsx` and exposes `{ open, toggle, setOpen }` via `useNotificationCenter()`. Always mounted — the panel and clock work even when no notifications exist.
-- **Placement:** `fixed right-0 top-7 bottom-0 z-50 w-[22.5rem]` (360px wide). Starts at `top-7` (below the 28px menu bar) so the clock remains clickable while the panel is open — clicking the clock again toggles the panel.
+- **Placement (R7 liquid glass):** `fixed right-3 top-10 bottom-3 z-50 w-90` (360px wide, detached from viewport edges with ~12px margins). Rounded on all corners. Starts at `top-10` so the menu bar (`top-0 h-7`) — including the clock — stays clickable while the panel is open.
+- **Surface (R7 liquid glass):** `bg-liquid-glass-surface shadow-liquid-glass backdrop-blur-(--liquid-glass-blur) backdrop-saturate-(--liquid-glass-saturate)` — translucent panel with macOS-Vibrancy-style saturation boost, deeper outer shadow, and a 1px inset specular top highlight. See [STYLEGUIDE.md §2.4](../STYLEGUIDE.md) for the recipe.
 - **Animation:** spring slide-in from the right using `motion/react` (`stiffness: 320, damping: 32`, matching `AppSheet`). Respects `useReducedMotion`.
 - **Close:** Esc / click backdrop / click X / call `setOpen(false)`. Backdrop is transparent (no dim) — matches real macOS.
 - **Focus:** captures `document.activeElement` on open and restores it on close. Initial focus moves to the `initialFocusRef` consumer-provided element (e.g. the Decline button on the consent card) or the close X if not provided. Non-modal — Tab can leave the panel naturally.
@@ -272,7 +273,12 @@ A macOS-style notification panel that slides in from the right edge when the men
 
 ## NotificationCard ([src/components/notifications/NotificationCard.tsx](../src/components/notifications/NotificationCard.tsx))
 
-Generic visual primitive for a single macOS notification. Props: `icon`, `iconTileClassName`, `appLabel`, `timestamp`, `title`, `body`, optional `actions`. Renders a translucent `rounded-xl bg-default/80 backdrop-blur-sm` card with a header row (icon tile + app label + timestamp), title, body, and optional split-actions footer (`grid divide-x divide-separator border-t`). Mobile action height is `h-11` (≥44px touch target); desktop shrinks to `h-9`.
+Generic visual primitive for a single macOS notification. Props: `icon`, `iconTileClassName`, `appLabel`, `timestamp`, `title`, `body`, optional `actions`, optional `variant`. Renders a `rounded-xl` card with a header row (icon tile + app label + timestamp), title, body, and optional split-actions footer (`grid divide-x divide-separator border-t`). Mobile action height is `h-11` (≥44px touch target); desktop shrinks to `h-9`.
+
+**Variant prop (R7):**
+
+- `variant="default"` (the unsupplied default) — dense `bg-default/80 backdrop-blur-sm` surface. Used by `MobileConsentNotification` so the mobile card reads on the bare wallpaper without a frosted panel beneath it.
+- `variant="liquid-glass"` — translucent `bg-liquid-glass-card` with a `shadow-liquid-glass-card` inset top highlight, no extra `backdrop-blur` (the parent panel already blurs). Used by the desktop consent card inside `NotificationCenter`. The variant is passed in `AnalyticsConsent.tsx`, **not** in `NotificationCenter` (which stays generic and only knows about `children`).
 
 ## AnalyticsConsent ([src/components/analytics/AnalyticsConsent.tsx](../src/components/analytics/AnalyticsConsent.tsx))
 

@@ -56,6 +56,24 @@ These are CSS custom properties defined in [globals.css](../src/app/globals.css)
 
 See the `html.glass-light` / `html.glass-dark` blocks in [globals.css](../src/app/globals.css) for the exact values.
 
+### Liquid glass tokens (overlay surfaces — NC only)
+
+A separate, heavier set of tokens for macOS Tahoe / iOS-26-style "liquid glass" floating overlays. Used today by the [NotificationCenter](desktop-shell.md#notification-center-srccomponentsnotificationsnotificationcentertsx) panel and its consent card. **Do not apply to other surfaces** (MenuBar, Dock, Spotlight, Windows) without an explicit scope discussion — the look is intentionally distinct from base glass.
+
+| Token | `@theme inline` mapping → Tailwind utility | Purpose |
+| --- | --- | --- |
+| `--liquid-glass-blur` | — (use directly: `backdrop-blur-(--liquid-glass-blur)`) | Heavier blur radius: 40px light, 50px dark |
+| `--liquid-glass-saturate` | — (use directly: `backdrop-saturate-(--liquid-glass-saturate)`) | Saturation boost (180%) — the canonical macOS Vibrancy lever |
+| `--liquid-glass-surface` | `--color-liquid-glass-surface` → `bg-liquid-glass-surface` | Translucent panel background (0.4 alpha light, 0.08 dark) |
+| `--liquid-glass-card-surface` | `--color-liquid-glass-card` → `bg-liquid-glass-card` | Translucent notification-card background (0.35 alpha light, 0.06 dark) |
+| `--liquid-glass-shadow` | `--shadow-liquid-glass` → `shadow-liquid-glass` | Outer drop shadow + inset top specular highlight (panels) |
+| `--liquid-glass-card-shadow` | `--shadow-liquid-glass-card` → `shadow-liquid-glass-card` | Inset top specular highlight only (cards) |
+| `--liquid-glass-highlight` | (raw; referenced by the two shadow recipes) | Highlight color (white, 0.4 alpha light / 0.15 dark) |
+
+Definitions live in the **Pro glass theme override blocks** (`html.glass-light`, `html.glass-dark`) so they pick up theme switches automatically. `@theme inline` mappings expose the color and shadow tokens to Tailwind's utility scanner.
+
+Full recipes are in [STYLEGUIDE.md §2.4](../STYLEGUIDE.md). To keep the recipe consistent, prefer the named tokens over inline arbitrary `shadow-[...]` or `bg-[...]` values.
+
 ### Hardcoded colors (allowed)
 
 Three colors are intentionally hardcoded because they're macOS-canonical, not theme-driven:

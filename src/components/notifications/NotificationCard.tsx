@@ -17,10 +17,22 @@ export interface NotificationCardProps {
   title: string;
   body: string;
   actions?: NotificationCardAction[];
+  /**
+   * Visual surface treatment.
+   * - `"default"` (mobile): dense `bg-default/80` with subtle backdrop blur — reads on the wallpaper standalone.
+   * - `"liquid-glass"` (desktop NC): translucent liquid-glass surface designed to sit on the already-frosted panel.
+   */
+  variant?: "default" | "liquid-glass";
 }
 
 const actionBase =
   "h-11 text-xs font-medium select-none hover:bg-default-hover transition-colors duration-100 motion-reduce:transition-none lg:h-9";
+
+const surfaceByVariant = {
+  default: "bg-default/80 backdrop-blur-sm",
+  "liquid-glass":
+    "bg-liquid-glass-surface shadow-liquid-glass backdrop-blur-(--liquid-glass-blur) backdrop-saturate-(--liquid-glass-saturate)",
+} as const;
 
 export default function NotificationCard({
   icon,
@@ -30,9 +42,14 @@ export default function NotificationCard({
   title,
   body,
   actions,
+  variant = "default",
 }: NotificationCardProps) {
+  const hasActions = actions && actions.length > 0;
+  const paddingClass = hasActions ? "pt-2.5" : "py-2.5";
   return (
-    <article className="rounded-xl bg-default/80 px-3 py-2.5 backdrop-blur-sm">
+    <article
+      className={`overflow-hidden rounded-xl px-3 ${paddingClass} ${surfaceByVariant[variant]}`}
+    >
       <div className="flex items-center gap-2">
         <div
           className={`grid h-7 w-7 shrink-0 place-items-center rounded-md ${iconTileClassName}`}

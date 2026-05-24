@@ -60,7 +60,35 @@ className="bg-surface backdrop-blur-(--glass-blur) border border-field-border sh
 
 For deeper / darker surfaces (e.g. dock), swap `bg-surface` → `bg-surface-secondary`. For the most translucent (e.g. menu bar), keep `bg-surface` but use a thinner border (`border-b border-separator`).
 
-### 2.4 Traffic-light colors
+### 2.4 Liquid glass (overlay surfaces — NC only for now)
+
+A separate, heavier glass recipe for floating overlay panels modeled on macOS Tahoe / iOS 26. Used today by the [Notification Center](docs/desktop-shell.md#notification-center-srccomponentsnotificationsnotificationcentertsx) panel and the consent card inside it. Do not apply to MenuBar, Dock, Spotlight, or Windows without an explicit design discussion — the look is intentionally distinct.
+
+Tokens (defined per theme in [src/app/globals.css](src/app/globals.css), mapped via `@theme inline`):
+
+| Token | Tailwind utility | Purpose |
+|---|---|---|
+| `--liquid-glass-blur` | `backdrop-blur-(--liquid-glass-blur)` | Heavier blur (40px light, 50px dark) |
+| `--liquid-glass-saturate` | `backdrop-saturate-(--liquid-glass-saturate)` | macOS Vibrancy saturation boost (180%) |
+| `--liquid-glass-surface` | `bg-liquid-glass-surface` | Translucent panel background |
+| `--liquid-glass-card-surface` | `bg-liquid-glass-card` | Translucent notification-card background |
+| `--liquid-glass-shadow` | `shadow-liquid-glass` | Outer drop shadow + inset top specular highlight (panels) |
+| `--liquid-glass-card-shadow` | `shadow-liquid-glass-card` | Inset top specular highlight (cards) |
+| `--liquid-glass-highlight` | (raw token, referenced by the two shadow tokens) | Highlight color used in both shadow recipes |
+
+Panel recipe:
+```tsx
+className="rounded-2xl bg-liquid-glass-surface shadow-liquid-glass backdrop-blur-(--liquid-glass-blur) backdrop-saturate-(--liquid-glass-saturate)"
+```
+
+Card recipe (when sitting on a liquid-glass panel — no extra `backdrop-blur` needed):
+```tsx
+className="rounded-xl bg-liquid-glass-card shadow-liquid-glass-card"
+```
+
+Detached floating positioning is part of the look: panel should leave a small margin from the viewport edges (e.g. `right-3 top-10 bottom-3`) so the wallpaper shows around it. Touching a viewport edge defeats the specular highlight.
+
+### 2.5 Traffic-light colors
 
 These are macOS-canonical, hardcode them:
 

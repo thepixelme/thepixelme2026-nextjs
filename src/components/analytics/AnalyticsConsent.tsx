@@ -51,6 +51,7 @@ export default function AnalyticsConsent() {
       <NotificationCenter initialFocusRef={declineRef}>
         {consent.promptVisible && (
           <NotificationCard
+            variant="liquid-glass"
             icon={<BarChart3 size={16} />}
             iconTileClassName="bg-accent text-accent-foreground"
             appLabel="Analytics"

@@ -271,6 +271,18 @@ html[data-theme="glass-light"] {
   --overlay-shadow:
     0 2px 8px 0 #0000000f, 0 -6px 12px 0 #00000008, 0 14px 28px 0 #00000014;
   --field-shadow: 0 0px 0px 0 #0000;
+  --liquid-glass-blur: 40px;
+  --liquid-glass-saturate: 180%;
+  --liquid-glass-surface: oklch(100% 0 0 / 0.4);
+  --liquid-glass-card-surface: oklch(100% 0 0 / 0.35);
+  --liquid-glass-highlight: rgba(255, 255, 255, 0.4);
+  --liquid-glass-shadow:
+    0 1px 2px -1px rgba(0, 0, 0, 0.04),
+    0 8px 24px -8px rgba(0, 0, 0, 0.1),
+    0 24px 48px -16px rgba(0, 0, 0, 0.14),
+    0 48px 96px -32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 0 var(--liquid-glass-highlight);
+  --liquid-glass-card-shadow: inset 0 1px 0 0 var(--liquid-glass-highlight);
   --glass-pinned-surface: oklch(99.11% 0 0);
   --glass-pinned-surface-secondary: oklch(95.77% 0.0017 247.84);
   --chart-1: oklch(65% 0.06 240);
@@ -308,6 +320,18 @@ html[data-theme="glass-dark"] {
     #005e500a 50%,
     #00786e00 100%
   );
+  --liquid-glass-blur: 50px;
+  --liquid-glass-saturate: 180%;
+  --liquid-glass-surface: oklch(100% 0 0 / 0.08);
+  --liquid-glass-card-surface: oklch(100% 0 0 / 0.06);
+  --liquid-glass-highlight: rgba(255, 255, 255, 0.15);
+  --liquid-glass-shadow:
+    0 1px 2px -1px rgba(0, 0, 0, 0.3),
+    0 8px 24px -8px rgba(0, 0, 0, 0.4),
+    0 24px 48px -16px rgba(0, 0, 0, 0.5),
+    0 48px 96px -32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 0 var(--liquid-glass-highlight);
+  --liquid-glass-card-shadow: inset 0 1px 0 0 var(--liquid-glass-highlight);
   --glass-pinned-surface: oklch(29.25% 0.0023 247.9);
   --glass-pinned-surface-secondary: oklch(25.55% 0.0024 247.92);
   --chart-1: oklch(from var(--accent) calc(l - 0.4) c h);
@@ -365,6 +389,11 @@ html[data-theme="glass-dark"] {
   --shadow-surface: var(--surface-shadow);
   --shadow-overlay: var(--overlay-shadow);
   --shadow-field: var(--field-shadow);
+
+  --color-liquid-glass-surface: var(--liquid-glass-surface);
+  --color-liquid-glass-card: var(--liquid-glass-card-surface);
+  --shadow-liquid-glass: var(--liquid-glass-shadow);
+  --shadow-liquid-glass-card: var(--liquid-glass-card-shadow);
 
   --color-field: var(--field-background, var(--default));
   --color-field-hover: var(--field-hover);
