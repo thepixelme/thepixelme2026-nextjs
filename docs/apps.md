@@ -35,11 +35,11 @@ In both cases the app receives a fixed-height container and should size itself w
 
 | # | `id`       | `title`            | `icon` (lucide)        | `defaultSize` (w × h) | in dock |
 | - | ---------- | ------------------ | ---------------------- | --------------------- | ------- |
-| 1 | `finder`   | Finder             | `FolderOpen`           | 880 × 560             | ✓       |
-| 2 | `preview`  | Preview            | `Eye`                  | 1024 × 720            | —¹      |
-| 3 | `about`    | About Me           | `User`                 | 520 × 600             | ✓       |
-| 4 | `contact`  | Contact            | `Mail`                 | 720 × 620             | ✓       |
-| 5 | `terminal` | Terminal           | `Terminal`             | 640 × 420             | ✓       |
+| 1 | `about`    | About              | `User`                 | 560 × 680             | ✓       |
+| 2 | `finder`   | Finder             | `FolderOpen`           | 880 × 560             | ✓       |
+| 3 | `contact`  | Contact            | `Mail`                 | 720 × 620             | ✓       |
+| 4 | `terminal` | Terminal           | `Terminal`             | 640 × 420             | ✓       |
+| 5 | `preview`  | Preview            | `Eye`                  | 1024 × 720            | —¹      |
 
 ¹ `preview` has `hideFromDock: true` — it's launched by [FinderApp](#finderapp-finderapptsx) with a `projectId` payload, not from the dock.
 

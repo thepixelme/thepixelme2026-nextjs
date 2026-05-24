@@ -14,26 +14,18 @@ import TerminalApp from "./TerminalApp";
 
 export const APPS: AppDef[] = [
   {
+    id: "about",
+    title: "About",
+    icon: User,
+    defaultSize: { w: 560, h: 680 },
+    Component: AboutApp,
+  },
+  {
     id: "finder",
     title: "Finder",
     icon: FolderOpen,
     defaultSize: { w: 880, h: 560 },
     Component: FinderApp,
-  },
-  {
-    id: "preview",
-    title: "Preview",
-    icon: Eye,
-    defaultSize: { w: 1024, h: 720 },
-    hideFromDock: true,
-    Component: PreviewApp,
-  },
-  {
-    id: "about",
-    title: "About Me",
-    icon: User,
-    defaultSize: { w: 560, h: 680 },
-    Component: AboutApp,
   },
   {
     id: "contact",
@@ -48,5 +40,13 @@ export const APPS: AppDef[] = [
     icon: TerminalIcon,
     defaultSize: { w: 640, h: 420 },
     Component: TerminalApp,
+  },
+  {
+    id: "preview",
+    title: "Preview",
+    icon: Eye,
+    defaultSize: { w: 1024, h: 720 },
+    hideFromDock: true,
+    Component: PreviewApp,
   },
 ];
