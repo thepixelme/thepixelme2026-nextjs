@@ -51,7 +51,7 @@ Props: `{ onOpenSpotlight: () => void }`.
 Layout:
 
 ```
-[User · Nhat Nguyen]   Portfolio   Contact          Battery  Wifi  Search  Mon 3:42 PM
+[User · Nhat Nguyen]   Portfolio   Contact                          Search  Mon 3:42 PM
 ```
 
 Left side (`<nav>`, `gap-4`):
@@ -61,8 +61,6 @@ Left side (`<nav>`, `gap-4`):
 
 Right side:
 
-- `<Battery size={16}>` — visual only.
-- `<Wifi size={14}>` — visual only.
 - Search button — `<button aria-label="Open Spotlight">` calling `onOpenSpotlight`. Renders `<Search size={14}>`.
 - Clock — `<span className="tabular-nums">{time}</span>` where `time` comes from `useClock()`.
 
@@ -211,8 +209,8 @@ Sheet stack is sorted **ascending by `z`** so the highest-z sheet renders last (
 
 Fixed top, `z-50`. Height `calc(2.75rem + env(safe-area-inset-top))` with `pt-[env(safe-area-inset-top)]` so the 44 pt content sits below the notch.
 
-- Left: `useNow()` formatted as `h:mm a`. **When `NEXT_PUBLIC_GA_ID` is set (R8)**, renders as a `<button>` calling `toggle()` from `useNotificationCenter()` — this is the mobile re-decide path for analytics consent (open the standalone consent card). When env is unset, stays plain `<span>` (no NC panel on mobile, so a toggle would have no visible effect).
-- Right: `<Wifi size={14}/>`, `<Battery size={16}/>`, and a `<Search size={14}/>` button (`h-11 w-11` hit area) that calls `onOpenSpotlight()`.
+- Left: About `<button aria-label="About menu">` containing `<User size={14}>` plus a semibold `<span>` with "Nhat" (first name only — full "Nhat Nguyen" would crowd the narrower mobile bar alongside the 44 pt tap target). On click, dispatches `OPEN { appId: "about" }`. Mirrors the desktop MenuBar's identity affordance.
+- Right: `<Search size={14}/>` button (`h-11 w-11` hit area) that calls `onOpenSpotlight()`, then the clock — `useNow()` formatted as `h:mm a`. **When `NEXT_PUBLIC_GA_ID` is set (R8)**, the clock renders as a `<button>` calling `toggle()` from `useNotificationCenter()` — the mobile re-decide path for analytics consent (opens the standalone consent card). When env is unset, stays plain `<span>` (no NC panel on mobile, so a toggle would have no visible effect).
 
 ## MobileDock ([src/components/mobile/MobileDock.tsx](../src/components/mobile/MobileDock.tsx))
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { Battery, Search, User, Wifi } from "lucide-react";
+import { Search, User } from "lucide-react";
 import { useClock } from "@/lib/clock";
 import { useNotificationCenter } from "@/lib/notification-center";
 import { useWindowsDispatch } from "@/lib/windows-store";
@@ -42,8 +42,6 @@ export default function MenuBar({ onOpenSpotlight }: Props) {
         </button>
       </nav>
       <div className="flex items-center gap-3">
-        <Battery size={16} />
-        <Wifi size={14} />
         <button
           type="button"
           aria-label="Open Spotlight"

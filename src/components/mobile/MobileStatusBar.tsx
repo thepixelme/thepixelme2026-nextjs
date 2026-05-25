@@ -1,9 +1,10 @@
 "use client";
 
-import { Battery, Search, Wifi } from "lucide-react";
+import { Search, User } from "lucide-react";
 import { useMemo } from "react";
 import { useNow } from "@/lib/clock";
 import { useNotificationCenter } from "@/lib/notification-center";
+import { useWindowsDispatch } from "@/lib/windows-store";
 
 const SHORT_FORMAT = new Intl.DateTimeFormat(undefined, {
   hour: "numeric",
@@ -23,6 +24,7 @@ export default function MobileStatusBar({ onOpenSpotlight }: Props) {
   const now = useNow();
   const shortTime = useMemo(() => (now ? SHORT_FORMAT.format(now) : ""), [now]);
   const { toggle: toggleNotificationCenter } = useNotificationCenter();
+  const dispatch = useWindowsDispatch();
 
   return (
     <header
@@ -31,21 +33,16 @@ export default function MobileStatusBar({ onOpenSpotlight }: Props) {
                  h-[calc(2.75rem+env(safe-area-inset-top))]
                  pt-[env(safe-area-inset-top)]"
     >
-      {ANALYTICS_ENABLED ? (
-        <button
-          type="button"
-          aria-label="Toggle Analytics preference"
-          onClick={toggleNotificationCenter}
-          className="-ml-1.5 rounded-md px-1.5 py-0.5 text-xs font-medium tabular-nums hover:bg-surface-tertiary"
-        >
-          {shortTime}
-        </button>
-      ) : (
-        <span className="text-xs font-medium tabular-nums">{shortTime}</span>
-      )}
+      <button
+        type="button"
+        aria-label="About menu"
+        onClick={() => dispatch({ type: "OPEN", appId: "about" })}
+        className="-ml-1.5 flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs font-medium hover:bg-surface-tertiary"
+      >
+        <User size={14} />
+        <span className="font-semibold">Nhat</span>
+      </button>
       <div className="-mr-2 flex items-center gap-3">
-        <Wifi size={14} />
-        <Battery size={16} />
         <button
           type="button"
           aria-label="Open Spotlight"
@@ -54,6 +51,18 @@ export default function MobileStatusBar({ onOpenSpotlight }: Props) {
         >
           <Search size={14} />
         </button>
+        {ANALYTICS_ENABLED ? (
+          <button
+            type="button"
+            aria-label="Toggle Analytics preference"
+            onClick={toggleNotificationCenter}
+            className="rounded-md px-1.5 py-0.5 text-xs font-medium tabular-nums hover:bg-surface-tertiary"
+          >
+            {shortTime}
+          </button>
+        ) : (
+          <span className="text-xs font-medium tabular-nums">{shortTime}</span>
+        )}
       </div>
     </header>
   );
