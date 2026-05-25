@@ -2,6 +2,7 @@
 
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { BarChart3 } from "lucide-react";
+import { AnimatePresence } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import MobileConsentNotification from "@/components/notifications/MobileConsentNotification";
 import NotificationCard from "@/components/notifications/NotificationCard";
@@ -72,12 +73,15 @@ export default function AnalyticsConsent() {
     return (
       <>
         {gaMount}
-        {mobileVisible && (
-          <MobileConsentNotification
-            accept={handleAccept}
-            decline={handleDecline}
-          />
-        )}
+        <AnimatePresence>
+          {mobileVisible && (
+            <MobileConsentNotification
+              key="mobile-ga-consent"
+              accept={handleAccept}
+              decline={handleDecline}
+            />
+          )}
+        </AnimatePresence>
       </>
     );
   }

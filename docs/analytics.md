@@ -7,7 +7,7 @@ Google Analytics 4, mounted via [`@next/third-parties/google`](https://nextjs.or
 `NEXT_PUBLIC_GA_ID` — GA4 Measurement ID (`G-XXXXXXXXXX`). Optional.
 
 - When **unset**, no analytics script loads, no consent prompt is shown, and `trackEvent()` is a no-op. The desktop Notification Center shell still mounts (so the menu-bar clock can open an empty NC); it just contains no notifications.
-- When **set**, the consent prompt appears on first visit. On desktop the [Notification Center](desktop-shell.md#notification-center-srccomponentsnotificationsnotificationcentertsx) panel auto-opens with the consent notification inside; on mobile a standalone notification card appears top-center. GA only loads after Accept.
+- When **set**, the consent prompt appears on first visit. On desktop the [Notification Center](desktop-shell.md#notification-center-srccomponentsnotificationsnotificationcentertsx) panel auto-opens with the consent notification inside; on mobile a standalone liquid-glass notification card slides down from above the top edge. GA only loads after Accept.
 - `NEXT_PUBLIC_*` values are **inlined into the client bundle at `next build` time**. Changing this var after a build does not change the deployed bundle — you must rebuild. If runtime configurability is ever needed, expose the ID from a server route and read it from the client instead.
 - This is a deliberate `NEXT_PUBLIC_*` exception (see [AGENTS.md](../AGENTS.md)) because GA4 must run in the browser; there is no way to keep the measurement ID server-side.
 
