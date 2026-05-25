@@ -35,7 +35,7 @@ export default function MobileStatusBar({ onOpenSpotlight }: Props) {
     >
       <button
         type="button"
-        aria-label="About menu"
+        aria-label="Nhat, open About"
         onClick={() => dispatch({ type: "OPEN", appId: "about" })}
         className="-ml-1.5 flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs font-medium hover:bg-surface-tertiary"
       >
@@ -54,7 +54,11 @@ export default function MobileStatusBar({ onOpenSpotlight }: Props) {
         {ANALYTICS_ENABLED ? (
           <button
             type="button"
-            aria-label="Toggle Analytics preference"
+            aria-label={
+              shortTime
+                ? `${shortTime}, toggle analytics preference`
+                : "Toggle analytics preference"
+            }
             onClick={toggleNotificationCenter}
             className="rounded-md px-1.5 py-0.5 text-xs font-medium tabular-nums hover:bg-surface-tertiary"
           >

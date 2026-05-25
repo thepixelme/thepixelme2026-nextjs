@@ -19,7 +19,7 @@ export default function MenuBar({ onOpenSpotlight }: Props) {
       <nav className="flex items-center gap-4">
         <button
           type="button"
-          aria-label="About menu"
+          aria-label="Nhat Nguyen, open About"
           className="flex h-5 items-center gap-1.5 rounded-md px-2 transition-colors duration-150 ease-out hover:bg-surface-tertiary"
           onClick={() => dispatch({ type: "OPEN", appId: "about" })}
         >
@@ -52,7 +52,11 @@ export default function MenuBar({ onOpenSpotlight }: Props) {
         </button>
         <button
           type="button"
-          aria-label="Toggle Notification Center"
+          aria-label={
+            time
+              ? `${time}, toggle Notification Center`
+              : "Toggle Notification Center"
+          }
           onClick={toggleNotificationCenter}
           className="flex h-5 items-center rounded-md px-1.5 tabular-nums transition-colors duration-150 ease-out hover:bg-surface-tertiary"
         >
