@@ -43,8 +43,8 @@ Now you're back to "first-visit, undecided."
 1. Reload the page.
 2. The Notification Center (NC) panel should slide in from the right edge automatically, showing one consent notification card.
 3. Inspect the card. The title should be **"Allow Analytics?"**. Two equal-width buttons at the bottom: **Decline** and **Allow**.
-4. In DevTools → Elements, find the panel's `<aside>` header. There should be **no X close button** (the lock hides it). The header just shows "Notification Center" text.
-5. Press **Esc**. Click outside the panel on the wallpaper. Click the menu-bar clock. → **NC should not close in any of these cases.** This is the modal lock.
+4. In DevTools → Elements, find the panel's `<aside>` header. There should be **no X close button** (the persistent flag hides it). The header just shows "Notification Center" text.
+5. Press **Esc**. Click the menu-bar clock. → **NC should not close.** (Esc and clock-toggle close attempts are refused while persistent.) Clicking outside the panel **no longer hits a backdrop** — clicks on the wallpaper, dock, or any underlying control reach those elements directly. Confirm: **click a Dock icon while the consent card is showing → the app opens and its window appears. The consent card remains visible.** This validates the non-blocking behavior.
 6. Click **Allow**.
 
 **Expected:**
@@ -54,7 +54,7 @@ Now you're back to "first-visit, undecided."
 - Network tab: a request to `https://www.google-analytics.com/g/collect?...&en=page_view&...` (the page_view event).
 - Console: `window['ga-disable-G-XXXXXXXXXX']` returns `false`.
 - Cookies: `ga-consent` is `"granted"`.
-- Click the menu-bar clock → NC re-opens, this time showing a card titled **"Analytics enabled"** with a single **"Change preference"** action. The close X is now visible in the header (lock released).
+- Click the menu-bar clock → NC re-opens, this time showing a card titled **"Analytics enabled"** with a single **"Change preference"** action. The close X is now visible in the header (persistent flag released).
 
 ---
 
@@ -64,7 +64,7 @@ Now you're back to "first-visit, undecided."
 
 **Steps:**
 
-1. Reload. NC auto-opens locked, consent card visible.
+1. Reload. NC auto-opens persistent, consent card visible. (The rest of the page remains interactive — clicking outside the panel hits underlying controls; only Accept / Decline dismiss the card.)
 2. Click **Decline**.
 
 **Expected:**
@@ -156,7 +156,7 @@ If no page_view fires after Allow, the synchronous `setGaDisabled(false)` in `ac
 
 - If `ga-consent === "granted"`: GA loads automatically on first paint; no consent card visible; clock click opens NC with "Analytics enabled" status.
 - If `ga-consent === "denied"`: GA does not load; no consent card visible; clock click opens NC with "Analytics disabled" status; `window['ga-disable-...']` is `true` (set by the effect backstop on hydration).
-- If `ga-consent` is absent (deleted): you get the first-visit experience again (NC auto-opens locked).
+- If `ga-consent` is absent (deleted): you get the first-visit experience again (NC auto-opens persistent — non-blocking but undismissable without a decision).
 
 ---
 
@@ -168,7 +168,7 @@ If no page_view fires after Allow, the synchronous `setGaDisabled(false)` in `ac
 
 1. The consent card appears top-center, just below the status bar. There's **no Notification Center panel** (mobile doesn't have one).
 2. In the status bar, the clock should be a tap target — DevTools → Elements → find the clock element. It should be a `<button>`, not a `<span>`. (R8 v6 finding.)
-3. Tap the clock while the card is showing. → The card stays. (Modal lock blocks close-attempts.)
+3. Tap the clock while the card is showing. → The card stays. (NC is persistent — close attempts are refused. Mobile NC isn't visible anyway, but the persistent flag is still set.)
 4. Tap **Decline** on the card. → Card hides.
 5. Tap the clock again. → Card re-appears in Decline/Allow buttons mode.
 6. Tap **Allow**. → Card hides. GA loads. `g/collect` request for page_view fires.
@@ -220,16 +220,15 @@ Object.defineProperty(document, "cookie", {
 
 ### 9a. Desktop trap on Accept-failure
 
-1. Reload. NC auto-opens locked with consent card.
+1. Reload. NC auto-opens persistent with consent card.
 2. Click **Allow**.
 
 **Expected:**
 
 - Cookies: `ga-consent` is **not** set (the write didn't persist; `writeConsent()` returned `false` from the read-back).
 - Card **stays visible** in buttons mode (consent stayed `null`).
-- NC stays locked (X still hidden, Esc/backdrop/clock don't close).
+- NC stays persistent (X still hidden, Esc/clock don't close, no backdrop to click). The user can ignore the banner and use the site; GA does not load. They can still click Decline to dismiss the banner.
 - GA does **not** load — `window['ga-disable-G-XXXXXXXXXX']` is `true`.
-- The user is trapped here intentionally — they must click **Decline** to escape.
 
 3. Click **Decline**. → NC closes (in-memory consent flips to `"denied"`; deferred-close fires).
 
@@ -272,6 +271,7 @@ After all the analytics work, the rest of the site should be visually identical.
 3. Drag a window by its titlebar → still works. Resize from edges → still works.
 4. Click the Dock icons → apps open. Click the traffic-light close → window closes.
 5. Toggle theme via System Settings app → glass-light ↔ glass-dark transitions still work.
+6. **Non-blocking consent (regression check):** delete the `ga-consent` cookie and hard-reload. While the persistent consent card is visible, drag a window, click a Dock icon, right-click the wallpaper, press **Cmd+K** for Spotlight. **All should work normally.** The consent card itself stays put.
 
 If any of these regressed, something analytics-related accidentally broke a shared piece.
 
@@ -286,14 +286,15 @@ If any of these regressed, something analytics-related accidentally broke a shar
 | GA script loaded | Network tab → `gtag/js?id=...` request |
 | Page_view sent | Network tab → `g/collect?...&en=page_view` |
 | Custom event sent | Network tab → `g/collect?...&en=app_open` (or other event name) |
-| Modal lock active | Elements → NC `<aside>` header → no X button |
+| Persistent banner active | Elements → NC `<aside>` header → no X button; no `<button aria-label="Close Notification Center">` sibling backdrop in the DOM |
 | Mobile clock interactive | Elements → MobileStatusBar clock → `<button>` not `<span>` |
 
 ## Common failure modes and what they mean
 
 | Symptom | Likely cause |
 |---|---|
-| NC closes when you press Esc on the first visit | Modal lock not wired (`setLocked` not being called, or context doesn't honor it) |
+| NC closes when you press Esc on the first visit | Persistent flag not wired (`setPersistent` not being called, or context doesn't honor it) |
+| Clicking the Dock / wallpaper while consent card is up does nothing (backdrop intercepts) | Conditional backdrop regression — verify `!persistent` gate around the `<button>` backdrop in `NotificationCenter.tsx` |
 | Click Allow on fresh visit → NC stays open | Deferred-close effect ordering wrong (lock effect must come first in declaration order) |
 | Denied → Allow doesn't fire page_view | `setGaDisabled(false)` not called synchronously before `setConsent("granted")` in `accept()` |
 | Decline doesn't stop traffic | `ga-disable` flag isn't being set; either `setGaDisabled(true)` missing from `decline()` or the gaId string is wrong |

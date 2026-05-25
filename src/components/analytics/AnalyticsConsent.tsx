@@ -20,18 +20,21 @@ interface Props {
 export default function AnalyticsConsent({ initialConsent }: Props) {
   const consent = useAnalyticsConsent(initialConsent);
   const isMobile = useIsMobile();
-  const { open, setOpen, setLocked } = useNotificationCenter();
+  const { open, setOpen, setPersistent } = useNotificationCenter();
   const declineRef = useRef<HTMLButtonElement>(null);
   const [editing, setEditing] = useState(false);
   const closeAfterChoiceRef = useRef(false);
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
 
-  // (1) Lock the NC while undecided. Declared FIRST so its effect runs first
-  //     in declaration order — the deferred-close effect below depends on
-  //     lockedRef.current being false by the time it runs.
+  // (1) Mark the NC persistent while undecided — close attempts are refused
+  //     so the consent card stays visible, but the rest of the page remains
+  //     interactive (the backdrop is suppressed in persistent mode).
+  //     Declared FIRST so its effect runs first in declaration order — the
+  //     deferred-close effect below depends on persistentRef.current being
+  //     false by the time it runs.
   useEffect(() => {
-    setLocked(consent.enabled && consent.consent === null);
-  }, [consent.enabled, consent.consent, setLocked]);
+    setPersistent(consent.enabled && consent.consent === null);
+  }, [consent.enabled, consent.consent, setPersistent]);
 
   // (2) Auto-open desktop NC on first visit when undecided.
   useEffect(() => {
@@ -41,8 +44,8 @@ export default function AnalyticsConsent({ initialConsent }: Props) {
   }, [isMobile, consent.enabled, consent.consent, setOpen]);
 
   // (3) Deferred close after a user pick. Declared LAST so it runs AFTER the
-  //     lock effect — by which point setLocked(false) has flipped
-  //     lockedRef.current synchronously, so setOpen(false) here is honored.
+  //     persistent effect — by which point setPersistent(false) has flipped
+  //     persistentRef.current synchronously, so setOpen(false) here is honored.
   useEffect(() => {
     if (closeAfterChoiceRef.current && consent.consent !== null) {
       closeAfterChoiceRef.current = false;

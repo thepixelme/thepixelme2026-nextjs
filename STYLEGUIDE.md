@@ -160,9 +160,11 @@ Use these named layers. Do not improvise z values.
 | Wallpaper        | `-z-10`       | Background image                       |
 | Desktop body     | `z-0`         | Desktop icons (if any)                 |
 | Window (base)    | `z-10`+       | Stacked dynamically by store; lowest active window starts at 10, increments by 1 on focus |
-| Dock / NC backdrop | `z-40`      | Dock always above windows; NC backdrop sits in the same band, above windows but below the NC panel itself |
-| Menu bar / Notification Center panel | `z-50` | Menu bar at `top-0 h-7`; NC panel at `top-7 right-0 bottom-0 w-[22.5rem]`. Same z is safe because they don't overlap geometrically |
+| Dock | `z-40` | Dock always above windows. The NC's transparent close-on-click backdrop also renders at this z when present (see note below). |
+| Menu bar / Notification Center panel | `z-50` | Menu bar at `top-0 h-7`; NC panel at `right-3 top-10 bottom-3 w-90`. Same z is safe because they don't overlap geometrically |
 | Spotlight / modals | `z-60`      | Above everything (still wins over NC when both are visible) |
+
+> When the NC is open and **not** persistent, a transparent `z-40` `<button>` backdrop is rendered to catch outside clicks (closes the panel without dimming, matching macOS). In **persistent** mode — currently the analytics-consent undecided state — the backdrop is omitted so the rest of the page stays interactive while the consent card remains visible.
 
 **Mobile shell (< 1024 px)** adds its own band — these layers only exist when `useIsMobile()` returns true:
 

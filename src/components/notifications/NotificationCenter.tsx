@@ -6,7 +6,7 @@ import { Children, type ReactNode, useEffect, useId, useRef } from "react";
 import { useNotificationCenter } from "@/lib/notification-center";
 
 interface Props {
-  /** First-actionable element inside the panel — focused on open. If not provided, the close X is focused. */
+  /** First-actionable element inside the panel — focused on open. If not provided, the close X is focused. Note: when `persistent`, the X is not rendered, so callers that rely on the fallback get a silent no-op. */
   initialFocusRef?: React.RefObject<HTMLElement | null>;
   children?: ReactNode;
 }
@@ -15,11 +15,12 @@ export default function NotificationCenter({
   initialFocusRef,
   children,
 }: Props) {
-  const { open, setOpen, locked } = useNotificationCenter();
+  const { open, setOpen, persistent } = useNotificationCenter();
   const reduceMotion = useReducedMotion();
   const headingId = useId();
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
 
   // Esc to close (only while open)
   useEffect(() => {
@@ -45,7 +46,18 @@ export default function NotificationCenter({
     } else {
       const prev = previouslyFocusedRef.current;
       previouslyFocusedRef.current = null;
-      if (prev && document.contains(prev)) prev.focus();
+      if (prev && document.contains(prev)) {
+        // Don't steal focus from an underlying control the user moved to
+        // while the panel was non-blocking (persistent mode allows
+        // click-through). Only restore if focus is still captive — inside
+        // the panel or on body.
+        const active = document.activeElement;
+        const focusStillCaptive =
+          active === document.body ||
+          active === null ||
+          (active instanceof Node && panelRef.current?.contains(active));
+        if (focusStillCaptive) prev.focus();
+      }
     }
   }, [open, initialFocusRef]);
 
@@ -55,14 +67,18 @@ export default function NotificationCenter({
     <AnimatePresence>
       {open && (
         <>
-          {/* Transparent backdrop — closes on click, doesn't dim (matches macOS) */}
-          <button
-            type="button"
-            aria-label="Close Notification Center"
-            onClick={() => setOpen(false)}
-            className="fixed inset-0 z-40 cursor-default bg-transparent"
-          />
+          {/* Transparent backdrop — closes on click, doesn't dim (matches macOS).
+              Suppressed while persistent so the rest of the page stays interactive. */}
+          {!persistent && (
+            <button
+              type="button"
+              aria-label="Close Notification Center"
+              onClick={() => setOpen(false)}
+              className="fixed inset-0 z-40 cursor-default bg-transparent"
+            />
+          )}
           <motion.aside
+            ref={panelRef}
             aria-labelledby={headingId}
             className="fixed right-3 top-10 bottom-3 z-50 flex w-90 flex-col gap-3 overflow-y-auto p-3"
             initial={{ x: "100%" }}
@@ -78,7 +94,7 @@ export default function NotificationCenter({
               <h2 id={headingId} className="text-sm font-semibold">
                 Notification Center
               </h2>
-              {!locked && (
+              {!persistent && (
                 <button
                   ref={closeButtonRef}
                   type="button"

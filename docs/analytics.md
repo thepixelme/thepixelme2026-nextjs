@@ -23,9 +23,9 @@ The session-state machine lives in the [`useAnalyticsConsent()`](../src/lib/useA
 |---|---|
 | `"granted"` | `<GoogleAnalytics>` mounts. `trackEvent()` sends events. `window['ga-disable-' + gaId]` is `false`. |
 | `"denied"`  | No script mount, no `trackEvent()`. `window['ga-disable-' + gaId]` is `true` so any previously-loaded gtag.js also stops sending. |
-| absent      | Consent card shown. The mobile banner is rendered in the initial server HTML (see SSR section below). Desktop NC auto-opens and is **modal-locked** (Esc / X / backdrop / clock-toggle-to-close are all blocked); mobile shows a top-center card that can't be dismissed without a choice. No GA until the visitor decides. |
+| absent      | Consent card shown. The mobile banner is rendered in the initial server HTML (see SSR section below). Desktop NC auto-opens and is **persistent** (X is hidden; Esc, clock-toggle, and clicks on the rest of the page do not close it — but the rest of the page remains interactive); mobile shows a top-center card that can't be dismissed without a choice. No GA until the visitor decides. |
 
-`readConsent()` matches the cookie against `/(?:^|; )ga-consent=([^;]+)/`. `writeConsent()` assigns `document.cookie = "ga-consent=...; Max-Age=31536000; Path=/; SameSite=Lax; Secure" (Secure only on https)`. Because `document.cookie = ...` doesn't throw when the browser rejects the cookie, `writeConsent()` performs a read-back and returns `true` only when the value persisted. On Accept-with-storage-failure, in-memory `consent` stays `null` (fail closed — `<GoogleAnalytics>` does not mount and NC stays locked); user must Decline to escape. On Decline-with-storage-failure, in-memory `consent` flips to `"denied"` for the session even though it didn't persist; reload re-prompts.
+`readConsent()` matches the cookie against `/(?:^|; )ga-consent=([^;]+)/`. `writeConsent()` assigns `document.cookie = "ga-consent=...; Max-Age=31536000; Path=/; SameSite=Lax; Secure" (Secure only on https)`. Because `document.cookie = ...` doesn't throw when the browser rejects the cookie, `writeConsent()` performs a read-back and returns `true` only when the value persisted. On Accept-with-storage-failure, in-memory `consent` stays `null` (fail closed — `<GoogleAnalytics>` does not mount and NC stays persistent); the user can ignore the banner and continue using the site, or click Decline to dismiss it. GA still does not load until a successful Accept persists. On Decline-with-storage-failure, in-memory `consent` flips to `"denied"` for the session even though it didn't persist; reload re-prompts.
 
 ## SSR (mobile banner)
 
@@ -41,7 +41,7 @@ The mobile branch in `AnalyticsConsent.tsx` is hidden on desktop via Tailwind `l
 
 To reset for testing: open DevTools → Application → Cookies → delete the `ga-consent` cookie for the origin. For full end-to-end QA of every consent state transition, see **[docs/analytics-testing.md](analytics-testing.md)**.
 
-**This is a consent gate, not a CMP.** No full GDPR/UK ePrivacy compliance is claimed: no preference granularity, no records of consent, no policy copy, no cookie cleanup, no Consent Mode v2. What R8 does cover: forced explicit decision before dismissal (Decline is equally available) + withdrawable lifecycle on both viewports + reliable per-property disable. If full compliance becomes a goal, swap [AnalyticsConsent](../src/components/analytics/AnalyticsConsent.tsx) for a real CMP without touching the rest.
+**This is a consent gate, not a CMP.** No full GDPR/UK ePrivacy compliance is claimed: no preference granularity, no records of consent, no policy copy, no cookie cleanup, no Consent Mode v2. What R8 does cover: explicit decision required to dismiss the banner (Decline is equally available), but the rest of the site remains usable while undecided + withdrawable lifecycle on both viewports + reliable per-property disable. If full compliance becomes a goal, swap [AnalyticsConsent](../src/components/analytics/AnalyticsConsent.tsx) for a real CMP without touching the rest.
 
 ## Event catalog
 
