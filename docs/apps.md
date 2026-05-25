@@ -220,6 +220,53 @@ Section headings throughout CaseStudy are uniformly `text-[10px] font-semibold u
 
 CaseStudy renders gracefully for projects without optional fields — only the title block (and, if present, `description`) are unconditional. There is no internal toolbar or back button — the window's traffic-light close handles closing.
 
+### Mobile (< 1024 px)
+
+On mobile (driven by [`useIsMobile()`](../src/lib/useIsMobile.ts)), PreviewApp branches before rendering the desktop toolbar/sidebar:
+
+- **Info view** — `<CaseStudy>` renders full-bleed inside `<div className="h-full overflow-y-auto">`. The PanelLeft toggle and sidebar are not rendered. The AppSheet header already provides "Done" + title.
+- **Screenshot view** — `<MobileImageViewer>` ([preview/MobileImageViewer.tsx](../src/components/apps/preview/MobileImageViewer.tsx)) replaces `<ImageView>`. PreviewApp owns the `view` index and passes `onClose` (→ `setView("info")`) and `onIndexChange` (→ `setView(i)`).
+
+`<MobileImageViewer>` is a touch-first canvas with always-visible top bar and filmstrip (no auto-hide; the chrome reserves space rather than overlaying the image). The component **stays mounted across index changes** (no `key` prop in PreviewApp) so filmstrip scroll position survives; the index-change effect does a full reset of `zoom`/`pan`/`mode`/`gesture`/`isDragging`/`naturalSize`/`gestureStart`/`pointers` so the next screenshot doesn't briefly render with the previous image's `fitScale`.
+
+**Layout** — a `flex h-full flex-col` column with three in-flow children:
+- **Top bar** (`relative flex h-11 shrink-0 bg-surface border-b border-separator`): `< Project Info` back button on the left, `N of M` counter centered via `absolute inset-x-0 text-center` (the `relative` parent anchors it). Always rendered.
+- **Canvas** (`relative flex-1 min-h-0 touch-none select-none overflow-hidden`): the image as `motion.img` inside a statically-centered wrapper — the wrapper owns `-translate-x/y-1/2` for centering; the `motion.img` owns only numeric `x`/`y`/`scale`/`opacity` so Motion never fights the CSS centering on the same transform slot. `touch-none` is essential: without it the browser interprets pointer gestures as native scroll/pinch and emits `pointercancel` mid-gesture.
+- **Bottom filmstrip** (`flex h-16 shrink-0 bg-surface border-t border-separator overflow-x-auto`): one thumb per screenshot, `aspect-9/19 h-12` portrait / `aspect-video h-12` landscape, current bordered `border-accent`. The active thumb auto-scrolls into view via `scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", inline: "center" })`. Filmstrip is hidden only when `screenshots.length === 1`.
+
+Because top bar and filmstrip are in the flex flow (not absolutely positioned overlays), the canvas's `flex-1` height excludes them and the fit-scaled image never sits under chrome.
+
+**Gestures** (all on the canvas; pointer events, no library):
+
+| Gesture | Effect |
+| --- | --- |
+| Double-tap | Toggle fit ↔ actual size (mirrors desktop `<ImageView>` double-click). Detected via `lastTapAt` ref + `DOUBLE_TAP_MS` (300 ms) window. |
+| Single tap | No-op. (Chrome is always visible, so tap-to-toggle is gone.) |
+| Swipe down (when fit) | `dy > 80 && |dy| > |dx|` → `onClose()`. Rubber-band: live opacity = `clamp(0.4, 1 - max(0, dy)/300, 1)`. |
+| Swipe ← / → (when fit) | `|dx| > 60 && |dx| > |dy|` → swipe-left = next, swipe-right = previous. Clamped to `[0, len-1]`. |
+| Pinch (two fingers) | Zoom around the pinch midpoint (canvas-centered coords). All math reads from `gestureStart` snapshot (`start.zoom`, `start.panX/Y`, `start.pinchDist`) — never closure state — so rapid `pointermove` events stay anchored. Clamped `[0.05, 40]`. Sets `mode = "custom"`. |
+| One-finger drag (when `start.zoom > 1`) | Pans. Branch gates on `start.zoom`, not closure `zoom`. |
+| Tap filmstrip thumb | `onIndexChange(i)`. |
+| Tap `< Project Info` | `onClose()`. |
+
+**Pinch→drag handoff:** when one of two pointers lifts, `gestureStart` is repopulated with `kind: "drag"` using the remaining pointer's coords + the **committed** `pan`/`zoom`, so the next pointermove stays anchored.
+
+**State model:**
+
+```ts
+type GestureStart =
+  | { kind: "drag"; startX; startY; startTime; panX; panY; zoom }
+  | { kind: "pinch"; pinchDist; panX; panY; zoom };
+```
+
+Discriminated union narrowing in each handler prevents a tap classifier from reading `pinchDist` or a pinch handler from reading `startX`.
+
+**Out of scope:**
+
+- The AppSheet header (`<header className="… h-11">` from [mobile/AppSheet.tsx](../src/components/mobile/AppSheet.tsx)) stays visible — that's the system-level chrome and is not affected by viewer state.
+- PreviewApp's arrow-key listener (`window.addEventListener("keydown", …)`) is inert on touch devices but remains for the desktop case; no harm.
+- Desktop `<ImageView>` is unchanged.
+
 ---
 
 ## AboutApp ([AboutApp.tsx](../src/components/apps/AboutApp.tsx))

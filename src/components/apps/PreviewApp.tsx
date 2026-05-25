@@ -3,9 +3,11 @@
 import { Eye, Info, PanelLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PROJECTS } from "@/lib/projects";
+import { useIsMobile } from "@/lib/useIsMobile";
 import { useWindows } from "@/lib/windows-store";
 import { CaseStudy } from "./preview/CaseStudy";
 import { ImageView } from "./preview/ImageViewer";
+import { MobileImageViewer } from "./preview/MobileImageViewer";
 
 type View = "info" | number;
 
@@ -39,6 +41,7 @@ function PreviewContent({
   const screenshots = project.screenshots ?? [];
   const isPortrait = project.orientation === "portrait";
   const [view, setView] = useState<View>("info");
+  const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     if (typeof window === "undefined") return true;
     return window.innerWidth >= 1024;
@@ -67,6 +70,25 @@ function PreviewContent({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [view, screenshots.length]);
+
+  if (isMobile === true) {
+    if (view === "info") {
+      return (
+        <div className="h-full overflow-y-auto">
+          <CaseStudy project={project} onScreenshotClick={(i) => setView(i)} />
+        </div>
+      );
+    }
+    return (
+      <MobileImageViewer
+        screenshots={screenshots}
+        index={view}
+        isPortrait={isPortrait}
+        onClose={() => setView("info")}
+        onIndexChange={(i) => setView(i)}
+      />
+    );
+  }
 
   return (
     <div className="flex h-full flex-col">
