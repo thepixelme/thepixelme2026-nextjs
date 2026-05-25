@@ -1,12 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { type ConsentValue, readConsent, writeConsent } from "@/lib/analytics";
+import { type ConsentValue, writeConsent } from "@/lib/analytics";
 
 export interface UseAnalyticsConsent {
-  /** False during first render to keep hydration safe. */
-  mounted: boolean;
-  /** Persisted value from `localStorage` (post-hydration). */
+  /** Persisted consent value, seeded from the server cookie read. */
   consent: ConsentValue | null;
   /** Session-only display state — true when the consent card should render. */
   promptVisible: boolean;
@@ -37,19 +35,14 @@ function setGaDisabled(disabled: boolean) {
     disabled;
 }
 
-export function useAnalyticsConsent(): UseAnalyticsConsent {
+export function useAnalyticsConsent(
+  initialConsent: ConsentValue | null,
+): UseAnalyticsConsent {
   const enabled = Boolean(GA_ID);
-  const [mounted, setMounted] = useState(false);
-  const [consent, setConsent] = useState<ConsentValue | null>(null);
-  const [promptVisible, setPromptVisible] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    if (!enabled) return;
-    const stored = readConsent();
-    setConsent(stored);
-    setPromptVisible(stored === null);
-  }, [enabled]);
+  const [consent, setConsent] = useState<ConsentValue | null>(initialConsent);
+  const [promptVisible, setPromptVisible] = useState(
+    enabled && initialConsent === null,
+  );
 
   const accept = useCallback(() => {
     const ok = writeConsent("granted");
@@ -82,7 +75,6 @@ export function useAnalyticsConsent(): UseAnalyticsConsent {
   }, [analyticsEnabled]);
 
   return {
-    mounted,
     consent,
     promptVisible,
     enabled,

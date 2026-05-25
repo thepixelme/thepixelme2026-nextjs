@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
-import AnalyticsConsent from "@/components/analytics/AnalyticsConsent";
+import { Suspense } from "react";
+import AnalyticsConsentServer from "@/components/analytics/AnalyticsConsentServer";
 import { NotificationCenterProvider } from "@/lib/notification-center";
 import "./globals.css";
 
@@ -40,7 +41,16 @@ export default function RootLayout({
       <body className="h-full">
         <NotificationCenterProvider>
           {children}
-          <AnalyticsConsent />
+          {/*
+            Wrapped in Suspense so the `cookies()` read inside
+            AnalyticsConsentServer stays isolated from the rest of the
+            layout. If the route ends up fully dynamic anyway (no PPR /
+            Cache Components configured), the cost is small — single page +
+            /api/contact.
+          */}
+          <Suspense fallback={null}>
+            <AnalyticsConsentServer />
+          </Suspense>
         </NotificationCenterProvider>
       </body>
     </html>

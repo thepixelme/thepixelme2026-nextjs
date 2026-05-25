@@ -1,26 +1,36 @@
 import { sendGAEvent } from "@next/third-parties/google";
+import {
+  type ConsentValue,
+  GA_CONSENT_COOKIE,
+  parseConsent,
+} from "@/lib/analytics-consent";
 import type { AppId } from "@/types/window";
 
-export const GA_CONSENT_STORAGE_KEY = "ga-consent";
+export { GA_CONSENT_COOKIE, parseConsent };
+export type { ConsentValue };
 
-export type ConsentValue = "granted" | "denied";
+// 1 year, renewed on each accept/decline.
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 export function readConsent(): ConsentValue | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const v = window.localStorage.getItem(GA_CONSENT_STORAGE_KEY);
-    return v === "granted" || v === "denied" ? v : null;
-  } catch {
-    return null;
-  }
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(
+    new RegExp(`(?:^|; )${GA_CONSENT_COOKIE}=([^;]+)`),
+  );
+  return parseConsent(match?.[1]);
 }
 
-/** Returns true if the value was persisted, false on storage failure. */
+/** Returns true if the value was persisted (verified by read-back), false otherwise. */
 export function writeConsent(value: ConsentValue): boolean {
-  if (typeof window === "undefined") return false;
+  if (typeof document === "undefined") return false;
   try {
-    window.localStorage.setItem(GA_CONSENT_STORAGE_KEY, value);
-    return true;
+    const secure = location.protocol === "https:" ? "; Secure" : "";
+    // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API is not supported in Safari; direct assignment is intentional. Read-back below verifies persistence regardless of the rejection path.
+    document.cookie = `${GA_CONSENT_COOKIE}=${value}; Max-Age=${COOKIE_MAX_AGE}; Path=/; SameSite=Lax${secure}`;
+    // document.cookie assignment doesn't throw when the browser rejects the
+    // cookie (third-party blocking, quota, malformed value). Read back to
+    // verify — preserves fail-closed posture on Accept-with-storage-failure.
+    return readConsent() === value;
   } catch {
     return false;
   }

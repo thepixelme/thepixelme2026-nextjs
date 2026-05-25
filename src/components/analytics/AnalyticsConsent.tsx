@@ -7,12 +7,18 @@ import { useEffect, useRef, useState } from "react";
 import MobileConsentNotification from "@/components/notifications/MobileConsentNotification";
 import NotificationCard from "@/components/notifications/NotificationCard";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
+import type { ConsentValue } from "@/lib/analytics-consent";
 import { useNotificationCenter } from "@/lib/notification-center";
 import { useAnalyticsConsent } from "@/lib/useAnalyticsConsent";
 import { useIsMobile } from "@/lib/useIsMobile";
 
-export default function AnalyticsConsent() {
-  const consent = useAnalyticsConsent();
+interface Props {
+  /** Seeded by `AnalyticsConsentServer` from the request cookie. */
+  initialConsent: ConsentValue | null;
+}
+
+export default function AnalyticsConsent({ initialConsent }: Props) {
+  const consent = useAnalyticsConsent(initialConsent);
   const isMobile = useIsMobile();
   const { open, setOpen, setLocked } = useNotificationCenter();
   const declineRef = useRef<HTMLButtonElement>(null);
@@ -44,8 +50,6 @@ export default function AnalyticsConsent() {
     }
   }, [consent.consent, setOpen]);
 
-  if (!consent.mounted || isMobile === null) return null;
-
   const gaMount =
     consent.analyticsEnabled && gaId ? <GoogleAnalytics gaId={gaId} /> : null;
 
@@ -54,43 +58,41 @@ export default function AnalyticsConsent() {
   // keep NC open with the new status card for feedback.
   // Mobile: always close after picking (no panel, simpler UX).
   const handleDecline = () => {
-    closeAfterChoiceRef.current = isMobile || consent.consent === null;
+    closeAfterChoiceRef.current = isMobile === true || consent.consent === null;
     setEditing(false);
     consent.decline();
   };
   const handleAccept = () => {
-    closeAfterChoiceRef.current = isMobile || consent.consent === null;
+    closeAfterChoiceRef.current = isMobile === true || consent.consent === null;
     setEditing(false);
     consent.accept();
   };
 
-  // Mobile: standalone card. Gated on `consent === null || open` — the
-  // `consent === null` clause keeps the card visible the entire undecided
-  // period, including after a failed Accept (where promptVisible flips false
-  // but consent stays null).
-  if (isMobile) {
-    const mobileVisible = consent.enabled && (consent.consent === null || open);
-    return (
-      <>
-        {gaMount}
-        <AnimatePresence>
-          {mobileVisible && (
-            <MobileConsentNotification
-              key="mobile-ga-consent"
-              accept={handleAccept}
-              decline={handleDecline}
-            />
-          )}
-        </AnimatePresence>
-      </>
-    );
-  }
+  // Mobile banner — always rendered in HTML (SSR-friendly) and hidden on
+  // desktop via Tailwind `lg:hidden`. The breakpoint must stay in sync with
+  // `useIsMobile()`'s cutoff (1023.98 px ↔ Tailwind v4 `lg` = 1024 px).
+  // `AnimatePresence initial={false}` skips the slide-in enter animation on
+  // first paint so the banner is a valid LCP candidate (an opacity-0 element
+  // would be ignored by the browser's LCP heuristic).
+  const mobileVisible = consent.enabled && (consent.consent === null || open);
+  const mobileBanner = (
+    <div className="lg:hidden">
+      <AnimatePresence initial={false}>
+        {mobileVisible && (
+          <MobileConsentNotification
+            key="mobile-ga-consent"
+            accept={handleAccept}
+            decline={handleDecline}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
 
-  // Desktop: NC always rendered when env is set; card content varies by state.
-  // When env is unset, NC still mounts (empty) so the clock can open it.
-  return (
-    <>
-      {gaMount}
+  // Desktop card — client-gated on `isMobile === false`. Desktop is already
+  // 100/100 on PSI so we don't pay the cost of SSR here.
+  const desktopCard =
+    isMobile === false ? (
       <NotificationCenter initialFocusRef={declineRef}>
         {consent.enabled &&
           (consent.consent === null || editing ? (
@@ -133,6 +135,13 @@ export default function AnalyticsConsent() {
             />
           ))}
       </NotificationCenter>
+    ) : null;
+
+  return (
+    <>
+      {gaMount}
+      {mobileBanner}
+      {desktopCard}
     </>
   );
 }

@@ -15,18 +15,18 @@ If you don't have a real GA ID, you can still use a placeholder like `G-TESTTEST
 ## 0. Setup — what to have open
 
 1. Set `NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX` in `.env.local`. **Restart `npm run dev` after changing this** (it's inlined at build/dev-server start).
-2. Open `http://localhost:3000` in a normal Chrome/Safari window (not Incognito — Incognito skews `localStorage` testing).
+2. Open `http://localhost:3000` in a normal Chrome/Safari window (not Incognito — Incognito skews cookie persistence testing).
 3. Open DevTools. Keep these panels handy:
    - **Console** — for typing `window['ga-disable-G-XXXXXXXXXX']` and reading the value.
    - **Network** tab, filtered to `analytics` or `google` — for spotting `gtag/js?id=...` (gtag.js loading) and `g/collect` (data being sent).
-   - **Application → Local Storage → `http://localhost:3000`** — for deleting `ga-consent` between tests and watching it change.
+   - **Application → Cookies → `http://localhost:3000`** — for deleting `ga-consent` between tests and watching it change.
    - **Elements** — for DOM-inspecting the close X and the mobile clock.
 
 ### "Fresh state" — how to reset between scenarios
 
 You'll do this constantly. The fastest path:
 
-1. DevTools → **Application** → **Local Storage** → `http://localhost:3000` → select the row with key `ga-consent` → press **Delete** (trash icon).
+1. DevTools → **Application** → **Cookies** → `http://localhost:3000` → select the row with name `ga-consent` → press **Delete** (trash icon). Hard reload so the next request is made without the cookie (the server-rendered banner shell depends on cookie state being read at request time).
 2. Network tab → click 🚫 (clear) to wipe captured requests.
 3. Hard reload: **Cmd/Ctrl+Shift+R**.
 
@@ -53,7 +53,7 @@ Now you're back to "first-visit, undecided."
 - Network tab: a request to `https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX` (gtag.js loading).
 - Network tab: a request to `https://www.google-analytics.com/g/collect?...&en=page_view&...` (the page_view event).
 - Console: `window['ga-disable-G-XXXXXXXXXX']` returns `false`.
-- Local Storage: `ga-consent` is `"granted"`.
+- Cookies: `ga-consent` is `"granted"`.
 - Click the menu-bar clock → NC re-opens, this time showing a card titled **"Analytics enabled"** with a single **"Change preference"** action. The close X is now visible in the header (lock released).
 
 ---
@@ -72,7 +72,7 @@ Now you're back to "first-visit, undecided."
 - NC slides closed.
 - Network tab: **no** requests to `googletagmanager.com` or `google-analytics.com`.
 - Console: `window['ga-disable-G-XXXXXXXXXX']` returns `true`.
-- Local Storage: `ga-consent` is `"denied"`.
+- Cookies: `ga-consent` is `"denied"`.
 - Click the menu-bar clock → NC re-opens showing **"Analytics disabled"** + **"Change preference"** action. X close button visible.
 
 ---
@@ -90,10 +90,10 @@ Now you're back to "first-visit, undecided."
 
 **Expected:**
 
-- Consent flips: Local Storage `ga-consent` updates to the new value.
+- Consent flips: Cookies `ga-consent` updates to the new value.
 - The card switches **in place** to the new status — `"Analytics enabled"` ↔ `"Analytics disabled"`. NC **stays open** (this is the intentional desktop UX so the user sees the new state).
 - `window['ga-disable-...']` flips correspondingly (true on Decline, false on Allow).
-- Bonus check: close NC, reload page. The persisted choice survives (Local Storage still has the latest value).
+- Bonus check: close NC, reload page. The persisted choice survives (the `ga-consent` cookie still has the latest value).
 
 ---
 
@@ -149,7 +149,7 @@ If no page_view fires after Allow, the synchronous `setGaDisabled(false)` in `ac
 
 **Steps:**
 
-1. Note the current Local Storage `ga-consent` value.
+1. Note the current Cookies `ga-consent` value.
 2. Hard reload the page (Cmd/Ctrl+Shift+R).
 
 **Expected:**
@@ -201,16 +201,22 @@ Restore the env var when done.
 
 **Setup:** Wide window. Fresh state. Open the Console.
 
-**Steps to simulate `localStorage.setItem` throwing:**
+**Steps to simulate the cookie write being rejected:**
+
+Cookies can be rejected silently by the browser (third-party cookie blocking, quota, malformed value). `document.cookie = ...` never throws — the write either persists or doesn't. `writeConsent()` performs a read-back and returns `false` when the value didn't persist.
+
+The cleanest local simulation is to make `readConsent()` see no cookie regardless of what was written: in DevTools → Application → Cookies → right-click the origin → **Clear** before clicking Allow, and ALSO put a temporary stub in the Console:
 
 ```js
-const originalSetItem = Storage.prototype.setItem;
-Storage.prototype.setItem = function () {
-  throw new Error("simulated storage failure");
-};
+// Stub readConsent's source. Restore by reloading.
+Object.defineProperty(document, "cookie", {
+  configurable: true,
+  get() { return ""; },
+  set() { /* swallow writes — simulates browser-side rejection */ },
+});
 ```
 
-(Restore with `Storage.prototype.setItem = originalSetItem;` when done.)
+(Reload the page when done — the stub is per-document and reload restores normal cookie access.)
 
 ### 9a. Desktop trap on Accept-failure
 
@@ -219,7 +225,7 @@ Storage.prototype.setItem = function () {
 
 **Expected:**
 
-- Local Storage: `ga-consent` is **not** set (the write threw).
+- Cookies: `ga-consent` is **not** set (the write didn't persist; `writeConsent()` returned `false` from the read-back).
 - Card **stays visible** in buttons mode (consent stayed `null`).
 - NC stays locked (X still hidden, Esc/backdrop/clock don't close).
 - GA does **not** load — `window['ga-disable-G-XXXXXXXXXX']` is `true`.
@@ -227,11 +233,11 @@ Storage.prototype.setItem = function () {
 
 3. Click **Decline**. → NC closes (in-memory consent flips to `"denied"`; deferred-close fires).
 
-4. Restore `Storage.prototype.setItem` and hard reload. → You're back to fresh state (the writes never persisted).
+4. Reload to remove the cookie stub. → You're back to fresh state (the writes never persisted).
 
 ### 9b. Mobile failed-Accept stays visible
 
-1. Restore `setItem`, then re-apply the override above. Switch to mobile width. Hard reload to clear consent.
+1. Reload to clear the cookie stub, then re-apply the override above. Switch to mobile width. Hard reload to clear consent.
 2. Card auto-shows top-center.
 3. Tap **Allow**.
 
@@ -275,7 +281,7 @@ If any of these regressed, something analytics-related accidentally broke a shar
 
 | Signal | Where |
 |---|---|
-| Consent persisted state | DevTools → Application → Local Storage → key `ga-consent` |
+| Consent persisted state | DevTools → Application → Cookies → name `ga-consent` |
 | In-memory disable flag | Console: `window['ga-disable-G-XXXXXXXXXX']` |
 | GA script loaded | Network tab → `gtag/js?id=...` request |
 | Page_view sent | Network tab → `g/collect?...&en=page_view` |

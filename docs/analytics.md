@@ -15,15 +15,23 @@ Documented placeholder in [.env.example](../.env.example).
 
 ## Consent contract
 
-[src/lib/analytics.ts](../src/lib/analytics.ts) exports `GA_CONSENT_STORAGE_KEY = "ga-consent"`. The session-state machine lives in the [`useAnalyticsConsent()`](../src/lib/useAnalyticsConsent.ts) hook, which is the **single owner** of consent state — it must be called only once, inside [`AnalyticsConsent`](../src/components/analytics/AnalyticsConsent.tsx). Notification surfaces receive `accept` / `decline` as props.
+[src/lib/analytics-consent.ts](../src/lib/analytics-consent.ts) exports the server-safe contract: `GA_CONSENT_COOKIE = "ga-consent"`, the `ConsentValue` type, and the `parseConsent()` parser. [src/lib/analytics.ts](../src/lib/analytics.ts) provides the client-side cookie read/write; [src/lib/analytics-server.ts](../src/lib/analytics-server.ts) provides the server-side read (via `next/headers cookies()`). The split keeps `@next/third-parties/google` (which is `'use client'`) out of the server graph.
 
-| `localStorage["ga-consent"]` | Effect |
+The session-state machine lives in the [`useAnalyticsConsent()`](../src/lib/useAnalyticsConsent.ts) hook, which is the **single owner** of consent state — it must be called only once, inside [`AnalyticsConsent`](../src/components/analytics/AnalyticsConsent.tsx). The hook receives `initialConsent` (read server-side from the cookie by [`AnalyticsConsentServer`](../src/components/analytics/AnalyticsConsentServer.tsx)) and seeds its state from it, so the consent banner can ship in the initial server HTML. Notification surfaces receive `accept` / `decline` as props.
+
+| Cookie `ga-consent` | Effect |
 |---|---|
 | `"granted"` | `<GoogleAnalytics>` mounts. `trackEvent()` sends events. `window['ga-disable-' + gaId]` is `false`. |
 | `"denied"`  | No script mount, no `trackEvent()`. `window['ga-disable-' + gaId]` is `true` so any previously-loaded gtag.js also stops sending. |
-| absent      | Consent card shown. Desktop NC auto-opens and is **modal-locked** (Esc / X / backdrop / clock-toggle-to-close are all blocked); mobile shows a top-center card that can't be dismissed without a choice. No GA until the visitor decides. |
+| absent      | Consent card shown. The mobile banner is rendered in the initial server HTML (see SSR section below). Desktop NC auto-opens and is **modal-locked** (Esc / X / backdrop / clock-toggle-to-close are all blocked); mobile shows a top-center card that can't be dismissed without a choice. No GA until the visitor decides. |
 
-`readConsent()` and `writeConsent()` both wrap `localStorage` access in try/catch — failures return `null`/`false` rather than throwing. On Accept-with-storage-failure, in-memory `consent` stays `null` (fail closed — `<GoogleAnalytics>` does not mount and NC stays locked); user must Decline to escape. On Decline-with-storage-failure, in-memory `consent` flips to `"denied"` for the session even though it didn't persist; reload re-prompts.
+`readConsent()` matches the cookie against `/(?:^|; )ga-consent=([^;]+)/`. `writeConsent()` assigns `document.cookie = "ga-consent=...; Max-Age=31536000; Path=/; SameSite=Lax; Secure" (Secure only on https)`. Because `document.cookie = ...` doesn't throw when the browser rejects the cookie, `writeConsent()` performs a read-back and returns `true` only when the value persisted. On Accept-with-storage-failure, in-memory `consent` stays `null` (fail closed — `<GoogleAnalytics>` does not mount and NC stays locked); user must Decline to escape. On Decline-with-storage-failure, in-memory `consent` flips to `"denied"` for the session even though it didn't persist; reload re-prompts.
+
+## SSR (mobile banner)
+
+The mobile consent banner ships in the initial server HTML so it can be the LCP candidate without paying for hydration. [`AnalyticsConsentServer`](../src/components/analytics/AnalyticsConsentServer.tsx) is an async Server Component that calls `readConsentServer()` (which reads the cookie via `next/headers`), then renders the client [`AnalyticsConsent`](../src/components/analytics/AnalyticsConsent.tsx) with the value seeded in via the `initialConsent` prop. The root layout wraps it in `<Suspense fallback={null}>` to keep the dynamic access isolated; without PPR / Cache Components configured, `/` is currently dynamic but the verification step is the SSR HTML inspection, not the route mode.
+
+The mobile branch in `AnalyticsConsent.tsx` is hidden on desktop via Tailwind `lg:hidden` (matching `useIsMobile`'s 1023.98 px cutoff = Tailwind v4 `lg` 1024 px); the desktop card stays client-gated on `isMobile === false` since desktop is already at the LCP target. Framer Motion's `AnimatePresence initial={false}` is set so the SSR'd banner first-paints at its animate state (visible) instead of `opacity: 0` — which would disqualify it as an LCP candidate.
 
 **Re-decide (R8)**: the desktop card is persistent — after a decision it switches to a "Analytics enabled/disabled · Change preference" status form. Clicking "Change preference" swaps back to Decline/Allow buttons without resetting persisted consent. Desktop change-preference picks keep NC open showing the new status. Mobile re-opens via the MobileStatusBar clock toggle (clock is interactive only when env is set); mobile re-decide picks close the card.
 
@@ -31,7 +39,7 @@ Documented placeholder in [.env.example](../.env.example).
 
 **Cookie limitation**: existing `_ga` / `_gid` cookies aren't actively cleared on Decline. They remain until expiry; the disable flag prevents further writes. Cookie cleanup would belong to a future CMP integration.
 
-To reset for testing: open DevTools → Application → Local Storage → delete `ga-consent`. For full end-to-end QA of every consent state transition, see **[docs/analytics-testing.md](analytics-testing.md)**.
+To reset for testing: open DevTools → Application → Cookies → delete the `ga-consent` cookie for the origin. For full end-to-end QA of every consent state transition, see **[docs/analytics-testing.md](analytics-testing.md)**.
 
 **This is a consent gate, not a CMP.** No full GDPR/UK ePrivacy compliance is claimed: no preference granularity, no records of consent, no policy copy, no cookie cleanup, no Consent Mode v2. What R8 does cover: forced explicit decision before dismissal (Decline is equally available) + withdrawable lifecycle on both viewports + reliable per-property disable. If full compliance becomes a goal, swap [AnalyticsConsent](../src/components/analytics/AnalyticsConsent.tsx) for a real CMP without touching the rest.
 
