@@ -6,8 +6,8 @@ import {
 } from "@/lib/analytics-consent";
 import type { AppId } from "@/types/window";
 
-export { GA_CONSENT_COOKIE, parseConsent };
 export type { ConsentValue };
+export { GA_CONSENT_COOKIE, parseConsent };
 
 // 1 year, renewed on each accept/decline.
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;

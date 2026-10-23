@@ -95,6 +95,7 @@ export default function TerminalApp() {
       <div ref={scrollRef} className="h-full overflow-auto pr-1">
         {lines.map((l, i) => (
           <div
+            // biome-ignore lint/suspicious/noArrayIndexKey: append-only log; repeated commands produce identical text, so the index is the only stable identity
             key={`${i}-${l.text}`}
             className={l.kind === "in" ? "text-white" : "text-emerald-200/90"}
           >

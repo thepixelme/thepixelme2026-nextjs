@@ -8,14 +8,15 @@ This file is the canonical style reference. Read it before writing any component
 
 ## 1. Stack & versions
 
-- **Next.js 16.2.4** — App Router only. APIs differ from training data; consult [node_modules/next/dist/docs/01-app/](node_modules/next/dist/docs/01-app/) before writing Next-API-touching code.
+- **Node.js 24** — pinned via `engines.node` in `package.json`; Vercel builds with the same version.
+- **Next.js 16.4.3** — App Router only. APIs differ from training data; consult [node_modules/next/dist/docs/01-app/](node_modules/next/dist/docs/01-app/) before writing Next-API-touching code.
 - **React 19** — `"use client"` directive on every interactive component. Default to server components for static content (apps that don't use state/events).
 - **Tailwind CSS v4** — configured via `@tailwindcss/postcss`. Use `@theme` block in CSS, not `tailwind.config.js`. Arbitrary values via `[var(--token)]` are fine and encouraged for glass tokens.
 - **No component library** — UI is built from plain React elements + Tailwind utilities. The design tokens (surfaces, separators, shadows, easing curves) and Tailwind `@theme inline` mappings live in [src/app/globals.css](src/app/globals.css). They were originally forked from HeroUI Pro's glass theme; the dependency is gone but the token names (`bg-surface`, `text-foreground`, `border-separator`, etc.) are preserved.
   - Keep theme values centralised in `globals.css` — do not redefine them per-component.
   - Use native `onClick` on `<button>` / `<a>` elements (the previous `onPress` convention was a HeroUI-ism and no longer applies).
-- **lucide-react ^1.11.0** — the only icon library. Do not introduce another.
-- **Biome 2.2** — both linter and formatter. `npm run lint` (check) and `npm run format` (write).
+- **lucide-react ^1.61.0** — the only icon library. Do not introduce another.
+- **Biome 2.6** — both linter and formatter. `npm run lint` (check) and `npm run format` (write). Markdown and SVG files are excluded in [biome.json](biome.json); Tailwind directives in CSS are enabled via `css.parser.tailwindDirectives`.
 
 ---
 

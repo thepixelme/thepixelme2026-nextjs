@@ -112,4 +112,4 @@ Mobile shell adds its own layers (only present when `useIsMobile()` is true):
 - Next.js 16 App Router with Turbopack. Read the matching guide under [node_modules/next/dist/docs/01-app/](../node_modules/next/dist/docs/01-app/) before touching Next-API surfaces — see [AGENTS.md](../AGENTS.md).
 - No React component library — UI is plain elements + Tailwind utilities. Use native `onClick` on `<button>` / `<a>`.
 - Tailwind CSS v4 is wired through `@tailwindcss/postcss`. There is no `tailwind.config.js` — design tokens and the `@theme inline` mappings live entirely in [globals.css](../src/app/globals.css) (originally forked from HeroUI Pro's glass theme).
-- Biome 2.2 handles both lint (`npm run lint`) and format (`npm run format`).
+- Biome 2.6 handles both lint (`npm run lint`) and format (`npm run format`).

@@ -179,7 +179,7 @@ function reducer(state: State, action: Action): State {
 
     case "RESTORE": {
       const target = state.windows.find((w) => w.id === action.id);
-      if (!target || !target.maximized || !target.prevBounds) return state;
+      if (!target?.maximized || !target.prevBounds) return state;
       const prev = target.prevBounds;
       return {
         ...state,

@@ -250,6 +250,7 @@ function Prose({ text }: { text: string }) {
   return (
     <div className="flex flex-col gap-3 text-sm leading-relaxed text-foreground/80">
       {paragraphs.map((p, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: static paragraphs split from a constant string; order never changes
         <p key={`${i}-${p.slice(0, 16)}`}>{renderInline(p)}</p>
       ))}
     </div>

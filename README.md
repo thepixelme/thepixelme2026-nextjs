@@ -17,17 +17,19 @@ A personal portfolio for [thepixelme.com](https://thepixelme.com), built as an i
 
 | Layer            | Choice                                                 |
 | ---------------- | ------------------------------------------------------ |
-| Framework        | Next.js 16.2.4 (App Router, Turbopack)                 |
-| Runtime          | React 19.2                                             |
+| Framework        | Next.js 16.4.3 (App Router, Turbopack)                 |
+| Runtime          | React 19.3 on Node.js 24                               |
 | Styling          | Tailwind CSS v4 via `@tailwindcss/postcss`             |
 | Component library | Plain React + Tailwind. Theme tokens (surfaces, separators, shadows, easing) are defined locally in [src/app/globals.css](src/app/globals.css) — originally forked from HeroUI Pro's glass theme. |
 | Animation peer   | `motion` (Framer Motion under new name)                |
 | Icons            | `lucide-react` for UI icons, `simple-icons` for brand logos via a small `<BrandIcon>` wrapper |
-| Tooling          | Biome 2.2 for lint + format                            |
+| Tooling          | Biome 2.6 for lint + format, TypeScript 7              |
 
 The only server code is a `/api/contact` route that forwards form submissions via Resend; everything else is static.
 
 ## Getting started
+
+Requires Node.js 24. The version is pinned via `engines.node` in [package.json](package.json), which Vercel also uses for builds.
 
 ```bash
 npm install
