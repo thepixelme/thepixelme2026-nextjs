@@ -2,6 +2,7 @@ import { apipeek } from "./apipeek";
 import { bonnevilleMobile } from "./bonneville-mobile";
 import { claudeswitcher } from "./claudeswitcher";
 import { heygrillhey } from "./heygrillhey";
+import { lamgigPlatform } from "./lamgig-platform";
 import type { Project } from "./types";
 
 export type {
@@ -14,8 +15,9 @@ export type {
 export { PROJECT_TAGS } from "./types";
 
 export const PROJECTS: Project[] = [
-  claudeswitcher,
+  lamgigPlatform,
   bonnevilleMobile,
+  claudeswitcher,
   heygrillhey,
   apipeek,
 ];

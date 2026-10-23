@@ -110,8 +110,9 @@ Order matters — it determines the rendered order in About → Find me.
 
 | `id`                | file                                                             | `title`                                                         | `tags`                                          | rich case-study?              |
 | ------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------- | ----------------------------- |
-| `claudeswitcher`    | [claudeswitcher.ts](../src/lib/projects/claudeswitcher.ts)       | ClaudeSwitcher                                                  | Swift · App                                     | yes (full + logo + 2 shots)   |
+| `lamgig-platform`   | [lamgig-platform.ts](../src/lib/projects/lamgig-platform.ts)     | LamGig — All-in-one business dashboard for small businesses     | Web · TypeScript · React                        | yes (full + 7 shots)          |
 | `bonneville-mobile` | [bonneville-mobile.ts](../src/lib/projects/bonneville-mobile.ts) | Bonneville News & Sports Mobile                                 | React Native · TypeScript · App                 | yes (full + 9 portrait shots) |
+| `claudeswitcher`    | [claudeswitcher.ts](../src/lib/projects/claudeswitcher.ts)       | ClaudeSwitcher                                                  | Swift · App                                     | yes (full + logo + 2 shots)   |
 | `heygrillhey`       | [heygrillhey.ts](../src/lib/projects/heygrillhey.ts)             | Hey Grill Hey — Recipe and commerce rebuild                     | Web · WordPress · Shopify · TypeScript · React  | yes (full + 6 shots)          |
 | `apipeek`           | [apipeek.ts](../src/lib/projects/apipeek.ts)                     | APIPeek — JSON viewer & API sandbox                             | React · TypeScript · App · Web                  | yes (full + 4 shots)          |
 
