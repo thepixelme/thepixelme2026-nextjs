@@ -1,0 +1,174 @@
+"use client";
+
+import { ChevronDown } from "lucide-react";
+import {
+  animate,
+  motion,
+  useMotionValueEvent,
+  useScroll,
+  useSpring,
+  useTransform,
+} from "motion/react";
+import { type ReactNode, useCallback, useEffect, useRef } from "react";
+import { finishIntro, useIntroPending } from "@/lib/intro";
+import { ABOUT } from "@/lib/portfolio-data";
+import LaptopFrame from "./LaptopFrame";
+
+// Screen size at rest, as a fraction of the viewport, and how far below
+// centre the laptop sits to leave room for the headline.
+const START_SCALE = 0.55;
+const START_OFFSET_VH = 7;
+const SCREEN_RADIUS_VW = 0.7;
+
+const easeInOut = (t: number) =>
+  t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+
+export default function LaptopIntro({ children }: { children: ReactNode }) {
+  const active = useIntroPending();
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ container: scrollerRef });
+  const progress = useSpring(scrollYProgress, {
+    stiffness: 260,
+    damping: 40,
+    restDelta: 0.0005,
+  });
+
+  // Interpolating in log space keeps the perceived zoom speed even.
+  const scale = useTransform(
+    progress,
+    (p) => START_SCALE ** (1 - easeInOut(p)),
+  );
+  const y = useTransform(
+    progress,
+    (p) => `${START_OFFSET_VH * (1 - easeInOut(p))}vh`,
+  );
+  const screenRadius = useTransform(
+    progress,
+    [0.8, 1],
+    [`${SCREEN_RADIUS_VW}vw`, "0vw"],
+  );
+  const headlineOpacity = useTransform(progress, [0, 0.2], [1, 0]);
+  const headlineY = useTransform(progress, [0, 0.2], [0, -32]);
+  const hintOpacity = useTransform(progress, [0, 0.08], [1, 0]);
+
+  useMotionValueEvent(progress, "change", (p) => {
+    if (active && p > 0.995) finishIntro();
+  });
+
+  const zoomIn = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    animate(el.scrollTop, el.scrollHeight - el.clientHeight, {
+      duration: 1.2,
+      ease: [0.65, 0, 0.35, 1],
+      onUpdate: (v) => {
+        el.scrollTop = v;
+      },
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!active) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl+K skips straight in so Spotlight opens on a live desktop.
+      if (
+        e.key === "Escape" ||
+        ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k")
+      ) {
+        finishIntro();
+        return;
+      }
+      if (e.target !== document.body) return;
+      if (["ArrowDown", "PageDown", "End", " ", "Enter"].includes(e.key)) {
+        e.preventDefault();
+        zoomIn();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [active, zoomIn]);
+
+  // Once finished, every wrapper collapses to `display: contents` so the
+  // desktop keeps its tree position (no remount) and lays out exactly as it
+  // would without the intro.
+  return (
+    <div
+      ref={scrollerRef}
+      className={
+        active
+          ? "relative h-full overflow-y-auto overscroll-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          : "contents"
+      }
+    >
+      <div className={active ? "h-[220vh]" : "contents"}>
+        <div
+          className={active ? "sticky top-0 h-dvh overflow-hidden" : "contents"}
+        >
+          {active && (
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 bg-background [background-image:var(--background-gradient)]"
+            />
+          )}
+          {active && (
+            <motion.header
+              style={{ opacity: headlineOpacity, y: headlineY }}
+              className="pointer-events-none absolute inset-x-0 top-[8vh] flex flex-col items-center gap-3 px-8 text-center"
+            >
+              <p className="text-sm font-medium text-muted">{ABOUT.name}</p>
+              <h1 className="max-w-4xl text-balance text-4xl font-semibold tracking-tight xl:text-5xl">
+                {ABOUT.title}
+              </h1>
+            </motion.header>
+          )}
+          <motion.div
+            style={{ scale, y }}
+            className={active ? "absolute inset-0" : "contents"}
+          >
+            {active && <LaptopFrame />}
+            <motion.div
+              inert={active}
+              style={{
+                borderTopLeftRadius: screenRadius,
+                borderTopRightRadius: screenRadius,
+              }}
+              className={
+                active
+                  ? "absolute inset-0 overflow-hidden [contain:paint]"
+                  : "contents"
+              }
+            >
+              {children}
+            </motion.div>
+            {active && (
+              <button
+                type="button"
+                aria-label="Enter desktop"
+                onClick={zoomIn}
+                className="absolute inset-0 cursor-zoom-in rounded-t-[0.7vw] outline-offset-[0.6vw] focus-visible:outline-[0.3vw] focus-visible:outline-focus"
+              />
+            )}
+          </motion.div>
+          {active && (
+            <motion.p
+              style={{ opacity: hintOpacity }}
+              className="pointer-events-none absolute inset-x-0 bottom-[4vh] flex flex-col items-center gap-1 text-xs font-medium text-muted"
+            >
+              Scroll to enter
+              <motion.span
+                animate={{ y: [0, 4, 0] }}
+                transition={{
+                  duration: 1.6,
+                  repeat: Number.POSITIVE_INFINITY,
+                  ease: "easeInOut",
+                }}
+              >
+                <ChevronDown size={16} />
+              </motion.span>
+            </motion.p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

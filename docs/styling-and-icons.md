@@ -74,6 +74,20 @@ Definitions live in the **Pro glass theme override blocks** (`html.glass-light`,
 
 Full recipes are in [STYLEGUIDE.md §2.4](../STYLEGUIDE.md). To keep the recipe consistent, prefer the named tokens over inline arbitrary `shadow-[...]` or `bg-[...]` values.
 
+### Laptop intro tokens
+
+Hardware colours for [LaptopFrame](desktop-shell.md#laptopframe-srccomponentsintrolaptopframetsx), defined in their own "Laptop intro hardware" section of [globals.css](../src/app/globals.css): `:root` holds the silver (light) values and `html.glass-dark` overrides them for space black. Consumed with the `(--var)` syntax (`bg-(--laptop-bezel)`, `from-(--laptop-deck-top)`, `shadow-[0_0_0_0.16vw_var(--laptop-rim)]`). Not for use outside the intro.
+
+| Token | Purpose |
+| --- | --- |
+| `--laptop-bezel` | Black screen bezel (same in both themes). |
+| `--laptop-camera` | Camera dot in the top bezel. |
+| `--laptop-rim` | Thin aluminium edge around the lid. |
+| `--laptop-deck-top` / `-mid` / `-bottom` | Vertical gradient stops for the base's front face (and the thumb-scoop notch). |
+| `--laptop-shadow` | Floor shadow under the base. |
+
+The intro backdrop reuses `bg-background` + `--background-gradient` so it follows the theme.
+
 ### Hardcoded colors (allowed)
 
 Three colors are intentionally hardcoded because they're macOS-canonical, not theme-driven:
@@ -120,6 +134,20 @@ Always prefer the named utility over the arbitrary form:
 | `z-60`                  | `z-[60]`                               |
 
 Biome will flag these.
+
+### `intro:` custom variant
+
+[globals.css](../src/app/globals.css) registers one custom variant:
+
+```css
+@custom-variant intro {
+  @media (min-width: 1024px) and (prefers-reduced-motion: no-preference) and (min-aspect-ratio: 5 / 4) {
+    @slot;
+  }
+}
+```
+
+It matches exactly when the laptop intro plays and must stay in sync with `INTRO_MEDIA_QUERY` in [src/lib/intro.ts](../src/lib/intro.ts). Used only by the pre-hydration branch of [Desktop.tsx](../src/components/desktop/Desktop.tsx) (`intro:hidden` / `hidden intro:block`) so the server-rendered first frame matches what hydrates.
 
 ### Safe-area insets (mobile shell)
 

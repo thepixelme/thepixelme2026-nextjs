@@ -13,8 +13,10 @@ Structure:
 ```
 <WindowsProvider>
   <ShellSwitch>
-    isMobile === null  → only <Wallpaper /> (pre-hydration, no mismatch)
-    isMobile === false → <DesktopBody />
+    isMobile === null  → pre-hydration first frame (no mismatch): <Wallpaper /> wrapped in
+                         `intro:hidden`, plus <LaptopIntro><Wallpaper /></LaptopIntro> wrapped in
+                         `hidden h-full intro:block`
+    isMobile === false → <LaptopIntro><DesktopBody /></LaptopIntro>
     isMobile === true  → <MobileShell />
 ```
 
@@ -29,6 +31,52 @@ Structure:
 5. `<Spotlight open={spotlightOpen} onOpenChange={setSpotlightOpen} />`
 
 `DesktopBody` owns its own `spotlightOpen: boolean`.
+
+## Laptop intro ([src/components/intro/LaptopIntro.tsx](../src/components/intro/LaptopIntro.tsx))
+
+Scroll-driven landing on desktop, modelled on mercury.com: the visitor first sees the headline and a MacBook whose screen shows the **live** `<DesktopBody />`. Scrolling zooms into the laptop until its screen exactly fills the viewport, and the desktop becomes interactive.
+
+Props: `{ children: ReactNode }` — the screen content (`<DesktopBody />`, or `<Wallpaper />` in the pre-hydration frame).
+
+**When it plays** — `useIntroPending()` from [src/lib/intro.ts](../src/lib/intro.ts) returns `true` until `finishIntro()` is called, and only while `INTRO_MEDIA_QUERY` matches: `(min-width: 1024px) and (prefers-reduced-motion: no-preference) and (min-aspect-ratio: 5/4)`. The same query is registered as the `intro:` Tailwind custom variant in [globals.css](../src/app/globals.css) for the server-rendered first frame — keep the two in sync. Reduced-motion visitors, portrait-shaped desktop viewports, and the mobile shell never see the intro. The finished flag is module state, so the intro plays once per page load. The server snapshot is `true` so nothing (e.g. the consent auto-open) races ahead of it during hydration.
+
+**Structure while active** (all inside the component's root):
+
+```
+<div scroller: h-full overflow-y-auto, scrollbar hidden>     ← useScroll({ container })
+  <div h-[220vh]>                                            ← 120vh of scroll distance
+    <div sticky top-0 h-dvh overflow-hidden>
+      backdrop      bg-background + --background-gradient
+      <header>      ABOUT.name + <h1>{ABOUT.title}</h1>; fades out over the first 20%
+      <motion.div stage absolute inset-0 style={{ scale, y }}>
+        <LaptopFrame />                       bezel, camera, base, floor shadow (outside the screen box)
+        <motion.div screen absolute inset-0 overflow-hidden [contain:paint] inert>
+          {children}
+        </motion.div>
+        <button aria-label="Enter desktop">   transparent, over the screen; click → animated zoom
+      </motion.div>
+      <p>Scroll to enter <ChevronDown /></p>   fades out over the first 8%
+```
+
+The screen box is exactly the viewport, so at scale 1 it fills the window and the frame sits off-screen. `contain: paint` makes the screen the containing block for the desktop's `fixed` chrome (wallpaper, menu bar, dock) and clips it to the screen's rounded corners.
+
+**Motion** — `scrollYProgress` is smoothed with `useSpring` (`stiffness 260, damping 40`). Scale runs from `START_SCALE` (0.55) to 1, interpolated in log space with an ease-in-out so the perceived zoom speed is even; the stage's `y` offset runs from `7vh` to `0`; the screen's top corner radius flattens from `0.7vw` to `0` over the last 20%. When progress passes 0.995 it calls `finishIntro()`.
+
+**Finishing** — once `useIntroPending()` is `false`, every wrapper above `{children}` switches to `display: contents` and the scene elements unmount. `DesktopBody` keeps its tree position (no remount, no transform, no extra stacking context), so the desktop behaves exactly as it would without the intro.
+
+**Input**
+
+| Input | Effect |
+| --- | --- |
+| Wheel / trackpad scroll | Drives the zoom (scrolling back up zooms out until finished). |
+| Click the laptop screen / Enter on the focused screen button | Animates the scroller to the end (1.2 s). |
+| ↓, PageDown, End, Space, Enter (focus on `<body>`) | Same animated zoom. |
+| Esc | Finishes immediately. |
+| ⌘K / Ctrl+K | Finishes immediately; Spotlight's own listener opens it on the now-live desktop. |
+
+## LaptopFrame ([src/components/intro/LaptopFrame.tsx](../src/components/intro/LaptopFrame.tsx))
+
+Stateless, `aria-hidden` MacBook hardware drawn around a viewport-sized screen box. All dimensions are in `vw` so proportions hold at any viewport size; the parent's `scale` sizes it. Colours come from the `--laptop-*` tokens in [globals.css](../src/app/globals.css) (silver in `glass-light`, space black in `glass-dark`) — see [styling-and-icons.md](styling-and-icons.md#laptop-intro-tokens).
 
 ## Mobile shell ([src/components/mobile/](../src/components/mobile/))
 
@@ -289,7 +337,7 @@ The single owner of consent state. Calls [`useAnalyticsConsent()`](../src/lib/us
   - `consent === "denied"` + `!editing`: title "Analytics disabled" + body + `[Change preference]` action.
 - **Persistent (R8):** a `useEffect` calls `setPersistent(consent.enabled && consent.consent === null)`. While undecided the NC cannot be dismissed — but the rest of the page remains interactive (the backdrop is suppressed). User must Decline or Allow to dismiss the card. Decline is equally available — this is a forced explicit choice, not a forced consent.
 - **Deferred close (R8):** action handlers don't call `setOpen(false)` directly. They set `closeAfterChoiceRef.current = (isMobile || consent === null)` and let a third `useEffect` (declared after the persistent effect) issue the close once `consent` flips to non-null. Effect declaration order matters: the persistent effect runs first and releases the flag synchronously via `persistentRef.current = false`, so the deferred close is honored. Desktop closes only on first-time decision; change-preference picks keep NC open showing the new status. Mobile closes on every pick.
-- **Auto-open (desktop only):** a `useEffect` calls `setOpen(true)` only when `!isMobile && enabled && consent === null`.
+- **Auto-open (desktop only):** a `useEffect` calls `setOpen(true)` only when `!isMobile && !introPending && enabled && consent === null`. `introPending` comes from `useIntroPending()` ([src/lib/intro.ts](../src/lib/intro.ts)), so the panel slides in once the [laptop intro](#laptop-intro-srccomponentsintrolaptopintrotsx) has handed over to the live desktop.
 - **Mobile branch:** `<MobileConsentNotification>` renders when `enabled && (consent === null || open)`. The `consent === null` clause keeps the card visible the entire undecided period — including after a failed Accept where `promptVisible` flips false but `consent` stays null. `open` covers the post-decision clock-toggle re-decide path.
 - **Storage key:** `ga-consent` cookie (`"granted"` \| `"denied"`; absent → undecided). Read/written client-side through `readConsent` / `writeConsent` in [src/lib/analytics.ts](../src/lib/analytics.ts); read server-side via `readConsentServer()` in [src/lib/analytics-server.ts](../src/lib/analytics-server.ts) using `next/headers cookies()`. `writeConsent()` verifies persistence with a read-back since `document.cookie = ...` doesn't throw on rejection — fail-closed on Accept-with-storage-failure is preserved. The constant, `ConsentValue` type, and `parseConsent()` parser live in [src/lib/analytics-consent.ts](../src/lib/analytics-consent.ts) so neither side imports the other's runtime (`analytics.ts` pulls `@next/third-parties/google` which is `'use client'`; keeping it out of the server graph is intentional).
 - **`ga-disable` flag (R8):** [`useAnalyticsConsent`](../src/lib/useAnalyticsConsent.ts) writes `window['ga-disable-' + gaId]` from inside `accept()` / `decline()` synchronously (before consent state updates) and from a `useEffect` backstop. Without this, already-loaded gtag.js keeps sending after Decline; with it, the flag is correctly `false` by the time GA re-mounts on Denied → Allow so the first page_view isn't dropped.

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import LaptopIntro from "@/components/intro/LaptopIntro";
 import MobileShell from "@/components/mobile/MobileShell";
 import { DockIconPositionsProvider } from "@/components/window/dock-positions";
 import WindowManager from "@/components/window/WindowManager";
@@ -31,9 +32,18 @@ function ShellSwitch() {
   const isMobile = useIsMobile();
 
   if (isMobile === null) {
+    // CSS picks the server-rendered first frame so it matches what hydrates:
+    // the laptop intro where it will play, the bare wallpaper everywhere else.
     return (
       <div className="relative h-full w-full overflow-hidden">
-        <Wallpaper />
+        <div className="intro:hidden">
+          <Wallpaper />
+        </div>
+        <div className="hidden h-full intro:block">
+          <LaptopIntro>
+            <Wallpaper />
+          </LaptopIntro>
+        </div>
       </div>
     );
   }
@@ -46,7 +56,11 @@ function ShellSwitch() {
     );
   }
 
-  return <DesktopBody />;
+  return (
+    <LaptopIntro>
+      <DesktopBody />
+    </LaptopIntro>
+  );
 }
 
 export default function Desktop() {

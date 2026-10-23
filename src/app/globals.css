@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* Matches when the laptop intro plays. Keep in sync with INTRO_MEDIA_QUERY in src/lib/intro.ts. */
+@custom-variant intro {
+  @media (min-width: 1024px) and (prefers-reduced-motion: no-preference) and (
+      min-aspect-ratio: 5 / 4
+    ) {
+    @slot;
+  }
+}
+
 /*
  * Local theme layer.
  *
@@ -339,6 +348,27 @@ html[data-theme="glass-dark"] {
   --chart-3: var(--accent);
   --chart-4: oklch(from var(--accent) calc(l + 0.06) c h);
   --chart-5: oklch(from var(--accent) calc(l + 0.12) c h);
+}
+
+/* == Laptop intro hardware ================================================ */
+/* Silver in light, space black in dark. Used by src/components/intro/LaptopFrame.tsx. */
+:root {
+  --laptop-bezel: oklch(16% 0.003 286);
+  --laptop-camera: oklch(28% 0.012 260);
+  --laptop-rim: oklch(80% 0.004 286);
+  --laptop-deck-top: oklch(94% 0.002 286);
+  --laptop-deck-mid: oklch(85% 0.004 286);
+  --laptop-deck-bottom: oklch(66% 0.005 286);
+  --laptop-shadow: oklch(0% 0 0 / 0.3);
+}
+
+html.glass-dark,
+html[data-theme="glass-dark"] {
+  --laptop-rim: oklch(40% 0.004 286);
+  --laptop-deck-top: oklch(48% 0.004 286);
+  --laptop-deck-mid: oklch(32% 0.004 286);
+  --laptop-deck-bottom: oklch(20% 0.004 286);
+  --laptop-shadow: oklch(0% 0 0 / 0.65);
 }
 
 /* == Tailwind utility mappings ============================================ */

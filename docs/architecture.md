@@ -13,16 +13,21 @@ The page ([src/app/page.tsx](../src/app/page.tsx)) is a server component that re
 ```
 <WindowsProvider>
   ShellSwitch (useIsMobile)
-    isMobile === null  →  <Wallpaper /> only (pre-hydration; avoids mismatch)
-    isMobile === false →  <DesktopBody />:
-                            <Wallpaper />              z=-10
-                            <MenuBar />                z=50
-                            <WindowManager />          dynamic z (≥10)
-                            <Dock />                   z=40
-                            <Spotlight />              z=60
+    isMobile === null  →  pre-hydration first frame, picked by CSS (avoids mismatch):
+                            <Wallpaper />                          where the `intro:` variant doesn't match
+                            <LaptopIntro><Wallpaper /></LaptopIntro>  where it does
+    isMobile === false →  <LaptopIntro>                (scroll-zoom intro; see desktop-shell.md)
+                            <DesktopBody />:
+                              <Wallpaper />              z=-10
+                              <MenuBar />                z=50
+                              <WindowManager />          dynamic z (≥10)
+                              <Dock />                   z=40
+                              <Spotlight />              z=60
     isMobile === true  →  <MobileShell />              (see desktop-shell.md)
 </WindowsProvider>
 ```
+
+While the intro plays, `<DesktopBody />` renders inside the laptop's screen box, which is scaled and has `contain: paint`, so the desktop's `fixed` chrome is positioned and clipped relative to the laptop screen rather than the viewport. When the intro finishes, every `LaptopIntro` wrapper switches to `display: contents`: `DesktopBody` keeps its tree position (no remount) and lays out exactly as it would without the intro.
 
 `<WindowsProvider>` lives above the switch so window state survives a viewport resize across the breakpoint. `spotlightOpen` is local state in each branch (`DesktopBody` owns its own; `MobileShell` owns its own).
 
@@ -82,11 +87,12 @@ Mobile shell adds its own layers (only present when `useIsMobile()` is true):
 
 ## Lifecycle (first paint → interaction)
 
-1. **Server render** — Next emits HTML for the layout + `Desktop` shell. Wallpaper renders with the fallback gradient (no `localStorage` available on server). [`AnalyticsConsentServer`](../src/components/analytics/AnalyticsConsentServer.tsx) (wrapped in `<Suspense>`) reads the `ga-consent` cookie via `next/headers` and seeds `<AnalyticsConsent initialConsent={...}>` — so the mobile consent banner ships in the initial HTML when undecided.
+1. **Server render** — Next emits HTML for the layout + `Desktop` shell. The pre-hydration branch ships both the bare wallpaper and the laptop intro's first frame (headline `<h1>` + laptop at rest); the `intro:` CSS variant shows exactly one of them, so the first paint matches what hydrates. [`AnalyticsConsentServer`](../src/components/analytics/AnalyticsConsentServer.tsx) (wrapped in `<Suspense>`) reads the `ga-consent` cookie via `next/headers` and seeds `<AnalyticsConsent initialConsent={...}>` — so the mobile consent banner ships in the initial HTML when undecided.
 2. **Hydration** — `WindowsProvider` initializes with `{ windows: [], topZ: 10, openCount: 0 }`. `useTheme` reads `portfolio:theme` and re-applies the class. `useClock` sets initial time and schedules the next-minute tick. `useAnalyticsConsent` already has state seeded from the server cookie value, so no client-side re-read is needed.
-3. **First user click** — clicking a `<DockIcon>` dispatches `OPEN`. The reducer adds a `WindowState`, increments `topZ`, increments `openCount`. `WindowManager` renders the new `<Window>`.
-4. **Drag / resize** — `<Window>`'s titlebar emits `FOCUS` on `pointerdown`, then `MOVE` on each `pointermove`. The 8 invisible handles in [ResizeHandles.tsx](../src/components/window/ResizeHandles.tsx) emit `RESIZE` (with full bounds, since corner drags can change x/y too).
-5. **Spotlight** — `cmd/ctrl+k` flips `spotlightOpen` to true; `Esc` flips it back. Selecting an item dispatches `OPEN` and closes the palette.
+3. **Laptop intro (desktop, motion allowed, landscape-ish viewport)** — the desktop is shown inside a laptop and is `inert`. Scrolling (or clicking the screen, or ↓ / Space / Enter / PageDown) zooms in until the screen fills the viewport, then `finishIntro()` hands over to the live desktop. Esc and ⌘K/Ctrl+K skip straight in. The desktop consent Notification Center auto-opens only after this point.
+4. **First user click** — clicking a `<DockIcon>` dispatches `OPEN`. The reducer adds a `WindowState`, increments `topZ`, increments `openCount`. `WindowManager` renders the new `<Window>`.
+5. **Drag / resize** — `<Window>`'s titlebar emits `FOCUS` on `pointerdown`, then `MOVE` on each `pointermove`. The 8 invisible handles in [ResizeHandles.tsx](../src/components/window/ResizeHandles.tsx) emit `RESIZE` (with full bounds, since corner drags can change x/y too).
+6. **Spotlight** — `cmd/ctrl+k` flips `spotlightOpen` to true; `Esc` flips it back. Selecting an item dispatches `OPEN` and closes the palette.
 
 ## Where each concern lives
 
@@ -104,6 +110,7 @@ Mobile shell adds its own layers (only present when `useIsMobile()` is true):
 | Static portfolio data | [src/lib/portfolio-data.ts](../src/lib/portfolio-data.ts) |
 | Brand-icon SVG       | [src/components/BrandIcon.tsx](../src/components/BrandIcon.tsx) |
 | Mobile shell         | [src/components/mobile/](../src/components/mobile/)         |
+| Laptop scroll-zoom intro | [src/components/intro/](../src/components/intro/), state in [src/lib/intro.ts](../src/lib/intro.ts) |
 | Viewport switch hook | [src/lib/useIsMobile.ts](../src/lib/useIsMobile.ts)         |
 | Shared clock + raw-Date hook | [src/lib/clock.ts](../src/lib/clock.ts) (`useClock`, `useNow`) |
 

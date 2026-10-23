@@ -8,6 +8,7 @@ import MobileConsentNotification from "@/components/notifications/MobileConsentN
 import NotificationCard from "@/components/notifications/NotificationCard";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
 import type { ConsentValue } from "@/lib/analytics-consent";
+import { useIntroPending } from "@/lib/intro";
 import { useNotificationCenter } from "@/lib/notification-center";
 import { useAnalyticsConsent } from "@/lib/useAnalyticsConsent";
 import { useIsMobile } from "@/lib/useIsMobile";
@@ -20,6 +21,7 @@ interface Props {
 export default function AnalyticsConsent({ initialConsent }: Props) {
   const consent = useAnalyticsConsent(initialConsent);
   const isMobile = useIsMobile();
+  const introPending = useIntroPending();
   const { open, setOpen, setPersistent } = useNotificationCenter();
   const declineRef = useRef<HTMLButtonElement>(null);
   const [editing, setEditing] = useState(false);
@@ -36,12 +38,18 @@ export default function AnalyticsConsent({ initialConsent }: Props) {
     setPersistent(consent.enabled && consent.consent === null);
   }, [consent.enabled, consent.consent, setPersistent]);
 
-  // (2) Auto-open desktop NC on first visit when undecided.
+  // (2) Auto-open desktop NC on first visit when undecided — held back until
+  //     the laptop intro has zoomed into the desktop.
   useEffect(() => {
-    if (isMobile === false && consent.enabled && consent.consent === null) {
+    if (
+      isMobile === false &&
+      !introPending &&
+      consent.enabled &&
+      consent.consent === null
+    ) {
       setOpen(true);
     }
-  }, [isMobile, consent.enabled, consent.consent, setOpen]);
+  }, [isMobile, introPending, consent.enabled, consent.consent, setOpen]);
 
   // (3) Deferred close after a user pick. Declared LAST so it runs AFTER the
   //     persistent effect — by which point setPersistent(false) has flipped

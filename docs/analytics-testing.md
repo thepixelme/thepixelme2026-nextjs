@@ -64,7 +64,7 @@ Now you're back to "first-visit, undecided."
 
 **Steps:**
 
-1. Reload. NC auto-opens persistent, consent card visible. (The rest of the page remains interactive — clicking outside the panel hits underlying controls; only Accept / Decline dismiss the card.)
+1. Reload, then scroll past the laptop intro (or press Esc). NC auto-opens persistent, consent card visible. (The rest of the page remains interactive — clicking outside the panel hits underlying controls; only Accept / Decline dismiss the card.)
 2. Click **Decline**.
 
 **Expected:**
@@ -220,7 +220,7 @@ Object.defineProperty(document, "cookie", {
 
 ### 9a. Desktop trap on Accept-failure
 
-1. Reload. NC auto-opens persistent with consent card.
+1. Reload, then scroll past the laptop intro (or press Esc). NC auto-opens persistent with consent card.
 2. Click **Allow**.
 
 **Expected:**

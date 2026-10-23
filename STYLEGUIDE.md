@@ -89,7 +89,11 @@ className="rounded-xl bg-liquid-glass-card shadow-liquid-glass-card"
 
 Detached floating positioning is part of the look: panel should leave a small margin from the viewport edges (e.g. `right-3 top-10 bottom-3`) so the wallpaper shows around it. Touching a viewport edge defeats the specular highlight.
 
-### 2.5 Traffic-light colors
+### 2.5 Laptop intro hardware
+
+The scroll-zoom intro draws a MacBook in CSS. Its colours are the `--laptop-*` tokens in their own section of [src/app/globals.css](src/app/globals.css) — silver under `glass-light`, space black under `glass-dark`. Use them only inside [src/components/intro/](src/components/intro/); the intro backdrop uses the regular `bg-background` + `--background-gradient`. Full table in [docs/styling-and-icons.md](docs/styling-and-icons.md#laptop-intro-tokens).
+
+### 2.6 Traffic-light colors
 
 These are macOS-canonical, hardcode them:
 
@@ -145,6 +149,7 @@ Antialiasing: `antialiased` is set on `<html>` in layout. Don't override.
 | Traffic light min   | `Minus`         |
 | Traffic light max   | `Maximize2`     |
 | Analytics consent prompt | `BarChart3` |
+| Laptop intro scroll hint | `ChevronDown` |
 
 If you need an icon not listed, add it here in the same PR.
 
@@ -214,6 +219,7 @@ Use these named layers. Do not improvise z values.
 - **Mobile dock show/hide**: `motion/react` spring (`stiffness 320, damping 32`) on `{ y, opacity }`. Reduced motion collapses to `duration: 0`.
 - **Spotlight**: backdrop fade 100ms, dialog scale `0.97 → 1` 150ms.
 - **Traffic light hover**: glyphs `opacity-0 → opacity-100` on `.group:hover`, 80ms.
+- **Laptop intro** (desktop landing): scroll-driven via `useScroll({ container })` smoothed by `useSpring` (`stiffness 260, damping 40`). Laptop scale `0.55 → 1` (log-space, ease-in-out), `y` `7vh → 0`; headline fades over the first 20% of progress, scroll hint over the first 8%. Click / keyboard entry animates the scroll position over 1.2s with `ease [0.65, 0, 0.35, 1]`. Never animates layout properties — only `transform` on one stage element.
 
 Never animate `width`/`height`/`left`/`top` directly during drag/resize — those use raw style mutations because the rate is 60fps. Only motion-library animations on enter/exit transitions.
 
@@ -329,7 +335,8 @@ Shared rules:
 - All interactive elements reachable by keyboard. Add `tabIndex`, `aria-*`, and focus styles to plain elements explicitly.
 - `aria-label` on icon-only buttons (traffic lights, dock icons, menu-bar icons).
 - Focus rings: don't suppress. Use `--accent` for the ring color (already the default in glass theme).
-- `prefers-reduced-motion`: respect via `motion/react`'s `useReducedMotion()`. Window transitions become instant; desktop dock magnify becomes static (it's a pure CSS transition with no `motion/react` involvement, so it's effectively unchanged); mobile dock show/hide collapses to a duration of 0.
+- `prefers-reduced-motion`: respect via `motion/react`'s `useReducedMotion()`. Window transitions become instant; desktop dock magnify becomes static (it's a pure CSS transition with no `motion/react` involvement, so it's effectively unchanged); mobile dock show/hide collapses to a duration of 0. The laptop intro is skipped entirely (its media query requires `prefers-reduced-motion: no-preference`).
+- Laptop intro: the scaled desktop is `inert` until the zoom finishes; the only focusable control is the screen-sized "Enter desktop" button (focus ring drawn around the laptop screen); Esc skips the intro.
 
 ---
 
@@ -355,4 +362,5 @@ Before claiming a feature done:
 2. `npm run dev` — open localhost, exercise the feature including its keyboard path.
 3. For chrome (menu bar / dock / window manager): test in both `glass-light` and `glass-dark`.
 4. Resize browser across the 1024 px boundary — confirm the desktop tree mounts at ≥ 1024 and the iOS-style mobile shell mounts at < 1024. App state should survive the switch (window records persist via the shared `<WindowsProvider>`).
-5. `npm run build` — clean build before merging anything significant.
+5. For desktop chrome changes, reload and scroll through the laptop intro too — the desktop renders scaled inside the laptop screen before it becomes interactive.
+6. `npm run build` — clean build before merging anything significant.
