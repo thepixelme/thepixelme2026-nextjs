@@ -218,40 +218,14 @@ const RUG_LINES = [
   [85, 87.5],
   [128, 130.5],
 ];
-const RUG_DIAMOND_ROWS = [
-  [52, 68],
-  [100, 116],
-];
-const RUG_DIAMOND_WIDTH = 22;
 
 function rugGeometry() {
   const spread = (y: number) => flatSpread(y) / flatSpread(RUG_BACK_Y);
-  // x0 is a position along the back edge, carried forward along its
-  // vanishing line to depth y.
   const at = (x0: number, y: number) => round2(50 + (x0 - 50) * spread(y));
   const left = 50 - RUG_BACK_HALF;
   const right = 50 + RUG_BACK_HALF;
   const band = ([top, bottom]: number[]) =>
     `M${at(left, top)},${top} L${at(right, top)},${top} L${at(right, bottom)},${bottom} L${at(left, bottom)},${bottom} Z`;
-  const diamond = (x0: number, w: number, top: number, bottom: number) => {
-    const mid = (top + bottom) / 2;
-    return `M${at(x0, mid)},${mid} L${at(x0 + w / 2, top)},${top} L${at(x0 + w, mid)},${mid} L${at(x0 + w / 2, bottom)},${bottom} Z `;
-  };
-  let diamonds = "";
-  let cores = "";
-  for (const [top, bottom] of RUG_DIAMOND_ROWS) {
-    const inset = (bottom - top) * 0.3;
-    for (let i = 0; i * RUG_DIAMOND_WIDTH < right - left; i += 1) {
-      const x0 = left + i * RUG_DIAMOND_WIDTH;
-      diamonds += diamond(x0, RUG_DIAMOND_WIDTH, top, bottom);
-      cores += diamond(
-        x0 + RUG_DIAMOND_WIDTH * 0.3,
-        RUG_DIAMOND_WIDTH * 0.4,
-        top + inset,
-        bottom - inset,
-      );
-    }
-  }
   let fringe = "";
   for (let i = 0; i * 4 <= right - left; i += 1) {
     fringe += `M${left + i * 4},${RUG_BACK_Y} l0,-3.5 `;
@@ -260,13 +234,80 @@ function rugGeometry() {
     field: band([RUG_BACK_Y, RUG_FRONT_Y]),
     border: band(RUG_BORDER),
     lines: RUG_LINES.map(band).join(" "),
-    diamonds,
-    cores,
     fringe,
   };
 }
 
 export const RUG = rugGeometry();
+
+// A box lying square on the desk, for DeskScene's notebooks: x0..x1 across
+// its back edge, from depth `back` to `front`, standing `base` above the desk
+// (when stacked) and `height` tall. Its sides follow the deck's vanishing
+// lines, so right of centre its inner (left) side shows as a sliver.
+export function deskBox({
+  x0,
+  x1,
+  back,
+  front,
+  base = 0,
+  height,
+}: {
+  x0: number;
+  x1: number;
+  back: number;
+  front: number;
+  base?: number;
+  height: number;
+}) {
+  const at = (x: number, y: number) =>
+    round2(50 + ((x - 50) * flatSpread(y)) / flatSpread(back));
+  const up = (y: number, lift: number) => round2(y - lift);
+  const lift = base + height;
+  const quad = (points: [number, number][]) =>
+    `M${points.map(([x, y]) => `${x},${y}`).join(" L")} Z`;
+  return {
+    top: quad([
+      [at(x0, back), up(back, lift)],
+      [at(x1, back), up(back, lift)],
+      [at(x1, front), up(front, lift)],
+      [at(x0, front), up(front, lift)],
+    ]),
+    face: quad([
+      [at(x0, front), up(front, lift)],
+      [at(x1, front), up(front, lift)],
+      [at(x1, front), up(front, base)],
+      [at(x0, front), up(front, base)],
+    ]),
+    side: quad([
+      [at(x0, back), up(back, lift)],
+      [at(x0, front), up(front, lift)],
+      [at(x0, front), up(front, base)],
+      [at(x0, back), up(back, base)],
+    ]),
+    // A strip across the top and down the front face, `w` wide from x
+    // (measured at the back edge), for an elastic band.
+    strap: (x: number, w: number) =>
+      quad([
+        [at(x, back), up(back, lift)],
+        [at(x + w, back), up(back, lift)],
+        [at(x + w, front), up(front, lift)],
+        [at(x + w, front), up(front, base)],
+        [at(x, front), up(front, base)],
+        [at(x, front), up(front, lift)],
+      ]),
+    // The page block on the front face, inset from the covers.
+    pages: (inset: number) =>
+      quad([
+        [round2(at(x0, front) + inset), up(front, lift - inset)],
+        [round2(at(x1, front) - inset * 2), up(front, lift - inset)],
+        [round2(at(x1, front) - inset * 2), up(front, base + inset)],
+        [round2(at(x0, front) + inset), up(front, base + inset)],
+      ]),
+    at,
+    frontTop: up(front, lift),
+    frontBottom: up(front, base),
+  };
+}
 
 // The room behind the desk, for SceneBackdrop and Fireplace, in rest-vw: vw
 // at the camera's rest position, with y = 0 on the laptop screen's bottom edge

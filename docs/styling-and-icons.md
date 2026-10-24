@@ -99,24 +99,23 @@ The room, desk and props around the laptop use a second set, `--scene-*`, define
 | --- | --- |
 | `--scene-ink` / `-muted` | The intro headline and the name above it, dark enough to read on the wall |
 | `--scene-wall` / `-shade` | Back wall; `-shade` darkens its top and edges (vignette) |
-| `--scene-trim` / `-shade` | Baseboard, window frame and sill, painted mantelpiece and its panel lines, clock face, picture mat |
+| `--scene-trim` / `-shade` | Baseboard, window frame and sill, painted mantelpiece and its panel lines, clock face |
 | `--scene-floor` / `-seam` | Floorboards and the seams between them |
-| `--scene-rug` / `-dark` / `-light` | Rug field; stripes, diamonds and edge shading; border, fringe and diamond centres (also the painting's sky) |
+| `--scene-rug` / `-dark` / `-light` | Rug field; stripes and edge shading; border and fringe |
 | `--scene-brick` / `-dark`, `--scene-mortar` | Fireplace brick panel in two tones, soldier course and firebox back wall; mortar |
 | `--scene-stone` / `-face` | Hearth slab top and front edge |
-| `--scene-soot` | Firebox, grate, andirons, wicks, clock hands, fairy-light wire |
+| `--scene-soot` | Firebox, grate, andirons, clock hands and ticks, fairy-light wire, black fountain pen, notebook strap and side shading |
 | `--scene-log` / `-end` | Logs and their cut ends |
 | `--scene-ember` | Pulsing embers under the logs |
-| `--scene-flame-outer` / `-mid` / `-core` | Fire and candle flames, outside in |
-| `--scene-firelight` | Glows: firelight on the wall, firebox and hearth, candle halos, fairy-light bulbs |
-| `--scene-brass` / `-shade` | Curtain rod and tie-backs, candlesticks, candle tray, clock |
-| `--scene-wax` / `-shade` | Candles |
-| `--scene-curtain` / `-shade` | Curtains and their folds (also the painting's hills) |
+| `--scene-flame-outer` / `-mid` / `-core` | Fire tongues, outside in; `-core` also lights the fairy-light bulbs |
+| `--scene-firelight` | Glows: firelight on the wall, firebox and hearth, fairy-light bulbs |
+| `--scene-brass` / `-shade` | Curtain rod and tie-backs, clock bezel and centre cap, fountain-pen nib, clip and bands |
+| `--scene-curtain` / `-shade` | Curtains and their folds |
 | `--scene-night-top` / `-horizon`, `--scene-moon` | Night sky through the window, moon and stars |
 | `--scene-snow` / `-shade`, `--scene-pine` | Near and far snowy hills, falling snow, pines |
-| `--scene-wood-top` / `-face`, `--scene-desk-leg` | Desk top, front edge (and picture frame), walnut legs |
-| `--scene-ceramic` / `-shade` | Mug, book-spine details |
-| `--scene-book-red` / `-navy` / `-mustard` | Book spines, mug band, the painting's mountains and sun |
+| `--scene-wood-top` / `-face`, `--scene-desk-leg` | Desk top, front edge (and the leather journal), walnut legs (and the clock case) |
+| `--scene-ceramic` / `-shade`, `--scene-coffee` | Mug and the coffee in it; notebook pages and pen highlights |
+| `--scene-book-red` / `-navy` / `-mustard` | Red pen, mug band and clock second hand; navy notebook; ribbon bookmark |
 | `--scene-steam` | Mug steam |
 | `--scene-shadow` | Contact shadows under props, the desk, the mantel shelf and the window sill |
 

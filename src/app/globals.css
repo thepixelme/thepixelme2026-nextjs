@@ -397,8 +397,6 @@ html[data-theme="glass-dark"] {
   --scene-firelight: oklch(78% 0.15 60);
   --scene-brass: oklch(76% 0.11 82);
   --scene-brass-shade: oklch(58% 0.09 70);
-  --scene-wax: oklch(96% 0.02 85);
-  --scene-wax-shade: oklch(84% 0.04 75);
   --scene-curtain: oklch(46% 0.07 160);
   --scene-curtain-shade: oklch(36% 0.06 160);
   --scene-night-top: oklch(24% 0.06 268);
@@ -412,6 +410,7 @@ html[data-theme="glass-dark"] {
   --scene-desk-leg: oklch(42% 0.06 55);
   --scene-ceramic: oklch(96% 0.006 90);
   --scene-ceramic-shade: oklch(84% 0.02 60);
+  --scene-coffee: oklch(34% 0.05 50);
   --scene-book-red: oklch(55% 0.15 25);
   --scene-book-navy: oklch(40% 0.08 260);
   --scene-book-mustard: oklch(80% 0.12 85);

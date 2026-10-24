@@ -3,8 +3,8 @@
 import { motion } from "motion/react";
 import { flamePath } from "./scenery";
 
-// A flickering flame standing on (x, y), in the parent SVG's units. Fire
-// tongues have an orange outer layer; candle flames are amber and yellow only.
+// A flickering fire tongue standing on (x, y), in the parent SVG's units:
+// orange outside, amber, then a pale yellow core.
 export default function Flame({
   x,
   y,
@@ -12,7 +12,6 @@ export default function Flame({
   lean = 0,
   duration = 1.6,
   delay = 0,
-  candle = false,
 }: {
   x: number;
   y: number;
@@ -20,9 +19,8 @@ export default function Flame({
   lean?: number;
   duration?: number;
   delay?: number;
-  candle?: boolean;
 }) {
-  const w = height * (candle ? 0.36 : 0.62);
+  const w = height * 0.62;
   return (
     <motion.g
       style={{ originY: 1 }}
@@ -38,18 +36,16 @@ export default function Flame({
         ease: "easeInOut",
       }}
     >
-      {!candle && (
-        <path
-          d={flamePath(x, y, w, height, lean)}
-          className="fill-(--scene-flame-outer)"
-        />
-      )}
       <path
-        d={flamePath(x, y, w * 0.7, height * (candle ? 1 : 0.7), lean * 0.7)}
+        d={flamePath(x, y, w, height, lean)}
+        className="fill-(--scene-flame-outer)"
+      />
+      <path
+        d={flamePath(x, y, w * 0.7, height * 0.7, lean * 0.7)}
         className="fill-(--scene-flame-mid)"
       />
       <path
-        d={flamePath(x, y, w * 0.4, height * (candle ? 0.55 : 0.4), lean * 0.4)}
+        d={flamePath(x, y, w * 0.4, height * 0.4, lean * 0.4)}
         className="fill-(--scene-flame-core)"
       />
     </motion.g>

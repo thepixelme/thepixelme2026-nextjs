@@ -3,10 +3,11 @@
 import { motion } from "motion/react";
 import { useId } from "react";
 import Flame from "./Flame";
+import MantelClock from "./MantelClock";
 import { brickCourses, ROOM_FLOOR_Y as FLOOR, round2 } from "./scenery";
 
-// Mantelpiece, fire and mantel ornaments for SceneBackdrop's room, drawn in
-// its rest-vw units (see scenery.ts). The firebox is centred on x = 15, so at
+// Mantelpiece, fire, fairy lights and mantel clock for SceneBackdrop's room,
+// drawn in its rest-vw units (see scenery.ts). The firebox is centred on x = 15, so at
 // rest it shows to the left of the laptop, above the desk's back edge.
 
 const BRICKS = brickCourses(
@@ -67,44 +68,6 @@ const flicker = (duration: number, delay = 0) => ({
   repeatType: "mirror" as const,
   ease: "easeInOut" as const,
 });
-
-function Candlestick({ x, taper }: { x: number; taper: number }) {
-  const top = -24.6 - taper;
-  return (
-    <g>
-      <ellipse
-        cx={x}
-        cy="-22.8"
-        rx="0.75"
-        ry="0.2"
-        className="fill-(--scene-brass-shade)"
-      />
-      <rect
-        x={x - 0.15}
-        y="-24.4"
-        width="0.3"
-        height="1.6"
-        className="fill-(--scene-brass)"
-      />
-      <rect
-        x={x - 0.5}
-        y="-24.75"
-        width="1"
-        height="0.35"
-        rx="0.1"
-        className="fill-(--scene-brass)"
-      />
-      <rect
-        x={x - 0.22}
-        y={top}
-        width="0.44"
-        height={taper}
-        className="fill-(--scene-wax)"
-      />
-      <Flame x={x} y={top - 0.1} height={1.3} candle duration={1.4} />
-    </g>
-  );
-}
 
 export default function Fireplace() {
   const id = useId();
@@ -369,77 +332,7 @@ export default function Fireplace() {
         </motion.g>
       ))}
 
-      {/* On the mantel: candlesticks, a leaning painting, books and a clock */}
-      <Candlestick x={3.8} taper={3.2} />
-      <Candlestick x={5.6} taper={2.3} />
-
-      <rect
-        x="9.9"
-        y="-30.6"
-        width="10.8"
-        height="7.9"
-        className="fill-(--scene-shadow)"
-      />
-      <rect
-        x="9.6"
-        y="-30.8"
-        width="10.8"
-        height="8.1"
-        className="fill-(--scene-wood-face)"
-      />
-      <rect
-        x="10.2"
-        y="-30.2"
-        width="9.6"
-        height="6.9"
-        className="fill-(--scene-trim)"
-      />
-      <rect
-        x="10.8"
-        y="-29.6"
-        width="8.4"
-        height="5.7"
-        className="fill-(--scene-rug-light)"
-      />
-      <circle
-        cx="16.9"
-        cy="-27.7"
-        r="0.9"
-        className="fill-(--scene-book-mustard)"
-      />
-      <path
-        d="M10.8,-23.9 L12.6,-26.4 L13.8,-25.3 L15.5,-27.8 L17.7,-24.9 L19.2,-25.9 L19.2,-23.9 Z"
-        className="fill-(--scene-book-navy)"
-      />
-      <path
-        d="M10.8,-23.9 Q13.6,-25.4 16.2,-24.8 Q18,-24.4 19.2,-24.9 L19.2,-23.9 Z"
-        className="fill-(--scene-curtain)"
-      />
-
-      <rect
-        x="21.8"
-        y="-23.45"
-        width="4.6"
-        height="0.75"
-        rx="0.1"
-        className="fill-(--scene-book-navy)"
-      />
-      <rect
-        x="22.2"
-        y="-24.05"
-        width="3.8"
-        height="0.6"
-        rx="0.1"
-        className="fill-(--scene-book-red)"
-      />
-      <circle cx="24.1" cy="-25.1" r="1.1" className="fill-(--scene-brass)" />
-      <circle cx="24.1" cy="-25.1" r="0.82" className="fill-(--scene-trim)" />
-      <path
-        d="M24.1,-25.1 L24.1,-25.7 M24.1,-25.1 L24.5,-24.95"
-        strokeWidth="0.12"
-        strokeLinecap="round"
-        className="stroke-(--scene-soot)"
-      />
+      <MantelClock />
     </g>
   );
 }
