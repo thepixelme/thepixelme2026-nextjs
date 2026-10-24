@@ -180,9 +180,23 @@ Biome will flag these.
 
 It matches exactly when the laptop intro plays and must stay in sync with `INTRO_MEDIA_QUERY` in [src/lib/intro.ts](../src/lib/intro.ts). Used only by the pre-hydration branch of [Desktop.tsx](../src/components/desktop/Desktop.tsx) (`intro:hidden` / `hidden intro:block`) so the server-rendered first frame matches what hydrates.
 
+### Mobile shell custom variants
+
+Three more custom variants in [globals.css](../src/app/globals.css) cover the touch shell:
+
+| Variant   | Media query | Use |
+| --------- | ----------- | --- |
+| `mobile:` | `(max-width: 1023.98px), (orientation: portrait)` | Matches exactly where the mobile shell is used. Must stay in sync with `MOBILE_MEDIA_QUERY` in [src/lib/useIsMobile.ts](../src/lib/useIsMobile.ts). Used for server-rendered markup that has to pick a shell before hydration: the pre-hydration branch of [Desktop.tsx](../src/components/desktop/Desktop.tsx) and the mobile consent banner in [AnalyticsConsent.tsx](../src/components/analytics/AnalyticsConsent.tsx) (`hidden mobile:block`). |
+| `tablet:` | `(min-width: 700px) and (min-height: 700px)` | A tablet-sized shell in either orientation (iPad mini portrait is 744 px wide), not a phone on its side. AppSheet becomes a floating card; HomeScreen gets larger padding and type. |
+| `short:`  | `(max-height: 480px)` | A phone on its side. MobileDock moves to the right edge; HomeScreen pads past it. |
+
+`tablet:` and `short:` also match some desktop viewports, so use them only inside [src/components/mobile/](../src/components/mobile/). Inside the shell, Tailwind's built-in `landscape:` means a phone or small tablet held sideways (wider landscape viewports get the desktop), and HomeScreen uses it to put its widgets side by side.
+
+The laptop intro's scroll hint swaps "Scroll to enter" for "Swipe up to enter" with Tailwind's built-in `pointer-coarse:` variant.
+
 ### Safe-area insets (mobile shell)
 
-Below the `lg` breakpoint, the mobile shell respects iOS notch / home-indicator areas via `env(safe-area-inset-*)`. The viewport meta in [layout.tsx](../src/app/layout.tsx) sets `viewportFit: "cover"` to enable this.
+The mobile shell respects iOS notch / home-indicator areas via `env(safe-area-inset-*)`. The viewport meta in [layout.tsx](../src/app/layout.tsx) sets `viewportFit: "cover"` to enable this.
 
 Static safe-area formulas are written as Tailwind arbitrary utilities (not inline `style`):
 
@@ -194,7 +208,7 @@ pb-[max(env(safe-area-inset-bottom),12px)]
 bottom-[max(env(safe-area-inset-bottom),8px)]
 ```
 
-Used by [MobileStatusBar](../src/components/mobile/MobileStatusBar.tsx), [MobileDock](../src/components/mobile/MobileDock.tsx), [AppSheet](../src/components/mobile/AppSheet.tsx), [HomeIndicator](../src/components/mobile/HomeIndicator.tsx).
+Used by [MobileStatusBar](../src/components/mobile/MobileStatusBar.tsx), [MobileDock](../src/components/mobile/MobileDock.tsx), [AppSheet](../src/components/mobile/AppSheet.tsx), [HomeIndicator](../src/components/mobile/HomeIndicator.tsx), [HomeScreen](../src/components/mobile/HomeScreen.tsx).
 
 ### Mobile z-index band
 
@@ -202,6 +216,7 @@ The mobile shell adds layers on top of the desktop hierarchy in [STYLEGUIDE.md Â
 
 | Layer              | z-index | Notes |
 | ------------------ | --- | --- |
+| `HomeScreen`       | `z-0` | Home widgets over the wallpaper; fades out and goes `inert` when any sheet is visible. |
 | `AppSheet`         | `30 + stackIndex` (dynamic inline, range 30â€“34 for current 5-app registry) | Sorted ascending by `z`. |
 | `MobileDock`       | `z-40` | Bottom pill launcher; goes `inert` and slides off-screen when any sheet is visible. |
 | `HomeIndicator`    | `z-40` | Interactive button above sheets; pointer-events suppressed when `disabled`. |

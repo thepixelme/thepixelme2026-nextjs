@@ -79,15 +79,15 @@ export default function AnalyticsConsent({ initialConsent }: Props) {
     consent.accept();
   };
 
-  // Mobile banner — always rendered in HTML (SSR-friendly) and hidden on
-  // desktop via Tailwind `lg:hidden`. The breakpoint must stay in sync with
-  // `useIsMobile()`'s cutoff (1023.98 px ↔ Tailwind v4 `lg` = 1024 px).
+  // Mobile banner — always rendered in HTML (SSR-friendly) and shown only
+  // where the touch shell is, via the `mobile:` custom variant (same media
+  // query as `useIsMobile()`).
   // `AnimatePresence initial={false}` skips the slide-in enter animation on
   // first paint so the banner is a valid LCP candidate (an opacity-0 element
   // would be ignored by the browser's LCP heuristic).
   const mobileVisible = consent.enabled && (consent.consent === null || open);
   const mobileBanner = (
-    <div className="lg:hidden">
+    <div className="hidden mobile:block">
       <AnimatePresence initial={false}>
         {mobileVisible && (
           <MobileConsentNotification

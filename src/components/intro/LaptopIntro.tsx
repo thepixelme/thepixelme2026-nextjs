@@ -143,7 +143,10 @@ export default function LaptopIntro({ children }: { children: ReactNode }) {
               style={{ opacity: hintOpacity }}
               className="pointer-events-none absolute bottom-[4vh] left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-separator bg-surface py-1.5 pr-2.5 pl-3.5 text-xs font-medium shadow-overlay backdrop-blur-(--glass-blur)"
             >
-              Scroll to enter
+              <span className="pointer-coarse:hidden">Scroll to enter</span>
+              <span className="hidden pointer-coarse:inline">
+                Swipe up to enter
+              </span>
               <motion.span
                 animate={{ y: [0, 3, 0] }}
                 transition={{

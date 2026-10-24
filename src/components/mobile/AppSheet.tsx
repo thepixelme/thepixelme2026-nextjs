@@ -7,6 +7,10 @@ import { APPS } from "@/components/apps/registry";
 import { useWindowsDispatch } from "@/lib/windows-store";
 import type { WindowState } from "@/types/window";
 
+// Past 100% so the tablet card, which floats above the bottom edge, clears
+// the screen too.
+const OFFSCREEN_Y = "110%";
+
 interface Props {
   win: WindowState;
   isActive: boolean;
@@ -34,12 +38,16 @@ export default function AppSheet({ win, isActive, stackIndex }: Props) {
       style={{ zIndex: 30 + stackIndex }}
       className="fixed inset-0 flex flex-col bg-surface backdrop-blur-(--glass-blur)
                  pt-[calc(2.75rem+env(safe-area-inset-top))]
-                 pb-[max(env(safe-area-inset-bottom),12px)]"
-      initial={{ y: "100%", opacity: 0.6 }}
+                 pb-[max(env(safe-area-inset-bottom),12px)]
+                 tablet:inset-x-6 tablet:top-[calc(env(safe-area-inset-top)+3.5rem)]
+                 tablet:bottom-[calc(env(safe-area-inset-bottom)+2.75rem)]
+                 tablet:overflow-hidden tablet:rounded-2xl tablet:border tablet:border-field-border
+                 tablet:py-0 tablet:shadow-overlay"
+      initial={{ y: OFFSCREEN_Y, opacity: 0.6 }}
       animate={
-        win.minimized ? { y: "100%", opacity: 0.6 } : { y: 0, opacity: 1 }
+        win.minimized ? { y: OFFSCREEN_Y, opacity: 0.6 } : { y: 0, opacity: 1 }
       }
-      exit={{ y: "100%", opacity: 0.6 }}
+      exit={{ y: OFFSCREEN_Y, opacity: 0.6 }}
       transition={
         reduceMotion
           ? { duration: 0 }

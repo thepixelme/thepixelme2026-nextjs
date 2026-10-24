@@ -54,7 +54,7 @@ function Handle({
   const handlers = useWindowResize(win, handle);
   return (
     <div
-      className={`absolute z-10 ${className}`}
+      className={`absolute z-10 touch-none ${className}`}
       style={{ cursor }}
       {...handlers}
     />

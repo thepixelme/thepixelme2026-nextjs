@@ -7,6 +7,7 @@ import Wallpaper from "@/components/desktop/Wallpaper";
 import { useWindows, useWindowsDispatch } from "@/lib/windows-store";
 import AppSheet from "./AppSheet";
 import HomeIndicator from "./HomeIndicator";
+import HomeScreen from "./HomeScreen";
 import MobileDock from "./MobileDock";
 import MobileStatusBar from "./MobileStatusBar";
 
@@ -31,6 +32,7 @@ export default function MobileShell() {
   return (
     <>
       <Wallpaper />
+      <HomeScreen hidden={hasVisible} />
       <MobileStatusBar onOpenSpotlight={() => setSpotlightOpen(true)} />
       <MobileDock hidden={hasVisible} />
       <AnimatePresence>

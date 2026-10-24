@@ -152,6 +152,11 @@ Antialiasing: `antialiased` is set on `<html>` in layout. Don't override.
 | Analytics consent prompt | `BarChart3` |
 | Laptop intro scroll hint | `ChevronDown` |
 | Dock "explore" hint | `MousePointerClick` |
+| Mobile home — location | `MapPin`     |
+| Mobile home — "About me" button | `User` |
+| Mobile home — "Contact" button | `Mail` |
+| Mobile home — Projects widget heading | `FolderOpen` |
+| Mobile home — "See all" | `ChevronRight` |
 
 If you need an icon not listed, add it here in the same PR.
 
@@ -175,10 +180,11 @@ Use these named layers. Do not improvise z values.
 
 > When the NC is open and **not** persistent, a transparent `z-40` `<button>` backdrop is rendered to catch outside clicks (closes the panel without dimming, matching macOS). In **persistent** mode — currently the analytics-consent undecided state — the backdrop is omitted so the rest of the page stays interactive while the consent card remains visible.
 
-**Mobile shell (< 1024 px)** adds its own band — these layers only exist when `useIsMobile()` returns true:
+**Mobile shell (< 1024 px, or portrait)** adds its own band — these layers only exist when `useIsMobile()` returns true:
 
 | Layer              | z-index | Purpose |
 | ------------------ | --- | --- |
+| HomeScreen         | `z-0`  | Identity + projects widgets over the wallpaper; fades out and goes `inert` when any sheet is visible. |
 | AppSheet (per win) | `30 + stackIndex` (dynamic inline, current range 30–34) | One sheet per non-closed window record; sorted ascending by `z`. |
 | MobileDock         | `z-40` | Bottom pill launcher; goes `inert` and slides off-screen when any sheet is visible. |
 | HomeIndicator      | `z-40` | iOS-style pill, tappable to minimize all visible sheets. |
@@ -187,7 +193,9 @@ Use these named layers. Do not improvise z values.
 
 ### 5.1.1 Mobile chrome conventions
 
-- **Breakpoint:** 1024 px (Tailwind `lg`). ≥ 1024 → desktop, < 1024 → mobile. Driven by [`useIsMobile()`](src/lib/useIsMobile.ts) using `matchMedia("(max-width: 1023.98px)")`.
+- **Breakpoint:** narrower than 1024 px (Tailwind `lg`), or portrait at any width → mobile; landscape and ≥ 1024 → desktop. Driven by [`useIsMobile()`](src/lib/useIsMobile.ts) using `MOBILE_MEDIA_QUERY` = `(max-width: 1023.98px), (orientation: portrait)`. For server-rendered markup use the matching `mobile:` custom variant, never `lg:` / `max-lg:` (they miss portrait tablets).
+- **Size variants:** inside [src/components/mobile/](src/components/mobile/), `tablet:` (≥ 700 × 700 px) is an iPad-sized shell — sheets become floating cards with the wallpaper around them — and `short:` (≤ 480 px tall) is a phone on its side, where the dock moves to the right edge. See [docs/styling-and-icons.md](docs/styling-and-icons.md#mobile-shell-custom-variants).
+- **Home screen:** the shell's home state shows widgets (identity card, project carousel), not an empty wallpaper. Widgets use the glass recipe with `rounded-3xl`, and the home screen never draws content under the dock.
 - **Touch targets:** minimum 44 × 44 pt for any interactive element. Use `h-11` (44 px) on buttons; for icon-only buttons, wrap a smaller visual element in a sized `<button>` (see HomeIndicator's `h-11 w-32` hit area around a `h-1.5 w-32` visible pill).
 - **Safe-area insets:** all top/bottom mobile chrome uses `env(safe-area-inset-*)`. Static formulas live in Tailwind arbitrary utilities, not inline `style` — see [docs/styling-and-icons.md](docs/styling-and-icons.md#safe-area-insets-mobile-shell).
 - **Focus rings:** never suppress (§10). Programmatic focus on mobile lands on a real focusable element (e.g. the first MobileDock button) so the native focus ring is visible.
@@ -220,6 +228,7 @@ Use these named layers. Do not improvise z values.
 - **Window maximize / restore**: bounds (`left/top/width/height`) interpolated via a transient CSS transition. ~220ms `ease-out`. The transition is only applied while toggling so drag/resize stay instant.
 - **Dock magnify** (desktop only): pure CSS `transition-transform duration-150 ease-out`. No JS — keep it cheap. The mobile dock (`<MobileDock>`) opts out via the `compact` prop on `<DockIcon>`.
 - **Mobile dock show/hide**: `motion/react` spring (`stiffness 320, damping 32`) on `{ y, opacity }`. Reduced motion collapses to `duration: 0`.
+- **Mobile home screen show/hide**: when a sheet opens, the home widgets fade and shrink (`opacity 1 → 0`, `scale 1 → 0.94`, 0.25s); the reverse when the last sheet goes. Reduced motion collapses to `duration: 0`.
 - **Spotlight**: backdrop fade 100ms, dialog scale `0.97 → 1` 150ms.
 - **Traffic light hover**: glyphs `opacity-0 → opacity-100` on `.group:hover`, 80ms.
 - **Laptop intro** (desktop landing): scroll-driven via `useScroll({ container })` smoothed by `useSpring` (`stiffness 260, damping 40`), over 180vh of scroll. Laptop/desk stage scale `0.25 → 1` (log-space, ease-in-out), `y` `−4vh → 0`. Backdrop layers zoom by the same curve raised to their depth (night view through the window 0.1, room 0.35) for parallax. Ambient loops (flames, embers, firelight, fairy lights, falling snow, mug steam, the mantel clock's second hand) run continuously while the intro is up; flames flicker by scaling about their base. Camera math lives in [src/components/intro/camera.ts](src/components/intro/camera.ts). Headline fades over the first 20% of progress, scroll hint over the first 8%. Click / keyboard entry animates the scroll position over 1.2s with `ease [0.65, 0, 0.35, 1]`. Never animates layout properties — only `transform` on the stage and layer elements.
@@ -315,7 +324,7 @@ Never write multi-paragraph docstrings.
 Two variants share [`DockIcon`](src/components/desktop/DockIcon.tsx):
 
 - **Desktop `<Dock>`**: bottom-center at `bottom-3`. Icons render with the default `DockIcon` behavior — hover tooltip and `scale-110 -translate-y-2` magnify.
-- **Mobile `<MobileDock>`**: bottom-center at `bottom-[calc(env(safe-area-inset-bottom)+3.25rem)]` (clears the full home-indicator hit area; `env(...)` falls back to `0` when no safe area is defined). Icons render with `compact` — no tooltip, no hover lift/scale, since hover is unreliable on touch. The dock slides off-screen and goes `inert` while any sheet is visible.
+- **Mobile `<MobileDock>`**: bottom-center at `bottom-[calc(env(safe-area-inset-bottom)+1.25rem)]` (`env(...)` falls back to `0` when no safe area is defined; it never shares the screen with an enabled home indicator, so it doesn't clear the indicator's hit area). On `short:` viewports it sits vertically centred on the right edge, as a column scaled to 85%. Icons render with `compact` — no tooltip, no hover lift/scale, since hover is unreliable on touch. The dock slides off-screen and goes `inert` while any sheet is visible.
 
 Shared rules:
 
@@ -368,6 +377,6 @@ Before claiming a feature done:
 1. `npm run lint` — zero errors.
 2. `npm run dev` — open localhost, exercise the feature including its keyboard path.
 3. For chrome (menu bar / dock / window manager): test in both `glass-light` and `glass-dark`.
-4. Resize browser across the 1024 px boundary — confirm the desktop tree mounts at ≥ 1024 and the iOS-style mobile shell mounts at < 1024. App state should survive the switch (window records persist via the shared `<WindowsProvider>`).
+4. Resize browser across the 1024 px boundary and across portrait/landscape — confirm the desktop tree mounts for landscape ≥ 1024 and the iOS-style mobile shell mounts below 1024 or in portrait. App state should survive the switch (window records persist via the shared `<WindowsProvider>`). For mobile-shell changes, check a phone (e.g. 390×660, roughly what iPhone Safari leaves with its toolbars), a tablet (820×1180), and a phone on its side (844×390).
 5. For desktop chrome changes, reload and scroll through the laptop intro too — the desktop renders scaled inside the laptop screen before it becomes interactive.
 6. `npm run build` — clean build before merging anything significant.

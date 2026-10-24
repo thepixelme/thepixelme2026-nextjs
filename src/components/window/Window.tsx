@@ -130,7 +130,7 @@ export default function Window({ win, children }: Props) {
         data-window-titlebar
         role="toolbar"
         aria-label={`${win.title} window controls`}
-        className="relative flex h-9 shrink-0 select-none items-center border-b border-separator"
+        className="relative flex h-9 shrink-0 touch-none select-none items-center border-b border-separator"
         onPointerDown={drag.onPointerDown}
         onPointerMove={drag.onPointerMove}
         onPointerUp={drag.onPointerUp}

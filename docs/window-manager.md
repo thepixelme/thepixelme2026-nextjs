@@ -117,7 +117,7 @@ Layout:
 </div>
 ```
 
-Visual classes: `rounded-xl border border-field-border bg-surface shadow-overlay backdrop-blur-(--glass-blur) overflow-hidden`. The titlebar has `border-b border-separator` and uses `select-none`.
+Visual classes: `rounded-xl border border-field-border bg-surface shadow-overlay backdrop-blur-(--glass-blur) overflow-hidden`. The titlebar has `border-b border-separator` and uses `select-none` and `touch-none`, so on a touch screen (an iPad in landscape gets the desktop) a finger drag moves the window instead of being claimed by the browser as a pan, which would fire `pointercancel` mid-drag.
 
 Behavior:
 
@@ -156,7 +156,7 @@ Glyphs are `opacity-0 group-hover:opacity-100`, so they fade in on hover of the 
 
 ### [ResizeHandles.tsx](../src/components/window/ResizeHandles.tsx)
 
-Renders 8 absolutely-positioned `<div>`s on the window edges/corners. Each handle uses a `<Handle>` sub-component that calls `useWindowResize(win, handle)`.
+Renders 8 absolutely-positioned `<div>`s on the window edges/corners, each `touch-none` for the same reason as the titlebar. Each handle uses a `<Handle>` sub-component that calls `useWindowResize(win, handle)`.
 
 | Handle | Class                              | Cursor        |
 | ------ | ---------------------------------- | ------------- |

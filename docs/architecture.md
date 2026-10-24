@@ -14,8 +14,9 @@ The page ([src/app/page.tsx](../src/app/page.tsx)) is a server component that re
 <WindowsProvider>
   ShellSwitch (useIsMobile)
     isMobile === null  →  pre-hydration first frame, picked by CSS (avoids mismatch):
-                            <Wallpaper />                          where the `intro:` variant doesn't match
-                            <LaptopIntro><Wallpaper /></LaptopIntro>  where it does
+                            <MobileShell />                        where the `mobile:` variant matches
+                            <LaptopIntro><Wallpaper /></LaptopIntro>  where the `intro:` variant matches
+                            <Wallpaper />                          everywhere else (desktop without the intro)
     isMobile === false →  <LaptopIntro>                (scroll-zoom intro; see desktop-shell.md)
                             <DesktopBody />:
                               <Wallpaper />              z=-10
@@ -31,7 +32,7 @@ While the intro plays, `<DesktopBody />` renders inside the laptop's screen box,
 
 `<WindowsProvider>` lives above the switch so window state survives a viewport resize across the breakpoint. `spotlightOpen` is local state in each branch (`DesktopBody` owns its own; `MobileShell` owns its own).
 
-The breakpoint is `1024px` (Tailwind `lg`): ≥ 1024 → desktop, < 1024 → mobile. See [src/lib/useIsMobile.ts](../src/lib/useIsMobile.ts).
+The switch is `MOBILE_MEDIA_QUERY`, `(max-width: 1023.98px), (orientation: portrait)`: viewports narrower than 1024 px, and portrait viewports of any width (an iPad Pro held upright, a rotated monitor), get the mobile shell; landscape viewports 1024 px and wider get the desktop. See [src/lib/useIsMobile.ts](../src/lib/useIsMobile.ts). The same query is the `mobile:` Tailwind variant in [globals.css](../src/app/globals.css).
 
 ## Data flow
 
@@ -59,7 +60,7 @@ There is no global event bus for windows — everything goes through the reducer
 
 `ga-consent` holds the Google Analytics consent choice (`"granted"` \| `"denied"`); absent means undecided and the consent banner is shown. The cookie (rather than localStorage) is what lets the mobile consent banner ship in the initial server HTML — `readConsentServer()` reads it via `next/headers cookies()` at request time. See [docs/analytics.md](analytics.md).
 
-Window positions, sizes, and open/closed state are **not** persisted — every page load starts with an empty desktop.
+Window positions, sizes, and open/closed state are **not** persisted — every page load starts with no windows (the desktop then opens About by itself; see [desktop-shell.md](desktop-shell.md#desktop-desktoptsx)).
 
 ## Z-index layering
 
@@ -78,6 +79,7 @@ Mobile shell adds its own layers (only present when `useIsMobile()` is true):
 
 | Layer              | z-index | Owner                                                       |
 | ------------------ | ------- | ----------------------------------------------------------- |
+| HomeScreen         | `z-0`   | [HomeScreen.tsx](../src/components/mobile/HomeScreen.tsx); fades out and goes `inert` when any sheet is visible |
 | AppSheet (per win) | `30 + stackIndex` (dynamic inline, range 30–34 for the current 5-app registry) | [AppSheet.tsx](../src/components/mobile/AppSheet.tsx) |
 | MobileDock         | `z-40`  | [MobileDock.tsx](../src/components/mobile/MobileDock.tsx); slides off-screen and goes `inert` when any sheet is visible |
 | HomeIndicator      | `z-40`  | [HomeIndicator.tsx](../src/components/mobile/HomeIndicator.tsx); `pointer-events-none` while disabled (home state) |
@@ -88,9 +90,9 @@ Mobile shell adds its own layers (only present when `useIsMobile()` is true):
 
 ## Lifecycle (first paint → interaction)
 
-1. **Server render** — Next emits HTML for the layout + `Desktop` shell. The pre-hydration branch ships both the bare wallpaper and the laptop intro's first frame (headline `<h1>` + laptop at rest); the `intro:` CSS variant shows exactly one of them, so the first paint matches what hydrates. [`AnalyticsConsentServer`](../src/components/analytics/AnalyticsConsentServer.tsx) (wrapped in `<Suspense>`) reads the `ga-consent` cookie via `next/headers` and seeds `<AnalyticsConsent initialConsent={...}>` — so the mobile consent banner ships in the initial HTML when undecided.
+1. **Server render** — Next emits HTML for the layout + `Desktop` shell. The pre-hydration branch ships the mobile shell (status bar, home screen widgets, dock), the laptop intro's first frame (headline `<h1>` + laptop at rest) and the bare wallpaper; the `mobile:` and `intro:` CSS variants show exactly one of them, so the first paint matches what hydrates. [`AnalyticsConsentServer`](../src/components/analytics/AnalyticsConsentServer.tsx) (wrapped in `<Suspense>`) reads the `ga-consent` cookie via `next/headers` and seeds `<AnalyticsConsent initialConsent={...}>` — so the mobile consent banner ships in the initial HTML when undecided.
 2. **Hydration** — `WindowsProvider` initializes with `{ windows: [], topZ: 10, openCount: 0 }`. `useTheme` reads `portfolio:theme` and re-applies the class. `useClock` sets initial time and schedules the next-minute tick. `useAnalyticsConsent` already has state seeded from the server cookie value, so no client-side re-read is needed.
-3. **Laptop intro (desktop, motion allowed, landscape-ish viewport)** — the desktop is shown inside a laptop on a desk in an illustrated, fire-lit room, and is `inert`. `DesktopBody` opens the About window after 700 ms (a `silent` OPEN, not tracked), and a fake cursor tours the dock with app labels. Scrolling (or clicking the screen, or ↓ / Space / Enter / PageDown) zooms in, with the room and the night view through its window zooming less for parallax, until the screen fills the viewport. `finishIntro()` then hands over to the live desktop. Esc and ⌘K/Ctrl+K skip straight in. Once the desktop is live, the dock icons bounce once and an "explore" hint floats above the dock for 8 s. The desktop consent Notification Center auto-opens only after this point.
+3. **Laptop intro (desktop, motion allowed, landscape-ish viewport)** — the desktop is shown inside a laptop on a desk in an illustrated, fire-lit room, and is `inert`. `DesktopBody` opens the About window after 700 ms (a `silent` OPEN, not tracked), and a fake cursor tours the dock with app labels. Scrolling (or clicking the screen, or ↓ / Space / Enter / PageDown) zooms in, with the room and the night view through its window zooming less for parallax, until the screen fills the viewport. `finishIntro()` then hands over to the live desktop. Esc and ⌘K/Ctrl+K skip straight in. Once the desktop is live, the dock icons bounce once and an "explore" hint floats above the dock for 8 s. The desktop consent Notification Center auto-opens only after this point. A desktop viewport where the intro doesn't play opens About straight away instead. The mobile shell shows its home screen (identity card and project carousel) and opens nothing by itself.
 4. **First user click** — clicking a `<DockIcon>` dispatches `OPEN`. The reducer adds a `WindowState`, increments `topZ`, increments `openCount`. `WindowManager` renders the new `<Window>`.
 5. **Drag / resize** — `<Window>`'s titlebar emits `FOCUS` on `pointerdown`, then `MOVE` on each `pointermove`. The 8 invisible handles in [ResizeHandles.tsx](../src/components/window/ResizeHandles.tsx) emit `RESIZE` (with full bounds, since corner drags can change x/y too).
 6. **Spotlight** — `cmd/ctrl+k` flips `spotlightOpen` to true; `Esc` flips it back. Selecting an item dispatches `OPEN` and closes the palette.

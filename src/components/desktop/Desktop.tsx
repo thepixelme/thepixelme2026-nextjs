@@ -16,16 +16,23 @@ import Wallpaper from "./Wallpaper";
 // Delay so visitors watch About open on the laptop screen.
 const INTRO_ABOUT_DELAY_MS = 700;
 
+// Module state so About opens by itself once per page load, not again when
+// the desktop remounts after a resize across the breakpoint.
+let aboutAutoOpened = false;
+
 function DesktopBody() {
   const [spotlightOpen, setSpotlightOpen] = useState(false);
   const introPending = useIntroPending();
   const dispatch = useWindowsDispatch();
 
   useEffect(() => {
-    if (!introPending) return;
+    if (aboutAutoOpened) return;
     const timer = setTimeout(
-      () => dispatch({ type: "OPEN", appId: "about", silent: true }),
-      INTRO_ABOUT_DELAY_MS,
+      () => {
+        aboutAutoOpened = true;
+        dispatch({ type: "OPEN", appId: "about", silent: true });
+      },
+      introPending ? INTRO_ABOUT_DELAY_MS : 0,
     );
     return () => clearTimeout(timer);
   }, [introPending, dispatch]);
@@ -48,16 +55,20 @@ function ShellSwitch() {
 
   if (isMobile === null) {
     // CSS picks the server-rendered first frame so it matches what hydrates:
-    // the laptop intro where it will play, the bare wallpaper everywhere else.
+    // the mobile shell, the laptop intro where it will play, or the bare
+    // wallpaper for a desktop without the intro.
     return (
       <div className="relative h-full w-full overflow-hidden">
-        <div className="intro:hidden">
+        <div className="mobile:hidden intro:hidden">
           <Wallpaper />
         </div>
         <div className="hidden h-full intro:block">
           <LaptopIntro>
             <Wallpaper />
           </LaptopIntro>
+        </div>
+        <div className="hidden mobile:block">
+          <MobileShell />
         </div>
       </div>
     );

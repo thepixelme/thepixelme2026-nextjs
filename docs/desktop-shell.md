@@ -6,7 +6,7 @@ The shell components are children of `<WindowsProvider>` (mounted by [Desktop.ts
 
 ## Desktop ([Desktop.tsx](../src/components/desktop/Desktop.tsx))
 
-Top-level client component mounted by [page.tsx](../src/app/page.tsx). It is also the **viewport router**: based on [`useIsMobile()`](../src/lib/useIsMobile.ts), it picks between the desktop tree (≥ 1024 px) and the mobile tree (< 1024 px).
+Top-level client component mounted by [page.tsx](../src/app/page.tsx). It is also the **viewport router**: based on [`useIsMobile()`](../src/lib/useIsMobile.ts), it picks between the desktop tree (landscape, ≥ 1024 px) and the mobile tree (narrower than 1024 px, or portrait at any width).
 
 Structure:
 
@@ -14,8 +14,8 @@ Structure:
 <WindowsProvider>
   <ShellSwitch>
     isMobile === null  → pre-hydration first frame (no mismatch): <Wallpaper /> wrapped in
-                         `intro:hidden`, plus <LaptopIntro><Wallpaper /></LaptopIntro> wrapped in
-                         `hidden h-full intro:block`
+                         `mobile:hidden intro:hidden`, <LaptopIntro><Wallpaper /></LaptopIntro> wrapped in
+                         `hidden h-full intro:block`, and <MobileShell /> wrapped in `hidden mobile:block`
     isMobile === false → <LaptopIntro><DesktopBody /></LaptopIntro>
     isMobile === true  → <MobileShell />
 ```
@@ -30,7 +30,7 @@ Structure:
 4. `<Dock />`
 5. `<Spotlight open={spotlightOpen} onOpenChange={setSpotlightOpen} />`
 
-`DesktopBody` owns its own `spotlightOpen: boolean`. While the laptop intro is pending it also opens the About window on its own, `INTRO_ABOUT_DELAY_MS` (700 ms) after mount, with `OPEN { appId: "about", silent: true }` so it doesn't count as an `app_open`. The timer is cancelled if the intro finishes first. `data-desktop-root` is the reference element [`dock-positions`](window-manager.md) uses to report dock-icon rects in desktop coordinates.
+`DesktopBody` owns its own `spotlightOpen: boolean`. It also opens the About window on its own, once per page load, with `OPEN { appId: "about", silent: true }` so it doesn't count as an `app_open`: `INTRO_ABOUT_DELAY_MS` (700 ms) after mount while the laptop intro is pending, so visitors watch it open on the laptop screen, and immediately where the intro doesn't play (reduced motion, or a viewport squarer than 5:4). If the intro finishes before the delay, About opens at that point. The module-level `aboutAutoOpened` flag stops it reopening when the desktop remounts after a resize across the breakpoint. `data-desktop-root` is the reference element [`dock-positions`](window-manager.md) uses to report dock-icon rects in desktop coordinates.
 
 ## Laptop intro ([src/components/intro/LaptopIntro.tsx](../src/components/intro/LaptopIntro.tsx))
 
@@ -38,7 +38,7 @@ Scroll-driven landing on desktop, modelled on mercury.com. The visitor first see
 
 Props: `{ children: ReactNode }` — the screen content (`<DesktopBody />`, or `<Wallpaper />` in the pre-hydration frame).
 
-**When it plays** — `useIntroPending()` from [src/lib/intro.ts](../src/lib/intro.ts) returns `true` until `finishIntro()` is called, and only while `INTRO_MEDIA_QUERY` matches: `(min-width: 1024px) and (prefers-reduced-motion: no-preference) and (min-aspect-ratio: 5/4)`. The same query is registered as the `intro:` Tailwind custom variant in [globals.css](../src/app/globals.css) for the server-rendered first frame — keep the two in sync. Reduced-motion visitors, portrait-shaped desktop viewports, and the mobile shell never see the intro. The finished flag is module state, so the intro plays once per page load. The server snapshot is `true` so nothing (e.g. the consent auto-open) races ahead of it during hydration.
+**When it plays** — `useIntroPending()` from [src/lib/intro.ts](../src/lib/intro.ts) returns `true` until `finishIntro()` is called, and only while `INTRO_MEDIA_QUERY` matches: `(min-width: 1024px) and (prefers-reduced-motion: no-preference) and (min-aspect-ratio: 5/4)`. The same query is registered as the `intro:` Tailwind custom variant in [globals.css](../src/app/globals.css) for the server-rendered first frame — keep the two in sync. Reduced-motion visitors, desktop viewports squarer than 5:4, and the mobile shell (which takes every portrait viewport) never see the intro. The finished flag is module state, so the intro plays once per page load. The server snapshot is `true` so nothing (e.g. the consent auto-open) races ahead of it during hydration.
 
 **Structure while active** (all inside the component's root):
 
@@ -57,7 +57,8 @@ Props: `{ children: ReactNode }` — the screen content (`<DesktopBody />`, or `
         </motion.div>
         <button aria-label="Enter desktop">   transparent, over the screen; click → animated zoom
       </motion.div>
-      <p>Scroll to enter <ChevronDown /></p>   glass pill; fades out over the first 8%
+      <p>Scroll to enter <ChevronDown /></p>   glass pill; fades out over the first 8%; reads
+                                               "Swipe up to enter" on touch (`pointer-coarse:`)
 ```
 
 The screen box is exactly the viewport, so at scale 1 it fills the window and the frame, desk and rug sit off-screen. `contain: paint` makes the screen the containing block for the desktop's `fixed` chrome (wallpaper, menu bar, dock) and clips it to the screen's rounded corners.
@@ -145,7 +146,7 @@ Rendered inside the screen box after `{children}`, so it is drawn in the desktop
 
 ## Mobile shell ([src/components/mobile/](../src/components/mobile/))
 
-Below 1024 px, `<MobileShell />` replaces the entire desktop chrome with a bottom-dock home state + sheet stack. See dedicated sections below.
+Below 1024 px, and on portrait viewports of any width, `<MobileShell />` replaces the entire desktop chrome with an iOS-style home screen (widgets + dock) and a sheet stack. Phones get full-screen sheets; tablets (the `tablet:` variant, ≥ 700 × 700 px) get floating card sheets; a phone on its side (the `short:` variant, ≤ 480 px tall) gets the dock on the right edge. See dedicated sections below.
 
 ## Wallpaper ([Wallpaper.tsx](../src/components/desktop/Wallpaper.tsx))
 
@@ -302,10 +303,10 @@ Updater (`update(m)`):
 `useIsMobile(): boolean | null`. Single source of truth for the viewport switch in `Desktop.tsx`.
 
 - Initial state `null` — both SSR and the first client render get the same value, so there's no hydration mismatch.
-- `useLayoutEffect` reads `window.matchMedia("(max-width: 1023.98px)").matches` and subscribes to its `change` event. Cleanup removes the listener.
-- Breakpoint `1023.98px` matches Tailwind's `lg` boundary: 1024 px and up = desktop, 1023.98 px and below = mobile.
+- `useLayoutEffect` reads `window.matchMedia(MOBILE_MEDIA_QUERY).matches` and subscribes to its `change` event. Cleanup removes the listener.
+- `MOBILE_MEDIA_QUERY` (exported) is `(max-width: 1023.98px), (orientation: portrait)`: under 1024 px wide, or portrait at any width, = mobile; landscape and 1024 px or wider = desktop. `1023.98px` matches Tailwind's `lg` boundary. The same query is registered as the `mobile:` custom variant in [globals.css](../src/app/globals.css) — keep the two in sync.
 
-Consumers should treat `null` as "render minimal fallback content" (Desktop.tsx renders only the wallpaper).
+Consumers should treat `null` as "render the CSS-picked fallback" (Desktop.tsx server-renders the mobile shell, the intro's first frame and the bare wallpaper, and lets the `mobile:` / `intro:` variants show one).
 
 ## MobileShell ([src/components/mobile/MobileShell.tsx](../src/components/mobile/MobileShell.tsx))
 
@@ -314,15 +315,35 @@ The mobile counterpart of `<DesktopBody>`. Mounted when `useIsMobile()` returns 
 Renders, in this order:
 
 1. `<Wallpaper />` (reused as-is).
-2. `<MobileStatusBar onOpenSpotlight={...} />` — top, z-50.
-3. `<MobileDock hidden={hasVisible} />` — the launcher, z-40, visible on the home state, slides off-screen when any sheet is visible.
-4. `<AnimatePresence>` wrapping a `.map` over every window record (regardless of `minimized`), each rendered as an `<AppSheet>` with `isActive` and `stackIndex` props.
-5. `<HomeIndicator onGoHome={goHome} disabled={!hasVisible} />` — z-40 above sheets.
-6. `<Spotlight open={spotlightOpen} onOpenChange={setSpotlightOpen} />` — reused.
+2. `<HomeScreen hidden={hasVisible} />` — identity card + project carousel, z-0, fades out when any sheet is visible.
+3. `<MobileStatusBar onOpenSpotlight={...} />` — top, z-50.
+4. `<MobileDock hidden={hasVisible} />` — the launcher, z-40, visible on the home state, slides off-screen when any sheet is visible.
+5. `<AnimatePresence>` wrapping a `.map` over every window record (regardless of `minimized`), each rendered as an `<AppSheet>` with `isActive` and `stackIndex` props.
+6. `<HomeIndicator onGoHome={goHome} disabled={!hasVisible} />` — z-40 above sheets.
+7. `<Spotlight open={spotlightOpen} onOpenChange={setSpotlightOpen} />` — reused.
 
 Sheet stack is sorted **ascending by `z`** so the highest-z sheet renders last (and visually stacks on top). `key={win.id}` preserves component identity across reorders (state survives raising/lowering).
 
 `goHome` loops through non-minimized windows and dispatches `MINIMIZE` for each. Sheets slide off-screen via their `animate` prop; their app state stays mounted.
+
+`MobileShell` is also server-rendered in [Desktop.tsx](../src/components/desktop/Desktop.tsx)'s pre-hydration frame (inside `hidden mobile:block`), so phones and tablets get the status bar, home screen and dock in the initial HTML instead of a bare wallpaper. Once `useIsMobile()` resolves it remounts in the `isMobile === true` branch, before the browser paints.
+
+## HomeScreen ([src/components/mobile/HomeScreen.tsx](../src/components/mobile/HomeScreen.tsx))
+
+The mobile shell's home state: two iOS-style glass widgets over the wallpaper, so a visitor sees who this is and what they've built before opening anything. Props: `{ hidden: boolean }` — `true` while any sheet is visible.
+
+- **Identity widget** (`<section>`): an initials avatar (`bg-accent`), `ABOUT.name` and `ABOUT.location`, then `ABOUT.title` as the page's `<h1>` (mirroring the laptop intro's headline), then two `h-11` pill buttons: "About me" (`OPEN about`) and "Contact" (`OPEN contact`).
+- **Projects widget** (`<section>`): a "Projects" heading with a "See all" button (`OPEN finder`), then a horizontal, scroll-snapping carousel of every entry in `PROJECTS`. Each card is a `<button>` with a [`ProjectThumbnail`](#projectthumbnail-srccomponentsprojectthumbnailtsx) and the title (two lines max) that opens `preview` with `{ projectId }`. Cards are 62% of the widget on phones (so the next one peeks in), `w-56` from `sm`, `w-48` on `short:` and `w-64` on `tablet:`.
+
+Widget surface: `rounded-3xl border border-field-border bg-surface shadow-overlay backdrop-blur-(--glass-blur)` (the standard glass recipe with iOS widget corners).
+
+Layout: the root `<motion.main>` is `fixed`, scrolls vertically, and ends 7 rem (plus the bottom safe area) above the bottom edge, at the top of the dock, so content is never drawn under the dock. Its inner column (`max-w-xl`, `tablet:max-w-2xl`) is vertically centred with `justify-center` and pads its top past the status bar. On `landscape:` the widgets sit side by side; on `short:` (dock on the right) the scroller runs to the bottom edge and pads its right side past the dock. The `tablet:` variant enlarges the padding and the headline (`text-4xl`).
+
+When `hidden`, it is `inert` + `aria-hidden` and animates to `opacity 0, scale 0.94` over 0.25 s (instant with reduced motion), like iOS zooming the home screen away behind an app. `initial={false}` keeps the server-rendered frame at full opacity.
+
+## ProjectThumbnail ([src/components/ProjectThumbnail.tsx](../src/components/ProjectThumbnail.tsx))
+
+Shared `aspect-video` project preview used by Finder's grid and the home screen carousel. Props: `{ project: Project; className?: string }` (`className` adds rounding/borders/margins). Shows the project's `logo` (contained at 75%), else its first screenshot (`object-contain` for `orientation: "portrait"` projects, `object-cover` otherwise), else the title's first letter. Images are `loading="lazy"`.
 
 ## MobileStatusBar ([src/components/mobile/MobileStatusBar.tsx](../src/components/mobile/MobileStatusBar.tsx))
 
@@ -339,7 +360,8 @@ Props: `{ hidden: boolean }` — driven by whether any non-minimized sheet is vi
 
 Structure:
 
-- Outer `<motion.nav aria-label="Dock">` — `pointer-events-none fixed inset-x-0 z-40 flex justify-center bottom-[calc(env(safe-area-inset-bottom)+3.25rem)]`. The bottom offset clears the full 44 pt `HomeIndicator` hit area on devices both with and without a bottom safe area (`env(safe-area-inset-bottom)` falls back to `0` per CSS spec).
+- Outer `<motion.nav aria-label="Dock">` — `pointer-events-none fixed inset-x-0 z-40 flex justify-center bottom-[calc(env(safe-area-inset-bottom)+1.25rem)]` (`env(safe-area-inset-bottom)` falls back to `0` per CSS spec). The dock doesn't need to clear the `HomeIndicator` hit area: the dock is only visible when no sheet is, and the indicator is disabled (`pointer-events-none`) then.
+- On `short:` viewports (≤ 480 px tall — a phone on its side), the nav instead spans from below the status bar to the bottom edge, pinned to the right (`right-[max(env(safe-area-inset-right),0.75rem)]`), and centres the pill vertically; the pill switches to `flex-col` and is scaled to 85% (`origin-right`) so four icons fit the height. The hide animation is unchanged (the pill drops 120 px while fading out).
 - Inner pill — same classes as the desktop dock (`pointer-events-auto flex items-end gap-3 rounded-2xl border border-separator bg-surface-secondary px-3 pb-2 pt-3 shadow-overlay backdrop-blur-(--glass-blur)`).
 - Iterates `APPS.filter(app => !app.hideFromDock)` in registry order; each item is `<DockIcon ... compact />`. Indicator dots light up for any window record (including minimized).
 
@@ -354,17 +376,19 @@ Focus restoration: when `hidden` flips `true → false` (last sheet closed, or a
 
 Full-screen `motion.section` with dynamic `style={{ zIndex: 30 + stackIndex }}`. Mounted for the entire life of the window record (unmounts only on `CLOSE`), so app-local state survives minimize/restore and sheet reordering.
 
-Animation:
-- `initial={{ y: "100%", opacity: 0.6 }}`
-- `animate={ win.minimized ? { y: "100%", opacity: 0.6 } : { y: 0, opacity: 1 } }` — slides off-screen on minimize, back on restore.
-- `exit={{ y: "100%", opacity: 0.6 }}` — slides down before unmount on CLOSE (inside `MobileShell`'s `<AnimatePresence>`).
+Animation (`OFFSCREEN_Y` = `"110%"`, past 100% so the tablet card, which floats above the bottom edge, also clears the screen):
+- `initial={{ y: OFFSCREEN_Y, opacity: 0.6 }}`
+- `animate={ win.minimized ? { y: OFFSCREEN_Y, opacity: 0.6 } : { y: 0, opacity: 1 } }` — slides off-screen on minimize, back on restore.
+- `exit={{ y: OFFSCREEN_Y, opacity: 0.6 }}` — slides down before unmount on CLOSE (inside `MobileShell`'s `<AnimatePresence>`).
 - `transition: spring { stiffness: 320, damping: 32 }`; reduced motion → `{ duration: 0 }`.
 
 Accessibility:
 - `inert={!isActive}` + `aria-hidden={!isActive}` on inactive sheets. Native `inert` suppresses pointer events, tab order, and AT.
 - On `isActive` becoming true, focuses the Done button via a `useEffect`.
 
-Layout: `pt-[calc(2.75rem+env(safe-area-inset-top))]` reserves the status bar; `pb-[max(env(safe-area-inset-bottom),12px)]` reserves the home indicator. Body is `min-h-0 flex-1 overflow-auto` with an inner `h-full` wrapper so app components that rely on `h-full` (Terminal especially) keep working.
+Layout (phones): full screen, `pt-[calc(2.75rem+env(safe-area-inset-top))]` reserves the status bar; `pb-[max(env(safe-area-inset-bottom),12px)]` reserves the home indicator.
+
+Layout (`tablet:`, ≥ 700 × 700 px): a floating card like an iPadOS window — inset `1.5rem` from the sides, starting `0.75rem` below the status bar and ending `2.75rem` above the bottom edge (plus safe areas) so the home indicator sits below it, with `rounded-2xl`, a `border-field-border` border, `shadow-overlay`, `overflow-hidden` and no vertical padding. The wallpaper shows around it. Body is `min-h-0 flex-1 overflow-auto` with an inner `h-full` wrapper so app components that rely on `h-full` (Terminal especially) keep working.
 
 Header has a left `<button>` ("Done" + `ChevronLeft size={16}`) dispatching `{ type: "CLOSE", id: win.id }`. The window title is centered and `pointer-events-none`.
 
@@ -413,7 +437,7 @@ The single owner of consent state. Calls [`useAnalyticsConsent()`](../src/lib/us
 - **Storage key:** `ga-consent` cookie (`"granted"` \| `"denied"`; absent → undecided). Read/written client-side through `readConsent` / `writeConsent` in [src/lib/analytics.ts](../src/lib/analytics.ts); read server-side via `readConsentServer()` in [src/lib/analytics-server.ts](../src/lib/analytics-server.ts) using `next/headers cookies()`. `writeConsent()` verifies persistence with a read-back since `document.cookie = ...` doesn't throw on rejection — fail-closed on Accept-with-storage-failure is preserved. The constant, `ConsentValue` type, and `parseConsent()` parser live in [src/lib/analytics-consent.ts](../src/lib/analytics-consent.ts) so neither side imports the other's runtime (`analytics.ts` pulls `@next/third-parties/google` which is `'use client'`; keeping it out of the server graph is intentional).
 - **`ga-disable` flag (R8):** [`useAnalyticsConsent`](../src/lib/useAnalyticsConsent.ts) writes `window['ga-disable-' + gaId]` from inside `accept()` / `decline()` synchronously (before consent state updates) and from a `useEffect` backstop. Without this, already-loaded gtag.js keeps sending after Decline; with it, the flag is correctly `false` by the time GA re-mounts on Denied → Allow so the first page_view isn't dropped.
 - **Env-var gate:** if `NEXT_PUBLIC_GA_ID` is unset, no `<GoogleAnalytics>` mounts and no consent card renders. The desktop NC shell still mounts (clock opens an empty panel). On mobile the clock stays plain text — no NC, no toggle target.
-- **SSR:** the mobile banner ships in the initial server HTML so it's a valid LCP candidate. [`AnalyticsConsentServer`](../src/components/analytics/AnalyticsConsentServer.tsx) reads the cookie via `next/headers` and passes the value into the client `AnalyticsConsent` via `initialConsent`; the hook seeds its `useState` from the prop instead of reading storage in a `useEffect`. The mobile branch is wrapped in `lg:hidden` (Tailwind v4 `lg` = 1024 px, matching `useIsMobile`'s 1023.98 px cutoff); the desktop card stays client-gated since desktop already meets LCP targets. `AnimatePresence initial={false}` skips the slide-in enter animation on first paint so the banner first-paints at `opacity: 1; transform: none` instead of `opacity: 0` (which the browser would not count as an LCP candidate).
+- **SSR:** the mobile banner ships in the initial server HTML so it's a valid LCP candidate. [`AnalyticsConsentServer`](../src/components/analytics/AnalyticsConsentServer.tsx) reads the cookie via `next/headers` and passes the value into the client `AnalyticsConsent` via `initialConsent`; the hook seeds its `useState` from the prop instead of reading storage in a `useEffect`. The mobile branch is wrapped in `hidden mobile:block` (the `mobile:` variant is `useIsMobile`'s media query); the desktop card stays client-gated since desktop already meets LCP targets. `AnimatePresence initial={false}` skips the slide-in enter animation on first paint so the banner first-paints at `opacity: 1; transform: none` instead of `opacity: 0` (which the browser would not count as an LCP candidate).
 
 The single-owner rule is strict: `useAnalyticsConsent()` must appear **only** in `AnalyticsConsent`. `setPersistent` from the NC context must only be called from `AnalyticsConsent`. NotificationCenter and MobileConsentNotification consume `accept`/`decline` as props.
 

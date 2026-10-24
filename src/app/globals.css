@@ -9,6 +9,27 @@
   }
 }
 
+/* Matches when the touch shell is used. Keep in sync with MOBILE_MEDIA_QUERY in src/lib/useIsMobile.ts. */
+@custom-variant mobile {
+  @media (max-width: 1023.98px), (orientation: portrait) {
+    @slot;
+  }
+}
+
+/* Tablet-sized touch shell (iPad in either orientation, not a phone on its side). Only used inside src/components/mobile/. */
+@custom-variant tablet {
+  @media (min-width: 700px) and (min-height: 700px) {
+    @slot;
+  }
+}
+
+/* A phone on its side: too short for a bottom dock. Only used inside src/components/mobile/. */
+@custom-variant short {
+  @media (max-height: 480px) {
+    @slot;
+  }
+}
+
 /*
  * Local theme layer.
  *

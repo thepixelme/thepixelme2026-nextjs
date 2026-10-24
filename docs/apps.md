@@ -20,8 +20,8 @@ An "app" is anything that satisfies the `AppDef` shape ([src/types/window.ts](..
 
 The `Component` is rendered in one of two places depending on viewport:
 
-- **Desktop (≥ 1024 px):** inside a `<Window>` (rendered by [WindowManager](../src/components/window/WindowManager.tsx)) whose body is `flex-1 overflow-auto`.
-- **Mobile (< 1024 px):** inside an `<AppSheet>` (rendered by [MobileShell](../src/components/mobile/MobileShell.tsx)) whose body is `min-h-0 flex-1 overflow-auto` with an inner `h-full` wrapper.
+- **Desktop (landscape, ≥ 1024 px):** inside a `<Window>` (rendered by [WindowManager](../src/components/window/WindowManager.tsx)) whose body is `flex-1 overflow-auto`.
+- **Mobile (< 1024 px, or portrait):** inside an `<AppSheet>` (rendered by [MobileShell](../src/components/mobile/MobileShell.tsx)) whose body is `min-h-0 flex-1 overflow-auto` with an inner `h-full` wrapper. On tablets the sheet is a floating card up to ~1000 px wide, so text-heavy apps cap their own reading width (`max-w-2xl` in AboutApp and CaseStudy).
 
 In both cases the app receives a fixed-height container and should size itself with `h-full`, `flex flex-col`, or scrollable layouts — not assume infinite height. The `windowId` prop is the same in both contexts.
 
@@ -82,9 +82,9 @@ Sidebar background: `bg-surface-secondary px-2 py-3 text-sm`. Outer grid: `grid-
 
 ### Grid (right pane)
 
-`grid grid-cols-1 gap-3 md:grid-cols-2`. Each card is a `<button>` containing:
+`grid grid-cols-1 gap-3 sm:grid-cols-2`. Each card is a `<button>` containing:
 
-- A fixed `aspect-video w-full` image slot with `bg-surface-secondary` backdrop and `overflow-hidden rounded-md` — same wrapper for every project so titles in adjacent cards line up. Inside the slot: `project.logo` (rendered at `h-3/4 w-3/4 object-contain`) if present, otherwise the first screenshot (`h-full w-full object-cover` for landscape, `h-full w-auto object-contain` when `project.orientation === "portrait"` so a phone screenshot pillar-boxes on the gray backdrop), otherwise the project's first letter as a fallback glyph.
+- A [`<ProjectThumbnail className="mb-3 rounded-md">`](desktop-shell.md#projectthumbnail-srccomponentsprojectthumbnailtsx) — a fixed `aspect-video w-full` image slot with `bg-surface-secondary` backdrop, the same for every project so titles in adjacent cards line up. Inside the slot: `project.logo` (rendered at `h-3/4 w-3/4 object-contain`) if present, otherwise the first screenshot (`h-full w-full object-cover` for landscape, `h-full w-auto object-contain` when `project.orientation === "portrait"` so a phone screenshot pillar-boxes on the gray backdrop), otherwise the project's first letter as a fallback glyph. The mobile home screen's project carousel uses the same component.
 - `<h3>` title (`text-sm font-semibold`).
 - `<p>` summary (`text-xs text-foreground/70`, line-clamp-2).
 - Up to 3 tag chips (`rounded-full bg-default px-2 py-0.5 text-[10px]`).
@@ -220,7 +220,7 @@ Section headings throughout CaseStudy are uniformly `text-[10px] font-semibold u
 
 CaseStudy renders gracefully for projects without optional fields — only the title block (and, if present, `description`) are unconditional. There is no internal toolbar or back button — the window's traffic-light close handles closing.
 
-### Mobile (< 1024 px)
+### Mobile (< 1024 px, or portrait)
 
 On mobile (driven by [`useIsMobile()`](../src/lib/useIsMobile.ts)), PreviewApp branches before rendering the desktop toolbar/sidebar:
 
@@ -271,11 +271,11 @@ Discriminated union narrowing in each handler prevents a tap classifier from rea
 
 ## AboutApp ([AboutApp.tsx](../src/components/apps/AboutApp.tsx))
 
-Single scrollable column at `p-8`, gap-6.
+Single scrollable column, `mx-auto max-w-2xl`, `p-5` (`sm:p-8`), gap-6. The width cap only matters in the tablet sheet; the desktop window is narrower.
 
 Sections, top to bottom:
 
-1. **Header row** — initials avatar (computed by splitting `ABOUT.name` on spaces and taking each first character) inside an 80×80 circle with a blue→purple gradient. Right of it: `<h1>` name, `<p>` title, location with `<MapPin size={12}>`.
+1. **Header** — `<h1>` name, `<p>` title, location with `<MapPin size={12}>`.
 2. **Bio** — `<p>` of `ABOUT.bio`.
 3. **Skills** — heading + flex-wrap of pill-shaped `<span>` tags per `ABOUT.skills[i]` (`inline-flex shrink-0 items-center gap-0.5 rounded-2xl bg-default px-1 py-0 text-xs leading-5 font-medium`).
 4. **Find me** — heading + flex-wrap of social links. Each link is an `<a>` with `target="_blank" rel="noopener noreferrer"`, rendering `<BrandIcon icon={BRANDS[s.brand]} size={14} />` and `s.label`.

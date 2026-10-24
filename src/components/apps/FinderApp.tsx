@@ -2,6 +2,7 @@
 
 import { Star, Tag } from "lucide-react";
 import { useMemo, useState } from "react";
+import ProjectThumbnail from "@/components/ProjectThumbnail";
 import { PROJECT_TAGS, PROJECTS, type ProjectTag } from "@/lib/projects";
 import { useWindowsDispatch } from "@/lib/windows-store";
 
@@ -55,31 +56,7 @@ export default function FinderApp() {
               }
               className="flex flex-col items-stretch rounded-lg border border-field-border bg-surface p-4 text-left transition-colors hover:bg-default"
             >
-              <div className="mb-3 grid aspect-video w-full place-items-center overflow-hidden rounded-md bg-surface-secondary">
-                {p.logo ? (
-                  <img
-                    src={p.logo.src}
-                    alt={p.logo.alt}
-                    loading="lazy"
-                    className="h-3/4 w-3/4 object-contain"
-                  />
-                ) : p.screenshots?.[0] ? (
-                  <img
-                    src={p.screenshots[0].src}
-                    alt={p.screenshots[0].alt}
-                    loading="lazy"
-                    className={
-                      p.orientation === "portrait"
-                        ? "h-full w-auto object-contain"
-                        : "h-full w-full object-cover"
-                    }
-                  />
-                ) : (
-                  <span className="text-2xl font-semibold text-foreground/70">
-                    {p.title.slice(0, 1)}
-                  </span>
-                )}
-              </div>
+              <ProjectThumbnail project={p} className="mb-3 rounded-md" />
               <h3 className="text-sm font-semibold">{p.title}</h3>
               <p className="mt-1 line-clamp-2 text-xs text-foreground/70">
                 {p.summary}

@@ -32,7 +32,9 @@ export default function MobileDock({ hidden }: Props) {
       aria-hidden={hidden}
       inert={hidden}
       className="pointer-events-none fixed inset-x-0 z-40 flex justify-center
-                 bottom-[calc(env(safe-area-inset-bottom)+3.25rem)]"
+                 bottom-[calc(env(safe-area-inset-bottom)+1.25rem)]
+                 short:top-[calc(env(safe-area-inset-top)+2.75rem)] short:right-[max(env(safe-area-inset-right),0.75rem)]
+                 short:bottom-0 short:left-auto short:items-center"
       animate={{ y: hidden ? 120 : 0, opacity: hidden ? 0 : 1 }}
       transition={
         reduceMotion
@@ -44,7 +46,8 @@ export default function MobileDock({ hidden }: Props) {
         ref={pillRef}
         className="pointer-events-auto flex items-end gap-3 rounded-2xl border border-separator
                    bg-surface-secondary px-3 pb-2 pt-3 shadow-overlay
-                   backdrop-blur-(--glass-blur)"
+                   backdrop-blur-(--glass-blur)
+                   short:origin-right short:scale-85 short:flex-col short:items-center"
       >
         {APPS.filter((app) => !app.hideFromDock).map((app) => {
           const isOpen = windows.some((w) => w.appId === app.id);
