@@ -362,6 +362,36 @@ html[data-theme="glass-dark"] {
   --laptop-shadow: oklch(0% 0 0 / 0.3);
 }
 
+/* Dawn landscape + desk the laptop sits on. An illustration, so the same in
+   both themes (like the wallpaper photo). Used by src/components/intro/. */
+:root {
+  --scene-sky-top: oklch(80% 0.06 245);
+  --scene-sky-mid: oklch(88% 0.05 30);
+  --scene-sky-horizon: oklch(94% 0.045 75);
+  --scene-sun: oklch(99% 0.04 90);
+  --scene-cloud: oklch(98% 0.012 60);
+  --scene-haze: oklch(92% 0.035 55);
+  --scene-ridge-far: oklch(80% 0.045 320);
+  --scene-ridge-mid: oklch(68% 0.05 300);
+  --scene-ridge-near: oklch(52% 0.05 265);
+  --scene-forest: oklch(38% 0.045 230);
+  --scene-meadow-far: oklch(72% 0.09 120);
+  --scene-meadow-near: oklch(46% 0.09 140);
+  --scene-wood-top: oklch(82% 0.07 70);
+  --scene-wood-face: oklch(64% 0.09 60);
+  --scene-desk-leg: oklch(24% 0.005 286);
+  --scene-ceramic: oklch(96% 0.006 90);
+  --scene-ceramic-shade: oklch(84% 0.02 60);
+  --scene-leaf: oklch(55% 0.12 150);
+  --scene-leaf-dark: oklch(40% 0.09 155);
+  --scene-leaf-edge: oklch(85% 0.12 110);
+  --scene-book-red: oklch(55% 0.15 25);
+  --scene-book-navy: oklch(40% 0.08 260);
+  --scene-book-mustard: oklch(80% 0.12 85);
+  --scene-steam: oklch(100% 0 0 / 0.7);
+  --scene-shadow: oklch(25% 0.03 50 / 0.25);
+}
+
 html.glass-dark,
 html[data-theme="glass-dark"] {
   --laptop-rim: oklch(40% 0.004 286);

@@ -1,7 +1,5 @@
-const DEFAULT_LANDSCAPE =
-  "/wallpapers/oleg-laptev-7jQh3EiS8Bs-unsplash-1980x1320.jpg";
-const DEFAULT_PORTRAIT =
-  "/wallpapers/oleg-laptev-7jQh3EiS8Bs-unsplash-768x1280.jpg";
+const DEFAULT_LANDSCAPE = "/wallpapers/flow-2560x1600.jpg";
+const DEFAULT_PORTRAIT = "/wallpapers/flow-768x1280.jpg";
 
 export default function Wallpaper() {
   return (

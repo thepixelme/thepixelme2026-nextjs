@@ -86,7 +86,20 @@ Hardware colours for [LaptopFrame](desktop-shell.md#laptopframe-srccomponentsint
 | `--laptop-deck-top` / `-mid` / `-bottom` | Vertical gradient stops for the base's front face (and the thumb-scoop notch). |
 | `--laptop-shadow` | Floor shadow under the base. |
 
-The intro backdrop reuses `bg-background` + `--background-gradient` so it follows the theme.
+The landscape and desk around the laptop use a second set, `--scene-*`, defined only in `:root` in the same section: the scene is an illustration, so it stays the same in both themes, like the wallpaper image. SVG fills use `fill-(--scene-…)` / `stroke-(--scene-…)`, gradient stops use `[stop-color:var(--scene-…)]`, and HTML layers use `from-(--scene-…)` etc. Not for use outside [src/components/intro/](../src/components/intro/).
+
+| Tokens | Used for |
+| --- | --- |
+| `--scene-sky-top` / `-mid` / `-horizon`, `--scene-sun`, `--scene-cloud` | Sky gradient, sun glow, clouds |
+| `--scene-haze` | Valley mist; the colour every ridge fades into |
+| `--scene-ridge-far` / `-mid` / `-near`, `--scene-forest` | Mountain ridges, back to front; conifers on the near ridge |
+| `--scene-meadow-far` / `-near` | Meadow gradient, tufts, foreground hill |
+| `--scene-wood-top` / `-face`, `--scene-desk-leg` | Desk top, front edge, steel legs |
+| `--scene-ceramic` / `-shade` | Plant pot, mug, book-spine details |
+| `--scene-leaf` / `-dark` / `-edge` | Snake plant leaves and their yellow edges |
+| `--scene-book-red` / `-navy` / `-mustard` | Book spines, mug band, wildflowers |
+| `--scene-steam` | Mug steam |
+| `--scene-shadow` | Contact shadows under props and the desk edge |
 
 ### Hardcoded colors (allowed)
 

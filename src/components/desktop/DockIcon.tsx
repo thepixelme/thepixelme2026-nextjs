@@ -1,6 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 import { useRegisterDockIcon } from "@/components/window/dock-positions";
 import type { AppId } from "@/types/window";
 
@@ -11,6 +12,7 @@ interface Props {
   open: boolean;
   onClick: () => void;
   compact?: boolean;
+  bounceDelay?: number;
 }
 
 export default function DockIcon({
@@ -20,8 +22,10 @@ export default function DockIcon({
   open,
   onClick,
   compact = false,
+  bounceDelay,
 }: Props) {
   const ref = useRegisterDockIcon(appId);
+  const reduceMotion = useReducedMotion();
   const tileClasses = compact
     ? "grid h-14 w-14 place-items-center rounded-2xl border border-field-border bg-linear-to-b from-white/40 to-white/10 shadow-surface"
     : "grid h-14 w-14 place-items-center rounded-2xl border border-field-border bg-linear-to-b from-white/40 to-white/10 shadow-surface transition-transform duration-150 ease-out group-hover:-translate-y-2 group-hover:scale-110";
@@ -30,6 +34,7 @@ export default function DockIcon({
       ref={ref}
       type="button"
       aria-label={label}
+      data-dock-icon={appId}
       onClick={onClick}
       className="group relative flex flex-col items-center justify-end"
     >
@@ -38,9 +43,22 @@ export default function DockIcon({
           {label}
         </span>
       )}
-      <span className={tileClasses}>
-        <Icon size={32} strokeWidth={1.5} className="text-foreground" />
-      </span>
+      <motion.span
+        className="block"
+        initial={false}
+        animate={bounceDelay !== undefined && !reduceMotion ? "bounce" : "rest"}
+        variants={{
+          rest: { y: 0 },
+          bounce: {
+            y: [0, -14, 0, -5, 0],
+            transition: { delay: bounceDelay, duration: 0.9, ease: "easeOut" },
+          },
+        }}
+      >
+        <span className={tileClasses}>
+          <Icon size={32} strokeWidth={1.5} className="text-foreground" />
+        </span>
+      </motion.span>
       <span
         className={`mt-1 h-1 w-1 rounded-full bg-foreground/70 ${open ? "opacity-100" : "opacity-0"}`}
       />

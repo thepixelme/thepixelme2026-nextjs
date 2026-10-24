@@ -50,7 +50,7 @@ All events go through `trackEvent()` from [src/lib/analytics.ts](../src/lib/anal
 | Event | Params | Fired from |
 |---|---|---|
 | `contact_form_submit` | `subject_length: number` | [ContactApp.tsx:80-87](../src/components/apps/ContactApp.tsx), inside the success branch (`payload.ok === true`). Failed submissions and validation errors do not fire. |
-| `app_open` | `app_id: AppId` | The `useCallback` dispatch wrapper in `WindowsProvider` ([src/lib/windows-store.ts:205-220](../src/lib/windows-store.ts)). Captures every `OPEN` action — Dock, MenuBar, Spotlight, Finder, mobile — through one chokepoint. The reducer stays pure. |
+| `app_open` | `app_id: AppId` | The `useCallback` dispatch wrapper in `WindowsProvider` ([src/lib/windows-store.ts:205-220](../src/lib/windows-store.ts)). Captures every `OPEN` action — Dock, MenuBar, Spotlight, Finder, mobile — through one chokepoint. `OPEN` actions with `silent: true` (the About window the laptop intro opens by itself) are skipped. The reducer stays pure. |
 | `spotlight_select` | `app_id: AppId`, `query_length: number` | The `launch()` function in [Spotlight.tsx](../src/components/desktop/Spotlight.tsx), hit by both Enter-key and click paths. `query_length` is sent instead of the raw query to avoid PII. |
 | `outbound_click` | `href: string`, `surface: "about_social" \| "project_link" \| "project_source"` | `onClick` on the three `target="_blank"` anchors: [AboutApp.tsx](../src/components/apps/AboutApp.tsx) social links, [CaseStudy.tsx](../src/components/apps/preview/CaseStudy.tsx) Visit / Source buttons. |
 

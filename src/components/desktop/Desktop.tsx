@@ -1,23 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import LaptopIntro from "@/components/intro/LaptopIntro";
 import MobileShell from "@/components/mobile/MobileShell";
 import { DockIconPositionsProvider } from "@/components/window/dock-positions";
 import WindowManager from "@/components/window/WindowManager";
+import { useIntroPending } from "@/lib/intro";
 import { useIsMobile } from "@/lib/useIsMobile";
-import { WindowsProvider } from "@/lib/windows-store";
+import { useWindowsDispatch, WindowsProvider } from "@/lib/windows-store";
 import Dock from "./Dock";
 import MenuBar from "./MenuBar";
 import Spotlight from "./Spotlight";
 import Wallpaper from "./Wallpaper";
 
+// Delay so visitors watch About open on the laptop screen.
+const INTRO_ABOUT_DELAY_MS = 700;
+
 function DesktopBody() {
   const [spotlightOpen, setSpotlightOpen] = useState(false);
+  const introPending = useIntroPending();
+  const dispatch = useWindowsDispatch();
+
+  useEffect(() => {
+    if (!introPending) return;
+    const timer = setTimeout(
+      () => dispatch({ type: "OPEN", appId: "about", silent: true }),
+      INTRO_ABOUT_DELAY_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [introPending, dispatch]);
 
   return (
     <DockIconPositionsProvider>
-      <div className="relative h-full w-full overflow-hidden">
+      <div data-desktop-root className="relative h-full w-full overflow-hidden">
         <Wallpaper />
         <MenuBar onOpenSpotlight={() => setSpotlightOpen(true)} />
         <WindowManager />

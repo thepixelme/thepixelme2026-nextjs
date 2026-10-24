@@ -12,16 +12,13 @@ import {
 import { type ReactNode, useCallback, useEffect, useRef } from "react";
 import { finishIntro, useIntroPending } from "@/lib/intro";
 import { ABOUT } from "@/lib/portfolio-data";
+import { stageScale, stageY } from "./camera";
+import DeskScene from "./DeskScene";
+import IntroWalkthrough from "./IntroWalkthrough";
 import LaptopFrame from "./LaptopFrame";
+import SceneBackdrop from "./SceneBackdrop";
 
-// Screen size at rest, as a fraction of the viewport, and how far below
-// centre the laptop sits to leave room for the headline.
-const START_SCALE = 0.55;
-const START_OFFSET_VH = 7;
 const SCREEN_RADIUS_VW = 0.7;
-
-const easeInOut = (t: number) =>
-  t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
 
 export default function LaptopIntro({ children }: { children: ReactNode }) {
   const active = useIntroPending();
@@ -33,15 +30,8 @@ export default function LaptopIntro({ children }: { children: ReactNode }) {
     restDelta: 0.0005,
   });
 
-  // Interpolating in log space keeps the perceived zoom speed even.
-  const scale = useTransform(
-    progress,
-    (p) => START_SCALE ** (1 - easeInOut(p)),
-  );
-  const y = useTransform(
-    progress,
-    (p) => `${START_OFFSET_VH * (1 - easeInOut(p))}vh`,
-  );
+  const scale = useTransform(progress, stageScale);
+  const y = useTransform(progress, (p) => `${stageY(p)}vh`);
   const screenRadius = useTransform(
     progress,
     [0.8, 1],
@@ -100,16 +90,11 @@ export default function LaptopIntro({ children }: { children: ReactNode }) {
           : "contents"
       }
     >
-      <div className={active ? "h-[220vh]" : "contents"}>
+      <div className={active ? "h-[280vh]" : "contents"}>
         <div
           className={active ? "sticky top-0 h-dvh overflow-hidden" : "contents"}
         >
-          {active && (
-            <div
-              aria-hidden="true"
-              className="absolute inset-0 bg-background [background-image:var(--background-gradient)]"
-            />
-          )}
+          {active && <SceneBackdrop progress={progress} />}
           {active && (
             <motion.header
               style={{ opacity: headlineOpacity, y: headlineY }}
@@ -125,6 +110,7 @@ export default function LaptopIntro({ children }: { children: ReactNode }) {
             style={{ scale, y }}
             className={active ? "absolute inset-0" : "contents"}
           >
+            {active && <DeskScene />}
             {active && <LaptopFrame />}
             <motion.div
               inert={active}
@@ -139,6 +125,7 @@ export default function LaptopIntro({ children }: { children: ReactNode }) {
               }
             >
               {children}
+              {active && <IntroWalkthrough />}
             </motion.div>
             {active && (
               <button
@@ -152,11 +139,11 @@ export default function LaptopIntro({ children }: { children: ReactNode }) {
           {active && (
             <motion.p
               style={{ opacity: hintOpacity }}
-              className="pointer-events-none absolute inset-x-0 bottom-[4vh] flex flex-col items-center gap-1 text-xs font-medium text-muted"
+              className="pointer-events-none absolute bottom-[4vh] left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-separator bg-surface py-1.5 pr-2.5 pl-3.5 text-xs font-medium shadow-overlay backdrop-blur-(--glass-blur)"
             >
               Scroll to enter
               <motion.span
-                animate={{ y: [0, 4, 0] }}
+                animate={{ y: [0, 3, 0] }}
                 transition={{
                   duration: 1.6,
                   repeat: Number.POSITIVE_INFINITY,

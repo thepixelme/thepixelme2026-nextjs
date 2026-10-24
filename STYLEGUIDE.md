@@ -91,7 +91,7 @@ Detached floating positioning is part of the look: panel should leave a small ma
 
 ### 2.5 Laptop intro hardware
 
-The scroll-zoom intro draws a MacBook in CSS. Its colours are the `--laptop-*` tokens in their own section of [src/app/globals.css](src/app/globals.css) — silver under `glass-light`, space black under `glass-dark`. Use them only inside [src/components/intro/](src/components/intro/); the intro backdrop uses the regular `bg-background` + `--background-gradient`. Full table in [docs/styling-and-icons.md](docs/styling-and-icons.md#laptop-intro-tokens).
+The scroll-zoom intro draws a MacBook in CSS. Its colours are the `--laptop-*` tokens in their own section of [src/app/globals.css](src/app/globals.css) — silver under `glass-light`, space black under `glass-dark`. The landscape, desk and props around it use the `--scene-*` tokens in the same section. They are defined once in `:root`, because the scene is an illustration and stays the same in both themes. Use both sets only inside [src/components/intro/](src/components/intro/). Full tables in [docs/styling-and-icons.md](docs/styling-and-icons.md#laptop-intro-tokens).
 
 ### 2.6 Traffic-light colors
 
@@ -150,6 +150,7 @@ Antialiasing: `antialiased` is set on `<html>` in layout. Don't override.
 | Traffic light max   | `Maximize2`     |
 | Analytics consent prompt | `BarChart3` |
 | Laptop intro scroll hint | `ChevronDown` |
+| Dock "explore" hint | `MousePointerClick` |
 
 If you need an icon not listed, add it here in the same PR.
 
@@ -169,6 +170,7 @@ Use these named layers. Do not improvise z values.
 | Dock | `z-40` | Dock always above windows. The NC's transparent close-on-click backdrop also renders at this z when present (see note below). |
 | Menu bar / Notification Center panel | `z-50` | Menu bar at `top-0 h-7`; NC panel at `right-3 top-10 bottom-3 w-90`. Same z is safe because they don't overlap geometrically |
 | Spotlight / modals | `z-60`      | Above everything (still wins over NC when both are visible) |
+| Intro walkthrough cursor | `z-60` | Fake cursor + labels on the laptop screen; only while the intro plays, inside the screen box's own stacking context |
 
 > When the NC is open and **not** persistent, a transparent `z-40` `<button>` backdrop is rendered to catch outside clicks (closes the panel without dimming, matching macOS). In **persistent** mode — currently the analytics-consent undecided state — the backdrop is omitted so the rest of the page stays interactive while the consent card remains visible.
 
@@ -219,7 +221,9 @@ Use these named layers. Do not improvise z values.
 - **Mobile dock show/hide**: `motion/react` spring (`stiffness 320, damping 32`) on `{ y, opacity }`. Reduced motion collapses to `duration: 0`.
 - **Spotlight**: backdrop fade 100ms, dialog scale `0.97 → 1` 150ms.
 - **Traffic light hover**: glyphs `opacity-0 → opacity-100` on `.group:hover`, 80ms.
-- **Laptop intro** (desktop landing): scroll-driven via `useScroll({ container })` smoothed by `useSpring` (`stiffness 260, damping 40`). Laptop scale `0.55 → 1` (log-space, ease-in-out), `y` `7vh → 0`; headline fades over the first 20% of progress, scroll hint over the first 8%. Click / keyboard entry animates the scroll position over 1.2s with `ease [0.65, 0, 0.35, 1]`. Never animates layout properties — only `transform` on one stage element.
+- **Laptop intro** (desktop landing): scroll-driven via `useScroll({ container })` smoothed by `useSpring` (`stiffness 260, damping 40`), over 180vh of scroll. Laptop/desk stage scale `0.3 → 1` (log-space, ease-in-out), `y` `−4vh → 0`. Landscape layers zoom by the same curve raised to their depth (sky 0.08, ridges 0.25 / 0.45 / 0.65) for parallax. Camera math lives in [src/components/intro/camera.ts](src/components/intro/camera.ts). Headline fades over the first 20% of progress, scroll hint over the first 8%. Click / keyboard entry animates the scroll position over 1.2s with `ease [0.65, 0, 0.35, 1]`. Never animates layout properties — only `transform` on the stage and layer elements.
+- **Intro ambience**: clouds drift ±3–5vw over 38–50s (mirror loop); mug steam fades and rises over 3.2s; the walkthrough cursor glides between stops in 0.8s every 1.6s.
+- **Dock explore hint**: after the desktop goes live, each dock tile bounces once (`y: [0, -14, 0, -5, 0]`, 0.9s, staggered 0.12s) and the hint chip fades in with a 6px rise (0.25s). Reduced motion skips the bounce.
 
 Never animate `width`/`height`/`left`/`top` directly during drag/resize — those use raw style mutations because the rate is 60fps. Only motion-library animations on enter/exit transitions.
 

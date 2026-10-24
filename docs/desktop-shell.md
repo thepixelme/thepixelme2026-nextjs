@@ -22,7 +22,7 @@ Structure:
 
 `<WindowsProvider>` lives outside the switch so window state persists across a viewport resize.
 
-`<DesktopBody />` (a local component inside the same file) renders the classic desktop tree:
+`<DesktopBody />` (a local component inside the same file) renders the classic desktop tree inside a root `<div data-desktop-root className="relative h-full w-full overflow-hidden">`:
 
 1. `<Wallpaper />`
 2. `<MenuBar onOpenSpotlight={() => setSpotlightOpen(true)} />`
@@ -30,11 +30,11 @@ Structure:
 4. `<Dock />`
 5. `<Spotlight open={spotlightOpen} onOpenChange={setSpotlightOpen} />`
 
-`DesktopBody` owns its own `spotlightOpen: boolean`.
+`DesktopBody` owns its own `spotlightOpen: boolean`. While the laptop intro is pending it also opens the About window on its own, `INTRO_ABOUT_DELAY_MS` (700 ms) after mount, with `OPEN { appId: "about", silent: true }` so it doesn't count as an `app_open`. The timer is cancelled if the intro finishes first. `data-desktop-root` is the reference element [`dock-positions`](window-manager.md) uses to report dock-icon rects in desktop coordinates.
 
 ## Laptop intro ([src/components/intro/LaptopIntro.tsx](../src/components/intro/LaptopIntro.tsx))
 
-Scroll-driven landing on desktop, modelled on mercury.com: the visitor first sees the headline and a MacBook whose screen shows the **live** `<DesktopBody />`. Scrolling zooms into the laptop until its screen exactly fills the viewport, and the desktop becomes interactive.
+Scroll-driven landing on desktop, modelled on mercury.com. The visitor first sees the headline over an illustrated dawn landscape: misty mountain ridges, a meadow, and an oak desk with a snake plant, a book stack and a steaming mug. On the desk sits a MacBook whose screen shows the **live** `<DesktopBody />`, with the About window open and a fake cursor touring the dock. Scrolling zooms into the laptop until its screen exactly fills the viewport, and the desktop becomes interactive.
 
 Props: `{ children: ReactNode }` — the screen content (`<DesktopBody />`, or `<Wallpaper />` in the pre-hydration frame).
 
@@ -44,23 +44,25 @@ Props: `{ children: ReactNode }` — the screen content (`<DesktopBody />`, or `
 
 ```
 <div scroller: h-full overflow-y-auto, scrollbar hidden>     ← useScroll({ container })
-  <div h-[220vh]>                                            ← 120vh of scroll distance
+  <div h-[280vh]>                                            ← 180vh of scroll distance
     <div sticky top-0 h-dvh overflow-hidden>
-      backdrop      bg-background + --background-gradient
+      <SceneBackdrop progress />   sky, sun, drifting clouds, three mountain ridges (parallax layers)
       <header>      ABOUT.name + <h1>{ABOUT.title}</h1>; fades out over the first 20%
       <motion.div stage absolute inset-0 style={{ scale, y }}>
+        <DeskScene />                         meadow, desk and props, anchored to the screen's bottom edge
         <LaptopFrame />                       bezel, camera, base, floor shadow (outside the screen box)
         <motion.div screen absolute inset-0 overflow-hidden [contain:paint] inert>
           {children}
+          <IntroWalkthrough />                fake cursor + app labels touring the dock
         </motion.div>
         <button aria-label="Enter desktop">   transparent, over the screen; click → animated zoom
       </motion.div>
-      <p>Scroll to enter <ChevronDown /></p>   fades out over the first 8%
+      <p>Scroll to enter <ChevronDown /></p>   glass pill; fades out over the first 8%
 ```
 
-The screen box is exactly the viewport, so at scale 1 it fills the window and the frame sits off-screen. `contain: paint` makes the screen the containing block for the desktop's `fixed` chrome (wallpaper, menu bar, dock) and clips it to the screen's rounded corners.
+The screen box is exactly the viewport, so at scale 1 it fills the window and the frame, desk and meadow sit off-screen. `contain: paint` makes the screen the containing block for the desktop's `fixed` chrome (wallpaper, menu bar, dock) and clips it to the screen's rounded corners.
 
-**Motion** — `scrollYProgress` is smoothed with `useSpring` (`stiffness 260, damping 40`). Scale runs from `START_SCALE` (0.55) to 1, interpolated in log space with an ease-in-out so the perceived zoom speed is even; the stage's `y` offset runs from `7vh` to `0`; the screen's top corner radius flattens from `0.7vw` to `0` over the last 20%. When progress passes 0.995 it calls `finishIntro()`.
+**Camera** ([src/components/intro/camera.ts](../src/components/intro/camera.ts)) — `scrollYProgress` is smoothed with `useSpring` (`stiffness 260, damping 40`). The stage (laptop, desk, meadow) scales from `START_SCALE` (0.3) to 1, interpolated in log space with an ease-in-out so the perceived zoom speed is even, and its `y` offset runs from `START_OFFSET_VH` (−4vh) to `0`. Background layers have a `depth` below 1 and magnify by `layerScale(p, depth)` = (1 / START_SCALE)^(depth · ease(p)), shifted by `layerY(p, depth)` so they zoom about the same point as the laptop screen. Farther layers therefore grow less, which produces the parallax. The screen's top corner radius flattens from `0.7vw` to `0` over the last 20%. When progress passes 0.995 it calls `finishIntro()`.
 
 **Finishing** — once `useIntroPending()` is `false`, every wrapper above `{children}` switches to `display: contents` and the scene elements unmount. `DesktopBody` keeps its tree position (no remount, no transform, no extra stacking context), so the desktop behaves exactly as it would without the intro.
 
@@ -78,16 +80,47 @@ The screen box is exactly the viewport, so at scale 1 it fills the window and th
 
 Stateless, `aria-hidden` MacBook hardware drawn around a viewport-sized screen box. All dimensions are in `vw` so proportions hold at any viewport size; the parent's `scale` sizes it. Colours come from the `--laptop-*` tokens in [globals.css](../src/app/globals.css) (silver in `glass-light`, space black in `glass-dark`) — see [styling-and-icons.md](styling-and-icons.md#laptop-intro-tokens).
 
+## SceneBackdrop ([src/components/intro/SceneBackdrop.tsx](../src/components/intro/SceneBackdrop.tsx))
+
+`aria-hidden` landscape behind the laptop, outside the stage. Props: `{ progress: MotionValue<number> }`. Each layer is a `DepthLayer` (local helper) whose `scale` / `y` come from `layerScale` / `layerY`:
+
+| Layer | Depth | Content |
+| --- | --- | --- |
+| Sky | 0.08 | `--scene-sky-*` gradient, radial sun glow, three SVG clouds drifting back and forth (40–50 s, `repeatType: "mirror"`) |
+| Far ridge | 0.25 | Ridge at `top-[34%]` |
+| Mid ridge | 0.45 | Ridge at `top-[45%]` |
+| Near ridge | 0.65 | Ridge at `top-[54%]` with a conifer forest along the crest |
+
+Ridges are generated at module load by midpoint displacement from a fixed seed ([random.ts](../src/components/intro/random.ts) `mulberry32`), so server and client render identical paths. Each ridge is an SVG (`viewBox 0 0 1000 1000`, `preserveAspectRatio="none"`) filled from the ridge colour to `--scene-haze`, with a soft mist band below the crest, and extends 60% past the viewport bottom so zooming never reveals a gap.
+
+## DeskScene ([src/components/intro/DeskScene.tsx](../src/components/intro/DeskScene.tsx))
+
+`aria-hidden` SVG inside the stage, positioned at the screen box's bottom edge (`top-full`, `viewBox 0 0 100 100` over `100vw` → one unit is `1vw`, `overflow-visible`). The units match LaptopFrame's, so the desk lines up under the laptop base at any aspect ratio. Back to front:
+
+1. Meadow hill (crest `meadowY(x)`), plus seeded grass tufts and wildflowers that grow larger towards the viewer.
+2. Desk: back legs, oak top surface (`--scene-wood-top`), front edge (`--scene-wood-face`), black steel front legs.
+3. A darker foreground hill (`foregroundY(x)`) the legs disappear into.
+4. Props on the desk: a snake plant in a ceramic pot (left), and a stack of three books with a mug on top (right). Two steam wisps above the mug fade and rise on a loop (3.2 s, staggered).
+
+## IntroWalkthrough ([src/components/intro/IntroWalkthrough.tsx](../src/components/intro/IntroWalkthrough.tsx))
+
+Rendered inside the screen box after `{children}`, so it is drawn in the desktop's own unscaled coordinates. It is `aria-hidden`, `pointer-events-none`, and at `z-60` so it sits above the dock and windows.
+
+- On mount (and on resize) it measures every `[data-dock-icon]` button in the screen, converting `getBoundingClientRect()` back to unscaled pixels with the screen's current scale.
+- Its stops are a rest point over the About window (64% / 40%), then each dock icon. Every 1.6 s it advances to the next stop.
+- A macOS-style arrow cursor (`--black` fill, `--white` outline) glides to each stop (0.8 s). At a dock icon, a dock-tooltip-style label fades in above it. The labels are "About me", "Projects", "Contact" and "Terminal", falling back to the icon's `aria-label`.
+- It renders nothing when no dock icons are present (the pre-hydration frame), and unmounts with the rest of the scene when the intro finishes.
+
 ## Mobile shell ([src/components/mobile/](../src/components/mobile/))
 
 Below 1024 px, `<MobileShell />` replaces the entire desktop chrome with a bottom-dock home state + sheet stack. See dedicated sections below.
 
 ## Wallpaper ([Wallpaper.tsx](../src/components/desktop/Wallpaper.tsx))
 
-Sits behind everything as a fixed, full-viewport background. Stateless — renders the bundled Oleg Laptev wallpaper via a responsive `<picture>`:
+Sits behind everything as a fixed, full-viewport background. Stateless — renders the bundled "flow" wallpaper (layered violet / pink / orange waves, generated as SVG and rasterised to JPEG) via a responsive `<picture>`:
 
-- `<source media="(orientation: portrait)" srcSet="/wallpapers/oleg-laptev-7jQh3EiS8Bs-unsplash-768x1280.jpg" />` (768×1280 portrait crop, ~46KB)
-- `<img src="/wallpapers/oleg-laptev-7jQh3EiS8Bs-unsplash-1980x1320.jpg" />` (1980×1320 landscape crop, ~187KB) as the default
+- `<source media="(orientation: portrait)" srcSet="/wallpapers/flow-768x1280.jpg" />` (768×1280 portrait crop, ~21KB)
+- `<img src="/wallpapers/flow-2560x1600.jpg" />` (2560×1600 landscape, ~69KB) as the default
 - The `<img>` carries `alt=""` + `aria-hidden="true"` (decorative) and `fixed inset-0 -z-10 h-full w-full object-cover` for the full-bleed backdrop.
 
 ## MenuBar ([MenuBar.tsx](../src/components/desktop/MenuBar.tsx))
@@ -116,7 +149,7 @@ Right side:
 
 Fixed `inset-x-0 bottom-3 z-40` flex justify-center wrapper, with `pointer-events-none` so clicks pass through to the desktop except on the pill itself.
 
-Inner pill: `pointer-events-auto flex items-end gap-3 rounded-2xl border border-separator bg-surface-secondary px-3 pb-2 pt-3 shadow-overlay backdrop-blur-(--glass-blur)`.
+Inner pill: `pointer-events-auto relative flex items-end gap-3 rounded-2xl border border-separator bg-surface-secondary px-3 pb-2 pt-3 shadow-overlay backdrop-blur-(--glass-blur)`.
 
 Iterates [APPS](../src/components/apps/registry.ts) in registry order, skipping any entry where `hideFromDock` is true. For each remaining app:
 
@@ -126,11 +159,14 @@ const isOpen = windows.some(w => w.appId === app.id);
   icon={app.icon}
   label={app.title}
   open={isOpen}
-  onClick={() => dispatch({ type: "OPEN", appId: app.id })}
+  bounceDelay={hint ? i * BOUNCE_STAGGER_S : undefined}
+  onClick={() => { setHint(false); dispatch({ type: "OPEN", appId: app.id }); }}
 />
 ```
 
 Note: `OPEN` on an already-open app focuses (and unminimizes) it, per the reducer in [windows-store.ts](../src/lib/windows-store.ts).
+
+**Explore hint** — once the desktop is live (`useIntroPending()` is `false`, either because the laptop intro just finished or because it never played), the dock sets `hint` after `HINT_DELAY_MS` (500 ms) and clears it `HINT_DURATION_MS` (8 s) later. While `hint` is true, a glass chip ("Click an app to explore", `MousePointerClick` icon) floats above the pill (`AnimatePresence`, fade + 6px rise), and each icon bounces once, staggered by `BOUNCE_STAGGER_S` (0.12 s). Hovering the pill or clicking any icon dismisses it.
 
 ## DockIcon ([DockIcon.tsx](../src/components/desktop/DockIcon.tsx))
 
@@ -144,11 +180,14 @@ A single dock entry, shared by the desktop `<Dock>` and the mobile `<MobileDock>
 | `open`    | `boolean`    | Controls the visibility of the indicator dot below.        |
 | `onClick` | `() => void` |                                                            |
 | `compact` | `boolean?`   | Default `false`. When `true`: hides the hover tooltip and removes the hover lift/scale transform. Passed by `MobileDock` to avoid sticky `:hover` artifacts on touch devices and remove the desktop-only tooltip convention. |
+| `bounceDelay` | `number?` | Seconds. When defined, the tile bounces once (`y: [0, -14, 0, -5, 0]`, 0.9 s) after this delay — the dock's explore hint. Skipped under reduced motion. |
+
+The `<button>` carries `data-dock-icon={appId}`, which [IntroWalkthrough](#introwalkthrough-srccomponentsintrointrowalkthroughtsx) uses to find the icons.
 
 Structure (single `<button>`, three `<span>`s):
 
 1. **Tooltip** (above the icon) — `absolute -top-9 hidden ... group-hover:block`, glass-styled chip showing `label`. Only rendered when `compact` is `false`.
-2. **Icon tile** — `h-14 w-14 rounded-2xl border border-field-border bg-linear-to-b from-white/40 to-white/10 shadow-surface`. When `compact` is `false`, also `transition-transform duration-150 ease-out group-hover:-translate-y-2 group-hover:scale-110`. Renders `<Icon size={32} strokeWidth={1.5}>`.
+2. **Icon tile** — `h-14 w-14 rounded-2xl border border-field-border bg-linear-to-b from-white/40 to-white/10 shadow-surface`. When `compact` is `false`, also `transition-transform duration-150 ease-out group-hover:-translate-y-2 group-hover:scale-110`. Renders `<Icon size={32} strokeWidth={1.5}>`. Wrapped in a `motion.span` with `rest` / `bounce` variants for `bounceDelay` (a wrapper, so the bounce's inline transform doesn't fight the hover transform classes).
 3. **Indicator dot** — `mt-1 h-1 w-1 rounded-full bg-foreground/70`, `opacity-100` when `open`, else `opacity-0`.
 
 There is no right-click handling on dock icons.

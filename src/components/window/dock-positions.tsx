@@ -29,9 +29,22 @@ export function DockIconPositionsProvider({
     else refs.current.delete(appId);
   }, []);
 
+  // Relative to the desktop root, in its unscaled pixels, so window
+  // animations still line up while the laptop intro scales the desktop.
   const getRect = useCallback((appId: AppId) => {
     const el = refs.current.get(appId);
-    return el ? el.getBoundingClientRect() : null;
+    if (!el) return null;
+    const rect = el.getBoundingClientRect();
+    const root = el.closest<HTMLElement>("[data-desktop-root]");
+    if (!root) return rect;
+    const rootRect = root.getBoundingClientRect();
+    const k = rootRect.width / root.offsetWidth || 1;
+    return new DOMRect(
+      (rect.left - rootRect.left) / k,
+      (rect.top - rootRect.top) / k,
+      rect.width / k,
+      rect.height / k,
+    );
   }, []);
 
   const value = useMemo(() => ({ register, getRect }), [register, getRect]);

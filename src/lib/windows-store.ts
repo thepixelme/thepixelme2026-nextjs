@@ -21,7 +21,7 @@ interface State {
 }
 
 type Action =
-  | { type: "OPEN"; appId: AppId; payload?: unknown }
+  | { type: "OPEN"; appId: AppId; payload?: unknown; silent?: boolean }
   | { type: "CLOSE"; id: string }
   | { type: "FOCUS"; id: string }
   | { type: "MOVE"; id: string; x: number; y: number }
@@ -209,7 +209,9 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
   const memoState = useMemo(() => state, [state]);
 
   const dispatch = useCallback<Dispatch<Action>>((action) => {
-    if (action.type === "OPEN") {
+    // `silent` opens (e.g. the laptop intro's About window) aren't visitor
+    // launches, so they don't count as app_open.
+    if (action.type === "OPEN" && !action.silent) {
       trackEvent({ name: "app_open", app_id: action.appId });
     }
     rawDispatch(action);
