@@ -160,11 +160,11 @@ function laptopBase() {
 
 export const LAPTOP_BASE = laptopBase();
 
-// Desk for DeskScene at real scale (~110 cm wide), running from behind the
+// Desk for DeskScene at real scale (~85 cm wide), running from behind the
 // laptop to in front of it. Its sides follow the deck's vanishing lines.
 const DESK_BACK_Y = -18;
 const DESK_FRONT_Y = 44;
-const DESK_FRONT_HALF = 165;
+const DESK_FRONT_HALF = 140;
 // Grain strokes as [y, from, to], from/to as fractions of the half width.
 const DESK_GRAIN = [
   [-12, -0.92, -0.6],

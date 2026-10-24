@@ -10,36 +10,39 @@ import { DESK, deskBox, RUG } from "./scenery";
 
 const DESK_FACE = 6;
 
-// Coffee mug at the back left, ~7 cm across and 7.5 cm tall: base centre,
-// radius, height, and the half-height of its rim ellipse seen from above.
-const MUG = { x: -38, y: 2, r: 11.5, h: 23, ry: 3.7 };
+// Coffee mug at the back left, ~6.5 cm across and 7 cm tall, handle on its
+// left: base centre, radius, height, and the half-height of its rim ellipse
+// seen from above.
+const MUG = { x: -34, y: 2, r: 10.5, h: 21, ry: 3.4 };
 const MUG_TOP = MUG.y - MUG.h;
 
-// Notebooks stacked on the right: a navy A5 notebook under a tan leather
-// pocket journal, with a soft shadow beneath both.
+// Notebooks stacked on the right: a navy notebook (~16 × 12 cm) under a
+// tan leather pocket journal (~13 × 9 cm), with a soft shadow beneath both.
 const NOTEBOOK = deskBox({
-  x0: 116,
-  x1: 184,
-  back: -8,
-  front: 13,
-  height: 4.5,
+  x0: 114,
+  x1: 168,
+  back: -6,
+  front: 11,
+  height: 3.8,
 });
 const JOURNAL = deskBox({
-  x0: 124,
-  x1: 178,
-  back: -5,
-  front: 11,
-  base: 4.5,
-  height: 3.4,
+  x0: 120,
+  x1: 162,
+  back: -4,
+  front: 9,
+  base: 3.8,
+  height: 3,
 });
 const STACK_SHADOW = deskBox({
-  x0: 113,
-  x1: 189,
-  back: -6,
-  front: 16,
+  x0: 111,
+  x1: 172,
+  back: -4,
+  front: 14,
   height: 0,
 });
-const RIBBON_X = NOTEBOOK.at(146, 13);
+const RIBBON_X = NOTEBOOK.at(136, 11);
+// The pens are ~11.5 cm long.
+const PEN_SCALE = 0.8;
 
 // Fountain pens, drawn lying along −x from their end cap and placed by a
 // transform: an uncapped black pen showing its gold nib, and a capped red one.
@@ -266,7 +269,7 @@ export default function DeskScene() {
         className="fill-(--scene-shadow)"
       />
       <path
-        d={`M${MUG.x + MUG.r - 1.5},${MUG_TOP + 5} C${MUG.x + MUG.r + 9},${MUG_TOP + 3.5} ${MUG.x + MUG.r + 9.5},${MUG_TOP + 17} ${MUG.x + MUG.r - 1.5},${MUG_TOP + 16}`}
+        d={`M${MUG.x - MUG.r + 1.5},${MUG_TOP + 4.5} C${MUG.x - MUG.r - 8.2},${MUG_TOP + 3.2} ${MUG.x - MUG.r - 8.6},${MUG_TOP + 15.5} ${MUG.x - MUG.r + 1.5},${MUG_TOP + 14.5}`}
         fill="none"
         strokeWidth="3.2"
         strokeLinecap="round"
@@ -277,7 +280,7 @@ export default function DeskScene() {
         fill={`url(#${id}-ceramic)`}
       />
       <path
-        d={`M${MUG.x - MUG.r},${MUG_TOP + 8} A${MUG.r},${MUG.ry} 0 0 0 ${MUG.x + MUG.r},${MUG_TOP + 8} V${MUG_TOP + 11.5} A${MUG.r},${MUG.ry} 0 0 1 ${MUG.x - MUG.r},${MUG_TOP + 11.5} Z`}
+        d={`M${MUG.x - MUG.r},${MUG_TOP + 7.3} A${MUG.r},${MUG.ry} 0 0 0 ${MUG.x + MUG.r},${MUG_TOP + 7.3} V${MUG_TOP + 10.5} A${MUG.r},${MUG.ry} 0 0 1 ${MUG.x - MUG.r},${MUG_TOP + 10.5} Z`}
         className="fill-(--scene-book-red)"
       />
       <ellipse
@@ -327,7 +330,7 @@ export default function DeskScene() {
       <path d={NOTEBOOK.face} className="fill-(--scene-book-navy)" />
       <path d={NOTEBOOK.pages(0.8)} className="fill-(--scene-ceramic)" />
       <path
-        d={`M${RIBBON_X},${NOTEBOOK.frontTop + 1} h1.6 V17.5 l-0.8,-0.9 l-0.8,0.9 Z`}
+        d={`M${RIBBON_X},${NOTEBOOK.frontTop + 1} h1.4 V15.5 l-0.7,-0.8 l-0.7,0.8 Z`}
         className="fill-(--scene-book-mustard)"
       />
       <path d={JOURNAL.side} className="fill-(--scene-wood-face)" />
@@ -335,9 +338,13 @@ export default function DeskScene() {
       <path d={JOURNAL.top} className="fill-(--scene-wood-face)" />
       <path d={JOURNAL.face} className="fill-(--scene-wood-face)" />
       <path d={JOURNAL.pages(0.6)} className="fill-(--scene-ceramic)" />
-      <path d={JOURNAL.strap(168, 1.4)} className="fill-(--scene-soot)" />
-      <FountainPen transform="translate(174 0) rotate(10)" />
-      <CappedPen transform="translate(154 27) rotate(8)" />
+      <path d={JOURNAL.strap(154, 1.2)} className="fill-(--scene-soot)" />
+      <FountainPen
+        transform={`translate(160 0) rotate(10) scale(${PEN_SCALE})`}
+      />
+      <CappedPen
+        transform={`translate(150 23) rotate(8) scale(${PEN_SCALE})`}
+      />
     </svg>
   );
 }
