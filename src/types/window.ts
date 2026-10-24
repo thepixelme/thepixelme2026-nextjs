@@ -28,5 +28,6 @@ export interface AppDef {
   defaultSize: { w: number; h: number };
   minSize?: { w: number; h: number };
   hideFromDock?: boolean;
+  desktopOnly?: boolean;
   Component: ComponentType<{ windowId: string }>;
 }

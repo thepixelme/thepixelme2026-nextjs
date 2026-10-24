@@ -209,7 +209,7 @@ Rendered inside the screen box after `{children}`, so it is drawn in the screen'
 
 - On mount (and on resize) it measures every `[data-dock-icon]` button in the screen, converting `getBoundingClientRect()` back to unscaled pixels with the screen's current scale.
 - Its stops are a rest point (64% / 40%: over the About window, or the home screen's identity card), then each dock icon. Every 1.6 s it advances to the next stop.
-- A macOS-style arrow cursor (`--black` fill, `--white` outline) glides to each stop (0.8 s); on a phone or tablet (`intro-device:`) a translucent white fingertip dot does instead, centred on each stop. At a dock icon, a dock-tooltip-style label fades in above it. The labels are "About me", "Projects", "Contact" and "Terminal", falling back to the icon's `aria-label`.
+- A macOS-style arrow cursor (`--black` fill, `--white` outline) glides to each stop (0.8 s); on a phone or tablet (`intro-device:`) a translucent white fingertip dot does instead, centred on each stop. At a dock icon, a dock-tooltip-style label fades in above it. The labels are "About me", "Projects", "Contact" and "Terminal" (the last only on the laptop, since the phone and tablet docks have no Terminal), falling back to the icon's `aria-label`.
 - It renders nothing when no dock icons are present (the pre-hydration frame), and unmounts with the rest of the scene when the intro finishes.
 
 ## Mobile shell ([src/components/mobile/](../src/components/mobile/))
@@ -295,7 +295,7 @@ There is no right-click handling on dock icons.
 
 ## Spotlight ([Spotlight.tsx](../src/components/desktop/Spotlight.tsx))
 
-Hand-rolled command palette. Props: `{ open: boolean; onOpenChange: (open: boolean) => void }`.
+Hand-rolled command palette. Props: `{ open: boolean; onOpenChange: (open: boolean) => void; mobile?: boolean }`. [MobileShell](#mobileshell-srccomponentsmobilemobileshelltsx) passes `mobile`, which leaves out apps with `desktopOnly: true` (Terminal), since phones and tablets have no Terminal.
 
 Internal state: `query: string` (the input value), `activeIndex: number` (the highlighted result). Refs: `inputRef` (focus target), `previouslyFocusedRef` (focus return target).
 
@@ -311,7 +311,7 @@ Open/close effect:
 
 Filtering and navigation:
 
-- `filtered = APPS.filter(a => a.title.toLowerCase().includes(query.trim().toLowerCase()))` (no query → all apps).
+- `filtered = apps.filter(a => a.title.toLowerCase().includes(query.trim().toLowerCase()))` (no query → all of `apps`), where `apps` is `APPS`, minus `desktopOnly` apps when `mobile` is set.
 - Input `onKeyDown`: `ArrowDown` / `ArrowUp` cycle `activeIndex`; `Enter` calls `launch(filtered[activeIndex].id)`.
 - List item `onMouseMove` sets `activeIndex` to its position; `onClick` launches.
 
@@ -388,7 +388,7 @@ Renders, in this order:
 4. `<MobileDock hidden={hasVisible} />` — the launcher, z-40, visible on the home state, slides off-screen when any sheet is visible.
 5. `<AnimatePresence>` wrapping a `.map` over every window record (regardless of `minimized`), each rendered as an `<AppSheet>` with `isActive` and `stackIndex` props.
 6. `<HomeIndicator onGoHome={goHome} disabled={!hasVisible} />` — z-40 above sheets.
-7. `<Spotlight open={spotlightOpen} onOpenChange={setSpotlightOpen} />` — reused.
+7. `<Spotlight open={spotlightOpen} onOpenChange={setSpotlightOpen} mobile />` — reused, without desktop-only apps.
 
 Sheet stack is sorted **ascending by `z`** so the highest-z sheet renders last (and visually stacks on top). `key={win.id}` preserves component identity across reorders (state survives raising/lowering).
 
@@ -429,9 +429,9 @@ Props: `{ hidden: boolean }` — driven by whether any non-minimized sheet is vi
 Structure:
 
 - Outer `<motion.nav aria-label="Dock">` — `pointer-events-none fixed inset-x-0 z-40 flex justify-center bottom-[calc(env(safe-area-inset-bottom)+1.25rem)]` (`env(safe-area-inset-bottom)` falls back to `0` per CSS spec). The dock doesn't need to clear the `HomeIndicator` hit area: the dock is only visible when no sheet is, and the indicator is disabled (`pointer-events-none`) then.
-- On `short:` viewports (≤ 480 px tall — a phone on its side), the nav instead spans from below the status bar to the bottom edge, pinned to the right (`right-[max(env(safe-area-inset-right),0.75rem)]`), and centres the pill vertically; the pill switches to `flex-col` and is scaled to 85% (`origin-right`) so four icons fit the height. The hide animation is unchanged (the pill drops 120 px while fading out).
+- On `short:` viewports (≤ 480 px tall — a phone on its side), the nav instead spans from below the status bar to the bottom edge, pinned to the right (`right-[max(env(safe-area-inset-right),0.75rem)]`), and centres the pill vertically; the pill switches to `flex-col` and is scaled to 85% (`origin-right`) so the icons fit the height. The hide animation is unchanged (the pill drops 120 px while fading out).
 - Inner pill — same classes as the desktop dock (`pointer-events-auto flex items-end gap-3 rounded-2xl border border-separator bg-surface-secondary px-3 pb-2 pt-3 shadow-overlay backdrop-blur-(--glass-blur)`).
-- Iterates `APPS.filter(app => !app.hideFromDock)` in registry order; each item is `<DockIcon ... compact />`. Indicator dots light up for any window record (including minimized).
+- Iterates the module-level `DOCK_APPS = APPS.filter(app => !app.hideFromDock && !app.desktopOnly)` in registry order — About, Finder and Contact; phones and tablets have no Terminal. Each item is `<DockIcon ... compact />`. Indicator dots light up for any window record (including minimized).
 
 Animation:
 

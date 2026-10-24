@@ -46,7 +46,7 @@ export default function MobileShell() {
         ))}
       </AnimatePresence>
       <HomeIndicator onGoHome={goHome} disabled={!hasVisible} />
-      <Spotlight open={spotlightOpen} onOpenChange={setSpotlightOpen} />
+      <Spotlight open={spotlightOpen} onOpenChange={setSpotlightOpen} mobile />
     </>
   );
 }

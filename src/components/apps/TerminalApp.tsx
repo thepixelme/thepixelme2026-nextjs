@@ -23,6 +23,12 @@ const GREETING = [
   "Welcome. Type `help` to begin.",
 ];
 
+// The fake home directory `ls` prints.
+const HOME_LISTING = "about.md  projects/";
+
+// Pad project ids to the longest one so `ls projects` lines up in columns.
+const ID_WIDTH = Math.max(...PROJECTS.map((p) => p.id.length)) + 2;
+
 export default function TerminalApp() {
   const [lines, setLines] = useState<Line[]>([]);
   const [input, setInput] = useState("");
@@ -60,17 +66,30 @@ export default function TerminalApp() {
     setHistory((h) => [...h, cmd]);
     setHistoryIndex(-1);
     draftRef.current = "";
+    const [name, ...args] = cmd.split(/\s+/);
+    // `projects/` and `projects` name the same directory.
+    const target = args[0]?.replace(/\/$/, "");
     const next: string[] = [];
-    if (cmd === "help") next.push(...HELP);
-    else if (cmd === "whoami") next.push(`${ABOUT.handle} — ${ABOUT.title}`);
-    else if (cmd === "ls projects") {
-      for (const p of PROJECTS) next.push(`${p.id.padEnd(10)} ${p.title}`);
-    } else if (cmd === "cat about.md") next.push(ABOUT.bio);
-    else if (cmd === "clear") {
+    if (name === "help") next.push(...HELP);
+    else if (name === "whoami") next.push(`${ABOUT.handle} — ${ABOUT.title}`);
+    else if (name === "ls") {
+      if (!target) next.push(HOME_LISTING);
+      else if (target === "projects") {
+        for (const p of PROJECTS)
+          next.push(`${p.id.padEnd(ID_WIDTH)}${p.title}`);
+      } else if (target === "about.md") next.push("about.md");
+      else next.push(`ls: ${args[0]}: No such file or directory`);
+    } else if (name === "cat") {
+      if (target === "about.md") next.push(ABOUT.bio);
+      else if (!target) next.push("usage: cat <file>");
+      else if (target === "projects")
+        next.push("cat: projects: Is a directory");
+      else next.push(`cat: ${args[0]}: No such file or directory`);
+    } else if (name === "clear") {
       setLines([]);
       return;
     } else {
-      next.push(`zsh: command not found: ${cmd.split(" ")[0]}`);
+      next.push(`zsh: command not found: ${name}`);
       next.push("Type `help` to see available commands.");
     }
     setLines((l) => [
@@ -97,9 +116,17 @@ export default function TerminalApp() {
           <div
             // biome-ignore lint/suspicious/noArrayIndexKey: append-only log; repeated commands produce identical text, so the index is the only stable identity
             key={`${i}-${l.text}`}
-            className={l.kind === "in" ? "text-white" : "text-emerald-200/90"}
+            className={`whitespace-pre-wrap break-words ${
+              l.kind === "in" ? "text-white" : "text-emerald-200/90"
+            }`}
           >
-            {l.kind === "in" ? `➜  ~ ${l.text}` : l.text}
+            {l.kind === "in" ? (
+              <>
+                <span className="text-emerald-300">➜ ~</span> {l.text}
+              </>
+            ) : (
+              l.text
+            )}
           </div>
         ))}
         <form

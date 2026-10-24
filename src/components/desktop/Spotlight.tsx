@@ -10,9 +10,11 @@ import type { AppId } from "@/types/window";
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  // Set by MobileShell: phones and tablets leave out desktop-only apps.
+  mobile?: boolean;
 }
 
-export default function Spotlight({ open, onOpenChange }: Props) {
+export default function Spotlight({ open, onOpenChange, mobile }: Props) {
   const dispatch = useWindowsDispatch();
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -47,10 +49,11 @@ export default function Spotlight({ open, onOpenChange }: Props) {
   }, [open]);
 
   const filtered = useMemo(() => {
+    const apps = mobile ? APPS.filter((a) => !a.desktopOnly) : APPS;
     const q = query.trim().toLowerCase();
-    if (!q) return APPS;
-    return APPS.filter((a) => a.title.toLowerCase().includes(q));
-  }, [query]);
+    if (!q) return apps;
+    return apps.filter((a) => a.title.toLowerCase().includes(q));
+  }, [query, mobile]);
 
   const onQueryChange = (value: string) => {
     setQuery(value);

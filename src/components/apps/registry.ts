@@ -39,6 +39,7 @@ export const APPS: AppDef[] = [
     title: "Terminal",
     icon: TerminalIcon,
     defaultSize: { w: 640, h: 420 },
+    desktopOnly: true,
     Component: TerminalApp,
   },
   {

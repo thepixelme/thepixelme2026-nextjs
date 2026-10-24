@@ -14,6 +14,7 @@ An "app" is anything that satisfies the `AppDef` shape ([src/types/window.ts](..
   defaultSize: { w: number; h: number };
   minSize?: { w: number; h: number };  // typed but currently unused
   hideFromDock?: boolean;               // omit from Dock; still appears in Spotlight / launchable via dispatch
+  desktopOnly?: boolean;                // omit from the phone/tablet shell (MobileDock and its Spotlight); desktop Dock and Spotlight still list it
   Component: React.ComponentType<{ windowId: string }>;
 }
 ```
@@ -38,10 +39,12 @@ In both cases the app receives a fixed-height container and should size itself w
 | 1 | `about`    | About              | `User`                 | 560 × 680             | ✓       |
 | 2 | `finder`   | Finder             | `FolderOpen`           | 880 × 560             | ✓       |
 | 3 | `contact`  | Contact            | `Mail`                 | 720 × 620             | ✓       |
-| 4 | `terminal` | Terminal           | `Terminal`             | 640 × 420             | ✓       |
+| 4 | `terminal` | Terminal           | `Terminal`             | 640 × 420             | ✓²      |
 | 5 | `preview`  | Preview            | `Eye`                  | 1024 × 720            | —¹      |
 
 ¹ `preview` has `hideFromDock: true` — it's launched by [FinderApp](#finderapp-finderapptsx) with a `projectId` payload, not from the dock.
+
+² `terminal` has `desktopOnly: true` — phones and tablets have no Terminal, so it is missing from [MobileDock](desktop-shell.md#mobiledock-srccomponentsmobilemobiledocktsx) and from the Spotlight that [MobileShell](desktop-shell.md#mobileshell-srccomponentsmobilemobileshelltsx) renders. The desktop Dock and Spotlight list it.
 
 Sizes are clamped at OPEN time to `vw - 80` and `vh - 160` (see [window-manager.md](window-manager.md#initial-position-math-open)).
 
@@ -329,11 +332,15 @@ Flow:
 4. Send via `resend.emails.send(payload, { idempotencyKey: \`contact/${Date.now()}/${crypto.randomUUID()}\` })`. `from: process.env.CONTACT_FROM_EMAIL` (must resolve to a sender on a Resend-verified domain). `to: [process.env.CONTACT_EMAIL]`. `replyTo: <visitor email>` so Reply in the inbox addresses the visitor — no auto-reply is sent. Subject is `[Portfolio] ${subject || \`Hello from ${name}\`}`. Both `text` and `html` versions are built; the HTML version HTML-escapes every interpolated value via a local `escapeHtml`.
 5. Resend's `{ data, error }` is the primary control flow per the SDK's design. The `send` call is wrapped in a single `try/catch` for unexpected runtime/network exceptions so the route always honors its JSON contract: any throw or non-null `error` → `500 { ok: false, error: "server" }` (the error is `console.error`'d but not returned to the client). Success → `200 { ok: true, id }`.
 
-Fake shell. The only window with a non-glass body — full bleed `bg-[oklch(0.18_0.012_260)]/95`, mono font.
+---
+
+## TerminalApp ([TerminalApp.tsx](../src/components/apps/TerminalApp.tsx))
+
+Fake shell, desktop only (`desktopOnly: true` — not offered on phones or tablets). The only window with a non-glass body — full bleed `bg-[oklch(0.18_0.012_260)]/95`, mono font.
 
 ### State
 
-- `lines: { kind: "out" | "in"; text: string }[]` — the scrollback. `"in"` lines render in white prefixed with `➜  ~`; `"out"` lines render in `text-emerald-200/90`.
+- `lines: { kind: "out" | "in"; text: string }[]` — the scrollback. `"in"` lines render in white prefixed with an emerald `➜ ~` (the same prompt as the live input row); `"out"` lines render in `text-emerald-200/90`. Every line is `whitespace-pre-wrap break-words`, so the help text's indentation and the `ls projects` columns survive while long lines (the bio) still wrap.
 - `input: string` — the current input value.
 - `history: string[]` — submitted commands, oldest-first. Populated by `run` after the empty-input guard, so empty submissions are not recorded.
 - `historyIndex: number` — browse cursor, offset from the end of `history` (`0` = most recent, `-1` = not browsing).
@@ -357,13 +364,19 @@ The `<input>` handles `ArrowUp` / `ArrowDown` to walk through `history` (most-re
 
 ### Commands
 
-`run(cmd)` recognizes:
+`run(cmd)` trims the input and splits it on runs of whitespace into a command name and arguments, so `ls  projects` works. A trailing `/` on the first argument is ignored (`ls projects/` = `ls projects`). The fake home directory holds `about.md` and `projects/`. It recognizes:
 
 | Command         | Output                                                                            |
 | --------------- | --------------------------------------------------------------------------------- |
 | `whoami`        | `${ABOUT.handle} — ${ABOUT.title}`                                                |
-| `ls projects`   | One line per `PROJECTS` entry: `${id padded to 10}  ${title}`                     |
-| `cat about.md`  | `ABOUT.bio` as a single line                                                      |
+| `ls`            | `HOME_LISTING` — `about.md  projects/`                                            |
+| `ls projects`   | One line per `PROJECTS` entry: `id` padded to `ID_WIDTH` (longest id + 2), then `title` |
+| `ls about.md`   | `about.md`                                                                        |
+| `ls <other>`    | `ls: <other>: No such file or directory`                                          |
+| `cat about.md`  | `ABOUT.bio` as a single (wrapping) line                                           |
+| `cat`           | `usage: cat <file>`                                                               |
+| `cat projects`  | `cat: projects: Is a directory`                                                   |
+| `cat <other>`   | `cat: <other>: No such file or directory`                                         |
 | `clear`         | Clears `lines`. No echo.                                                          |
 | `help`          | The static `HELP` array (6 lines).                                                |
 | anything else   | Two lines: `zsh: command not found: ${first word}` then `Type \`help\` to see available commands.` |

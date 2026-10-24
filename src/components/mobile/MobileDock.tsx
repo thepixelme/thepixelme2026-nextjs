@@ -10,6 +10,9 @@ interface Props {
   hidden: boolean;
 }
 
+// Phones and tablets have no Terminal, so desktop-only apps stay off this dock.
+const DOCK_APPS = APPS.filter((app) => !app.hideFromDock && !app.desktopOnly);
+
 export default function MobileDock({ hidden }: Props) {
   const { windows } = useWindows();
   const dispatch = useWindowsDispatch();
@@ -49,7 +52,7 @@ export default function MobileDock({ hidden }: Props) {
                    backdrop-blur-(--glass-blur)
                    short:origin-right short:scale-85 short:flex-col short:items-center"
       >
-        {APPS.filter((app) => !app.hideFromDock).map((app) => {
+        {DOCK_APPS.map((app) => {
           const isOpen = windows.some((w) => w.appId === app.id);
           return (
             <DockIcon
