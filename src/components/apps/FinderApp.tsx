@@ -62,7 +62,7 @@ export default function FinderApp() {
                 {p.summary}
               </p>
               <div className="mt-3 flex flex-wrap gap-1">
-                {p.tags.slice(0, 3).map((t) => (
+                {p.tags.slice(0, 4).map((t) => (
                   <span
                     key={t}
                     className="rounded-full bg-default px-2 py-0.5 text-[10px] font-medium text-foreground/70"

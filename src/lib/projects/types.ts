@@ -3,10 +3,15 @@ export const PROJECT_TAGS = [
   "Web",
   "TypeScript",
   "Swift",
+  "Node.js",
   "React",
   "React Native",
+  "Next.js",
+  "PostgreSQL",
   "WordPress",
   "Shopify",
+  "Supabase",
+  "Stripe",
 ] as const;
 
 export type ProjectTag = (typeof PROJECT_TAGS)[number];

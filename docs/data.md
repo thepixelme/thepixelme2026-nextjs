@@ -33,10 +33,15 @@ type ProjectTag =
   | "Web"
   | "TypeScript"
   | "Swift"
+  | "Node.js"
   | "React"
   | "React Native"
+  | "Next.js"
+  | "PostgreSQL"
   | "WordPress"
-  | "Shopify";
+  | "Shopify"
+  | "Supabase"
+  | "Stripe";
 
 interface Project {
   id: string;
@@ -108,13 +113,13 @@ Order matters — it determines the rendered order in About → Find me.
 
 ## `PROJECTS: Project[]` ([src/lib/projects/index.ts](../src/lib/projects/index.ts))
 
-| `id`                | file                                                             | `title`                                                         | `tags`                                          | rich case-study?              |
-| ------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------- | ----------------------------- |
-| `lamgig-platform`   | [lamgig-platform.ts](../src/lib/projects/lamgig-platform.ts)     | LamGig — All-in-one business dashboard for small businesses     | Web · TypeScript · React                        | yes (full + 7 shots)          |
-| `bonneville-mobile` | [bonneville-mobile.ts](../src/lib/projects/bonneville-mobile.ts) | Bonneville News & Sports Mobile                                 | React Native · TypeScript · App                 | yes (full + 9 portrait shots) |
-| `claudeswitcher`    | [claudeswitcher.ts](../src/lib/projects/claudeswitcher.ts)       | ClaudeSwitcher                                                  | Swift · App                                     | yes (full + logo + 2 shots)   |
-| `heygrillhey`       | [heygrillhey.ts](../src/lib/projects/heygrillhey.ts)             | Hey Grill Hey — Recipe and commerce rebuild                     | Web · WordPress · Shopify · TypeScript · React  | yes (full + 6 shots)          |
-| `apipeek`           | [apipeek.ts](../src/lib/projects/apipeek.ts)                     | APIPeek — JSON viewer & API sandbox                             | React · TypeScript · App · Web                  | yes (full + 4 shots)          |
+| `id`                | file                                                             | `title`                                                     | `tags`                                                                        | rich case-study?              |
+| ------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------- |
+| `lamgig-platform`   | [lamgig-platform.ts](../src/lib/projects/lamgig-platform.ts)     | LamGig — All-in-one business dashboard for small businesses | Web · Next.js · PostgreSQL · React · TypeScript · Node.js · Supabase · Stripe | yes (full + 7 shots)          |
+| `bonneville-mobile` | [bonneville-mobile.ts](../src/lib/projects/bonneville-mobile.ts) | Bonneville News & Sports Mobile                             | React Native · TypeScript · App                                               | yes (full + 9 portrait shots) |
+| `claudeswitcher`    | [claudeswitcher.ts](../src/lib/projects/claudeswitcher.ts)       | ClaudeSwitcher                                              | Swift · App                                                                   | yes (full + logo + 2 shots)   |
+| `heygrillhey`       | [heygrillhey.ts](../src/lib/projects/heygrillhey.ts)             | Hey Grill Hey — Recipe and commerce rebuild                 | Web · WordPress · Shopify · TypeScript · React                                | yes (full + 6 shots)          |
+| `apipeek`           | [apipeek.ts](../src/lib/projects/apipeek.ts)                     | APIPeek — JSON viewer & API sandbox                         | React · TypeScript · App · Web                                                | yes (full + 4 shots)          |
 
 Each project lives in its own file under [src/lib/projects/](../src/lib/projects/) so that long-form copy doesn't crowd one giant module. [index.ts](../src/lib/projects/index.ts) imports each project file and exports `PROJECTS: Project[]` in the order they should appear in the Finder grid.
 
@@ -122,7 +127,7 @@ To add a new project: create `src/lib/projects/<id>.ts` with `export const <id>:
 
 ### Canonical tags
 
-`PROJECT_TAGS` in [types.ts](../src/lib/projects/types.ts) is the single source of truth for the eight allowed tags and their display order in the Finder sidebar. Order is curated, not alphabetical — it walks from form factor to language to framework to platform:
+`PROJECT_TAGS` in [types.ts](../src/lib/projects/types.ts) is the single source of truth for the thirteen allowed tags and their display order in the Finder sidebar. Order is curated, not alphabetical — it walks from form factor to language to runtime to framework to database to platform:
 
 | Tag            | Kind        |
 | -------------- | ----------- |
@@ -130,10 +135,15 @@ To add a new project: create `src/lib/projects/<id>.ts` with `export const <id>:
 | `Web`          | form factor |
 | `TypeScript`   | language    |
 | `Swift`        | language    |
+| `Node.js`      | runtime     |
 | `React`        | framework   |
 | `React Native` | framework   |
+| `Next.js`      | framework   |
+| `PostgreSQL`   | database    |
 | `WordPress`    | platform    |
 | `Shopify`      | platform    |
+| `Supabase`     | platform    |
+| `Stripe`       | platform    |
 
 `ProjectTag` is derived as `(typeof PROJECT_TAGS)[number]`, so adding a new tag is a deliberate edit (update `PROJECT_TAGS` and the docs), not an emergent side effect of adding a project. [FinderApp](../src/components/apps/FinderApp.tsx) renders the sidebar `Tags` section directly from `PROJECT_TAGS`.
 

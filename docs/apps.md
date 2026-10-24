@@ -79,7 +79,7 @@ Two sections via the local `<SidebarSection>` helper:
 | Favorites   | `All Projects` (Star icon, sets `filter.kind = "all"`) |
 | Tags        | One row per tag from `PROJECT_TAGS` (Tag icon)         |
 
-The Tags list is **not** derived from `PROJECTS`. It iterates the canonical `PROJECT_TAGS` constant (see [data.md](data.md#canonical-tags)) so the order is deliberate (form factor → language → framework → platform) and the sidebar is stable regardless of project content. Each row is a `<SidebarItem>` `<button>` with active state `bg-default font-medium` when its kind+key matches the current `filter`.
+The Tags list is **not** derived from `PROJECTS`. It iterates the canonical `PROJECT_TAGS` constant (see [data.md](data.md#canonical-tags)) so the order is deliberate (form factor → language → runtime → framework → database → platform) and the sidebar is stable regardless of project content. Each row is a `<SidebarItem>` `<button>` with active state `bg-default font-medium` when its kind+key matches the current `filter`.
 
 Sidebar background: `bg-surface-secondary px-2 py-3 text-sm`. Outer grid: `grid-cols-[200px_1fr] divide-x divide-separator`.
 
@@ -90,7 +90,7 @@ Sidebar background: `bg-surface-secondary px-2 py-3 text-sm`. Outer grid: `grid-
 - A [`<ProjectThumbnail className="mb-3 rounded-md">`](desktop-shell.md#projectthumbnail-srccomponentsprojectthumbnailtsx) — a fixed `aspect-video w-full` image slot with `bg-surface-secondary` backdrop, the same for every project so titles in adjacent cards line up. Inside the slot: `project.logo` (rendered at `h-3/4 w-3/4 object-contain`) if present, otherwise the first screenshot (`h-full w-full object-cover` for landscape, `h-full w-auto object-contain` when `project.orientation === "portrait"` so a phone screenshot pillar-boxes on the gray backdrop), otherwise the project's first letter as a fallback glyph. The mobile home screen's project carousel uses the same component.
 - `<h3>` title (`text-sm font-semibold`).
 - `<p>` summary (`text-xs text-foreground/70`, line-clamp-2).
-- Up to 3 tag chips (`rounded-full bg-default px-2 py-0.5 text-[10px]`).
+- Up to 4 tag chips (`rounded-full bg-default px-2 py-0.5 text-[10px]`).
 
 Click → `dispatch({ type: "OPEN", appId: "preview", payload: { projectId: p.id } })` via `useWindowsDispatch()`.
 

@@ -3,7 +3,16 @@ import type { Project } from "./types";
 export const lamgigPlatform: Project = {
   id: "lamgig-platform",
   title: "LamGig — All-in-one business dashboard for small businesses",
-  tags: ["Web", "TypeScript", "React"],
+  tags: [
+    "Web",
+    "Next.js",
+    "PostgreSQL",
+    "React",
+    "TypeScript",
+    "Node.js",
+    "Supabase",
+    "Stripe",
+  ],
   link: "https://www.lamgig.com",
   linkLabel: "Visit lamgig.com",
   screenshots: [
