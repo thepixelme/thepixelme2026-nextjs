@@ -1,11 +1,13 @@
 @import "tailwindcss";
 
-/* Matches when the laptop intro plays. Keep in sync with INTRO_MEDIA_QUERY in src/lib/intro.ts. */
+/* Matches when the desk intro plays with the laptop. The intro-* variants below must stay in sync with the queries in src/lib/intro.ts. */
 @custom-variant intro {
-  @media (min-width: 1024px) and (prefers-reduced-motion: no-preference) and (
-      min-aspect-ratio: 5 / 4
-    ) {
-    @slot;
+  @supports (scale: pow(2, 1)) {
+    @media (min-width: 1024px) and (prefers-reduced-motion: no-preference) and (
+        min-aspect-ratio: 5 / 4
+      ) {
+      @slot;
+    }
   }
 }
 
@@ -27,6 +29,35 @@
 @custom-variant short {
   @media (max-height: 480px) {
     @slot;
+  }
+}
+
+/* The desk intro on a portrait screen, with a phone or a tablet in place of the laptop. Registered after `mobile` so `intro-device:hidden` overrides `mobile:block`. */
+@custom-variant intro-device {
+  @supports (scale: pow(2, 1)) {
+    @media (orientation: portrait) and (prefers-reduced-motion: no-preference) {
+      @slot;
+    }
+  }
+}
+
+@custom-variant intro-phone {
+  @supports (scale: pow(2, 1)) {
+    @media (orientation: portrait) and (
+        prefers-reduced-motion: no-preference
+      ) and (max-width: 699.98px) {
+      @slot;
+    }
+  }
+}
+
+@custom-variant intro-tablet {
+  @supports (scale: pow(2, 1)) {
+    @media (orientation: portrait) and (
+        prefers-reduced-motion: no-preference
+      ) and (min-width: 700px) {
+      @slot;
+    }
   }
 }
 
@@ -451,6 +482,118 @@ html[data-theme="glass-dark"] {
   --laptop-trackpad: oklch(44% 0.004 286);
   --laptop-grille: oklch(24% 0.004 286);
   --laptop-shadow: oklch(0% 0 0 / 0.65);
+}
+
+/* == Desk intro camera ==================================================== */
+/* The scroll-zoom camera of src/components/intro/DeskIntro.tsx, in CSS so the
+   server-rendered first frame is right for whichever device the media query
+   picks. --intro-e is the eased progress (0 at rest, 1 zoomed in) and
+   --intro-r the screen-corner factor; DeskIntro sets them per frame on the
+   elements that use them. They don't inherit, so the live desktop inside the
+   screen isn't restyled every frame. */
+@property --intro-e {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --intro-r {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+
+/* Rest pose per device. Room units are rest-vw of the laptop pose (see
+   scenery.ts), where the laptop's screen is 25 units (~30 cm) wide.
+   --intro-device-width: the device's screen width in room units.
+   --intro-room-scale: how far the room is magnified at rest (camera closer).
+   --intro-room-pan: room shift, in room units, to put the fireplace behind
+     the device.
+   --intro-offset: the screen centre's offset from the viewport centre at rest.
+   --intro-desk-lift: how far the stand raises the device above the desk, in
+     desk units (1 cm ≈ 3.33). */
+:root {
+  --intro-device-width: 25;
+  --intro-room-scale: 1;
+  --intro-room-pan: 0vw;
+  --intro-offset: -4%;
+  --intro-desk-lift: 0vw;
+  --intro-radius-top: 0.7vw;
+  --intro-radius-bottom: 0vw;
+  --intro-start: calc(
+    var(--intro-device-width) *
+    var(--intro-room-scale) /
+    100
+  );
+  --intro-desk-scale: calc(25 / var(--intro-device-width));
+
+  /* Phones in three shapes, so the fireplace and clock fit between the
+     headline and the desk: squat (an iPhone SE in Safari), regular, and
+     tall (a phone with Safari's toolbars hidden). */
+  @variant intro-phone {
+    --intro-device-width: 5.4;
+    --intro-room-scale: 3.2;
+    --intro-room-pan: 35vw;
+    --intro-offset: 27%;
+    --intro-desk-lift: 10vw;
+    --intro-radius-top: 12vw;
+    --intro-radius-bottom: 12vw;
+
+    @media (min-aspect-ratio: 3 / 5) {
+      --intro-room-scale: 2.7;
+      --intro-offset: 30.5%;
+    }
+
+    @media (max-aspect-ratio: 9 / 17) {
+      --intro-room-scale: 3.6;
+      --intro-offset: 23.8%;
+    }
+  }
+
+  @variant intro-tablet {
+    --intro-device-width: 13.3;
+    --intro-room-scale: 1.9;
+    --intro-room-pan: 22vw;
+    --intro-offset: -0.6%;
+    --intro-desk-lift: 13vw;
+    --intro-radius-top: 2.6vw;
+    --intro-radius-bottom: 2.6vw;
+  }
+}
+
+/* The laptop/desk plane: START^(1−e), zooming in log space from the rest
+   scale to 1 while the offset eases to 0. */
+@utility intro-stage {
+  scale: pow(var(--intro-start), calc(1 - var(--intro-e)));
+  translate: 0 calc(var(--intro-offset) * (1 - var(--intro-e)));
+}
+
+/* A background layer at --intro-depth (< 1) magnifies by
+   (1/START)^(depth·e), shifted so it zooms about the screen's centre. */
+@utility intro-layer {
+  scale: pow(
+    var(--intro-start),
+    calc(var(--intro-depth) * var(--intro-e) * -1)
+  );
+  translate: 0
+    calc(
+      var(--intro-offset) *
+      (1 - var(--intro-e)) -
+      pow(var(--intro-start), calc(var(--intro-depth) * var(--intro-e) * -1)) *
+      var(--intro-offset)
+    );
+}
+
+/* The screen's bottom edge at rest, which the room is drawn around. */
+@utility intro-anchor {
+  top: calc(50% + 50% * var(--intro-start) + var(--intro-offset));
+}
+
+@utility intro-screen-corners {
+  border-radius: calc(var(--intro-radius-top) * var(--intro-r))
+    calc(var(--intro-radius-top) * var(--intro-r))
+    calc(var(--intro-radius-bottom) * var(--intro-r))
+    calc(var(--intro-radius-bottom) * var(--intro-r));
 }
 
 /* == Tailwind utility mappings ============================================ */

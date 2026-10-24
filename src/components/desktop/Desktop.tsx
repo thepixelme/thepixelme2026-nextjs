@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import LaptopIntro from "@/components/intro/LaptopIntro";
+import DeskIntro from "@/components/intro/DeskIntro";
 import MobileShell from "@/components/mobile/MobileShell";
 import { DockIconPositionsProvider } from "@/components/window/dock-positions";
 import WindowManager from "@/components/window/WindowManager";
@@ -55,20 +55,26 @@ function ShellSwitch() {
 
   if (isMobile === null) {
     // CSS picks the server-rendered first frame so it matches what hydrates:
-    // the mobile shell, the laptop intro where it will play, or the bare
-    // wallpaper for a desktop without the intro.
+    // the bare wallpaper for a desktop without the intro, the mobile shell
+    // without it, or the desk intro (one copy, whose laptop, phone or tablet
+    // is also picked by CSS) around the wallpaper or the mobile shell.
     return (
       <div className="relative h-full w-full overflow-hidden">
         <div className="mobile:hidden intro:hidden">
           <Wallpaper />
         </div>
-        <div className="hidden h-full intro:block">
-          <LaptopIntro>
-            <Wallpaper />
-          </LaptopIntro>
-        </div>
-        <div className="hidden mobile:block">
+        <div className="hidden mobile:block intro-device:hidden">
           <MobileShell />
+        </div>
+        <div className="hidden h-full intro:block intro-device:block">
+          <DeskIntro>
+            <div className="contents intro-device:hidden">
+              <Wallpaper />
+            </div>
+            <div className="hidden intro-device:contents">
+              <MobileShell />
+            </div>
+          </DeskIntro>
         </div>
       </div>
     );
@@ -77,15 +83,17 @@ function ShellSwitch() {
   if (isMobile) {
     return (
       <div className="relative h-full w-full overflow-hidden">
-        <MobileShell />
+        <DeskIntro>
+          <MobileShell />
+        </DeskIntro>
       </div>
     );
   }
 
   return (
-    <LaptopIntro>
+    <DeskIntro>
       <DesktopBody />
-    </LaptopIntro>
+    </DeskIntro>
   );
 }
 

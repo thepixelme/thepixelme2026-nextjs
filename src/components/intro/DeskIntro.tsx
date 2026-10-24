@@ -3,6 +3,7 @@
 import { ChevronDown } from "lucide-react";
 import {
   animate,
+  type MotionStyle,
   motion,
   useMotionValueEvent,
   useScroll,
@@ -12,15 +13,18 @@ import {
 import { type ReactNode, useCallback, useEffect, useRef } from "react";
 import { finishIntro, useIntroPending } from "@/lib/intro";
 import { ABOUT } from "@/lib/portfolio-data";
-import { stageScale, stageY } from "./camera";
+import { easeInOut } from "./camera";
 import DeskScene from "./DeskScene";
+import DeviceFrame from "./DeviceFrame";
 import IntroWalkthrough from "./IntroWalkthrough";
 import LaptopFrame from "./LaptopFrame";
 import SceneBackdrop from "./SceneBackdrop";
 
-const SCREEN_RADIUS_VW = 0.7;
-
-export default function LaptopIntro({ children }: { children: ReactNode }) {
+// The device on the desk is a laptop on desktop screens and a phone or
+// tablet on portrait ones. Which one, and where it rests, comes from the
+// intro-* media variants and the camera variables in globals.css, so the
+// server-rendered first frame matches whatever device hydrates.
+export default function DeskIntro({ children }: { children: ReactNode }) {
   const active = useIntroPending();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ container: scrollerRef });
@@ -30,13 +34,8 @@ export default function LaptopIntro({ children }: { children: ReactNode }) {
     restDelta: 0.0005,
   });
 
-  const scale = useTransform(progress, stageScale);
-  const y = useTransform(progress, (p) => `${stageY(p)}vh`);
-  const screenRadius = useTransform(
-    progress,
-    [0.8, 1],
-    [`${SCREEN_RADIUS_VW}vw`, "0vw"],
-  );
+  const eased = useTransform(progress, easeInOut);
+  const corners = useTransform(progress, [0.8, 1], [1, 0]);
   const headlineOpacity = useTransform(progress, [0, 0.2], [1, 0]);
   const headlineY = useTransform(progress, [0, 0.2], [0, -32]);
   const hintOpacity = useTransform(progress, [0, 0.08], [1, 0]);
@@ -78,6 +77,9 @@ export default function LaptopIntro({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [active, zoomIn]);
 
+  const enterClass =
+    "intro-screen-corners absolute inset-0 cursor-zoom-in outline-offset-[0.6vw] focus-visible:outline-[0.3vw] focus-visible:outline-focus";
+
   // Once finished, every wrapper collapses to `display: contents` so the
   // desktop keeps its tree position (no remount) and lays out exactly as it
   // would without the intro.
@@ -94,54 +96,61 @@ export default function LaptopIntro({ children }: { children: ReactNode }) {
         <div
           className={active ? "sticky top-0 h-dvh overflow-hidden" : "contents"}
         >
-          {active && <SceneBackdrop progress={progress} />}
+          {active && <SceneBackdrop eased={eased} />}
           {active && (
             <motion.header
               style={{ opacity: headlineOpacity, y: headlineY }}
-              className="pointer-events-none absolute inset-x-0 top-[8vh] flex flex-col items-center gap-3 px-8 text-center"
+              className="pointer-events-none absolute inset-x-0 top-[8%] flex flex-col items-center gap-3 px-8 text-center intro-phone:top-[4.5%] intro-phone:gap-2 intro-phone:px-6"
             >
               <p className="text-sm font-medium text-(--scene-ink-muted)">
                 {ABOUT.name}
               </p>
-              <h1 className="max-w-4xl text-balance text-4xl font-semibold tracking-tight text-(--scene-ink) xl:text-5xl">
+              <h1 className="max-w-4xl text-balance text-4xl font-semibold tracking-tight text-(--scene-ink) xl:text-5xl intro-phone:text-[1.75rem] intro-phone:leading-tight">
                 {ABOUT.title}
               </h1>
             </motion.header>
           )}
           <motion.div
-            style={{ scale, y }}
-            className={active ? "absolute inset-0" : "contents"}
+            style={{ "--intro-e": eased } as MotionStyle}
+            className={active ? "intro-stage absolute inset-0" : "contents"}
           >
             {active && <DeskScene />}
             {active && <LaptopFrame />}
+            {active && <DeviceFrame part="body" />}
             <motion.div
               inert={active}
-              style={{
-                borderTopLeftRadius: screenRadius,
-                borderTopRightRadius: screenRadius,
-              }}
+              style={{ "--intro-r": corners } as MotionStyle}
               className={
                 active
-                  ? "absolute inset-0 overflow-hidden [contain:paint]"
+                  ? "intro-screen-corners absolute inset-0 overflow-hidden [contain:paint]"
                   : "contents"
               }
             >
               {children}
               {active && <IntroWalkthrough />}
             </motion.div>
+            {active && <DeviceFrame part="front" corners={corners} />}
             {active && (
-              <button
-                type="button"
-                aria-label="Enter desktop"
-                onClick={zoomIn}
-                className="absolute inset-0 cursor-zoom-in rounded-t-[0.7vw] outline-offset-[0.6vw] focus-visible:outline-[0.3vw] focus-visible:outline-focus"
-              />
+              <>
+                <button
+                  type="button"
+                  aria-label="Enter desktop"
+                  onClick={zoomIn}
+                  className={`${enterClass} intro-device:hidden`}
+                />
+                <button
+                  type="button"
+                  aria-label="Open the home screen"
+                  onClick={zoomIn}
+                  className={`${enterClass} hidden intro-device:block`}
+                />
+              </>
             )}
           </motion.div>
           {active && (
             <motion.p
               style={{ opacity: hintOpacity }}
-              className="pointer-events-none absolute bottom-[4vh] left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-separator bg-surface py-1.5 pr-2.5 pl-3.5 text-xs font-medium shadow-overlay backdrop-blur-(--glass-blur)"
+              className="pointer-events-none absolute bottom-[4%] left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-separator bg-surface py-1.5 pr-2.5 pl-3.5 text-xs font-medium shadow-overlay backdrop-blur-(--glass-blur)"
             >
               <span className="pointer-coarse:hidden">Scroll to enter</span>
               <span className="hidden pointer-coarse:inline">

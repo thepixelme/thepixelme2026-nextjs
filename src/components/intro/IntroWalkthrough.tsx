@@ -21,8 +21,8 @@ interface Stop {
 }
 
 // A fake cursor that tours the dock on the laptop screen while the intro
-// plays. Rendered inside the screen box, so it is measured and drawn in the
-// desktop's own (unscaled) coordinates.
+// plays (a fingertip on a phone or tablet). Rendered inside the screen box,
+// so it is measured and drawn in the screen's own (unscaled) coordinates.
 export default function IntroWalkthrough() {
   const ref = useRef<HTMLDivElement>(null);
   const [stops, setStops] = useState<Stop[]>([]);
@@ -90,12 +90,20 @@ export default function IntroWalkthrough() {
         )}
       </AnimatePresence>
       {stop && (
+        <motion.span
+          initial={false}
+          animate={{ x: stop.x, y: stop.y }}
+          transition={{ duration: 0.8, ease: [0.45, 0, 0.2, 1] }}
+          className="absolute top-0 left-0 hidden size-11 -translate-1/2 rounded-full border-2 border-(--white)/90 bg-(--white)/35 shadow-overlay intro-device:block"
+        />
+      )}
+      {stop && (
         <motion.svg
           viewBox="0 0 17 25"
           initial={false}
           animate={{ x: stop.x, y: stop.y }}
           transition={{ duration: 0.8, ease: [0.45, 0, 0.2, 1] }}
-          className="absolute top-0 left-0 h-9 w-auto drop-shadow-sm"
+          className="absolute top-0 left-0 h-9 w-auto drop-shadow-sm intro-device:hidden"
         >
           <path
             d="M1 1 L1 19.5 L5.6 15.2 L8.6 22.6 L11.6 21.4 L8.7 14.2 L14.8 14.2 Z"

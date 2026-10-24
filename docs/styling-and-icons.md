@@ -76,7 +76,7 @@ Full recipes are in [STYLEGUIDE.md §2.4](../STYLEGUIDE.md). To keep the recipe 
 
 ### Laptop intro tokens
 
-Hardware colours for [LaptopFrame](desktop-shell.md#laptopframe-srccomponentsintrolaptopframetsx), defined in their own "Laptop intro hardware" section of [globals.css](../src/app/globals.css): `:root` holds the silver (light) values and `html.glass-dark` overrides them for space black. Consumed with the `(--var)` syntax (`bg-(--laptop-bezel)`, `shadow-[0_0_0_0.16vw_var(--laptop-rim)]`) on the lid, and as `fill-(--laptop-…)` / `stroke-(--laptop-…)` / `[stop-color:var(--laptop-…)]` on the base SVG. Not for use outside the intro.
+Hardware colours for [LaptopFrame](desktop-shell.md#laptopframe-srccomponentsintrolaptopframetsx), and reused for the phone and tablet in [DeviceFrame](desktop-shell.md#deviceframe-srccomponentsintrodeviceframetsx) (bezel, rim, camera) and their stands in DeskScene (the `--laptop-deck-*` aluminium tones and `--laptop-shadow`), defined in their own "Laptop intro hardware" section of [globals.css](../src/app/globals.css): `:root` holds the silver (light) values and `html.glass-dark` overrides them for space black. Consumed with the `(--var)` syntax (`bg-(--laptop-bezel)`, `shadow-[0_0_0_0.16vw_var(--laptop-rim)]`) on the lid, and as `fill-(--laptop-…)` / `stroke-(--laptop-…)` / `[stop-color:var(--laptop-…)]` on the base SVG. Not for use outside the intro.
 
 | Token | Purpose |
 | --- | --- |
@@ -166,19 +166,22 @@ Always prefer the named utility over the arbitrary form:
 
 Biome will flag these.
 
-### `intro:` custom variant
+### Desk intro custom variants
 
-[globals.css](../src/app/globals.css) registers one custom variant:
+[globals.css](../src/app/globals.css) registers four variants for the [desk intro](desktop-shell.md#desk-intro-srccomponentsintrodeskintrotsx), each wrapped in `@supports (scale: pow(2, 1))` because the intro's camera needs CSS `pow()`:
 
-```css
-@custom-variant intro {
-  @media (min-width: 1024px) and (prefers-reduced-motion: no-preference) and (min-aspect-ratio: 5 / 4) {
-    @slot;
-  }
-}
-```
+| Variant | Media query | Matches |
+| --- | --- | --- |
+| `intro:` | `(min-width: 1024px) and (prefers-reduced-motion: no-preference) and (min-aspect-ratio: 5/4)` | The intro plays with the laptop. |
+| `intro-device:` | `(orientation: portrait) and (prefers-reduced-motion: no-preference)` | It plays with a phone or tablet. |
+| `intro-phone:` | `intro-device:` and `(max-width: 699.98px)` | With a phone. |
+| `intro-tablet:` | `intro-device:` and `(min-width: 700px)` | With a tablet. |
 
-It matches exactly when the laptop intro plays and must stay in sync with `INTRO_MEDIA_QUERY` in [src/lib/intro.ts](../src/lib/intro.ts). Used only by the pre-hydration branch of [Desktop.tsx](../src/components/desktop/Desktop.tsx) (`intro:hidden` / `hidden intro:block`) so the server-rendered first frame matches what hydrates.
+They must stay in sync with `LAPTOP_INTRO_QUERY` / `DEVICE_INTRO_QUERY` in [src/lib/intro.ts](../src/lib/intro.ts). Uses: the pre-hydration branch of [Desktop.tsx](../src/components/desktop/Desktop.tsx) (which wrapper shows), the device-specific pieces of the intro (LaptopFrame `intro-device:hidden`, DeviceFrame, DeskScene's stands and phone prop layout, IntroWalkthrough's pointer, the two "enter" buttons, the phone headline size), the per-device camera variables (`@variant intro-phone { … }` inside `:root`), and the mobile consent banner, which is `intro-device:hidden` while the intro is pending. The intro variants are registered after `mobile:` so `intro-device:hidden` overrides `mobile:block`.
+
+### Desk intro camera
+
+The intro's zoom is plain CSS in the "Desk intro camera" section of [globals.css](../src/app/globals.css), so its first frame is server-rendered correctly for every device. Two registered properties carry the per-frame values (`@property --intro-e` and `--intro-r`, `<number>`, `inherits: false`, so the live shell inside the screen isn't restyled each frame); per-device rest-pose variables live on `:root`; and four `@utility` rules do the maths with `pow()` and `calc()`: `intro-stage`, `intro-layer`, `intro-anchor`, `intro-screen-corners`. Full tables in [desktop-shell.md](desktop-shell.md#desk-intro-srccomponentsintrodeskintrotsx). Inside the scene, Tailwind's `scale-(--intro-room-scale)`, `translate-x-(--intro-room-pan)`, `scale-(--intro-desk-scale)` and `translate-y-(--intro-desk-lift)` apply the rest of the pose.
 
 ### Mobile shell custom variants
 
@@ -192,7 +195,7 @@ Three more custom variants in [globals.css](../src/app/globals.css) cover the to
 
 `tablet:` and `short:` also match some desktop viewports, so use them only inside [src/components/mobile/](../src/components/mobile/). Inside the shell, Tailwind's built-in `landscape:` means a phone or small tablet held sideways (wider landscape viewports get the desktop), and HomeScreen uses it to put its widgets side by side.
 
-The laptop intro's scroll hint swaps "Scroll to enter" for "Swipe up to enter" with Tailwind's built-in `pointer-coarse:` variant.
+The desk intro's scroll hint swaps "Scroll to enter" for "Swipe up to enter" with Tailwind's built-in `pointer-coarse:` variant.
 
 ### Safe-area insets (mobile shell)
 

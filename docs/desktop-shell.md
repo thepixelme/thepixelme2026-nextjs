@@ -13,11 +13,14 @@ Structure:
 ```
 <WindowsProvider>
   <ShellSwitch>
-    isMobile === null  → pre-hydration first frame (no mismatch): <Wallpaper /> wrapped in
-                         `mobile:hidden intro:hidden`, <LaptopIntro><Wallpaper /></LaptopIntro> wrapped in
-                         `hidden h-full intro:block`, and <MobileShell /> wrapped in `hidden mobile:block`
-    isMobile === false → <LaptopIntro><DesktopBody /></LaptopIntro>
-    isMobile === true  → <MobileShell />
+    isMobile === null  → pre-hydration first frame (no mismatch), each wrapper shown by CSS:
+                           <Wallpaper />    in `mobile:hidden intro:hidden`      (desktop without the intro)
+                           <MobileShell />  in `hidden mobile:block intro-device:hidden`  (mobile without it)
+                           <DeskIntro>      in `hidden h-full intro:block intro-device:block`, one copy,
+                             <Wallpaper />    in `contents intro-device:hidden`  (laptop screen)
+                             <MobileShell />  in `hidden intro-device:contents`  (phone/tablet screen)
+    isMobile === false → <DeskIntro><DesktopBody /></DeskIntro>
+    isMobile === true  → <DeskIntro><MobileShell /></DeskIntro>
 ```
 
 `<WindowsProvider>` lives outside the switch so window state persists across a viewport resize.
@@ -30,15 +33,23 @@ Structure:
 4. `<Dock />`
 5. `<Spotlight open={spotlightOpen} onOpenChange={setSpotlightOpen} />`
 
-`DesktopBody` owns its own `spotlightOpen: boolean`. It also opens the About window on its own, once per page load, with `OPEN { appId: "about", silent: true }` so it doesn't count as an `app_open`: `INTRO_ABOUT_DELAY_MS` (700 ms) after mount while the laptop intro is pending, so visitors watch it open on the laptop screen, and immediately where the intro doesn't play (reduced motion, or a viewport squarer than 5:4). If the intro finishes before the delay, About opens at that point. The module-level `aboutAutoOpened` flag stops it reopening when the desktop remounts after a resize across the breakpoint. `data-desktop-root` is the reference element [`dock-positions`](window-manager.md) uses to report dock-icon rects in desktop coordinates.
+`DesktopBody` owns its own `spotlightOpen: boolean`. It also opens the About window on its own, once per page load, with `OPEN { appId: "about", silent: true }` so it doesn't count as an `app_open`: `INTRO_ABOUT_DELAY_MS` (700 ms) after mount while the desk intro is pending, so visitors watch it open on the laptop screen, and immediately where the intro doesn't play (reduced motion, or a viewport squarer than 5:4). If the intro finishes before the delay, About opens at that point. The module-level `aboutAutoOpened` flag stops it reopening when the desktop remounts after a resize across the breakpoint. `data-desktop-root` is the reference element [`dock-positions`](window-manager.md) uses to report dock-icon rects in desktop coordinates.
 
-## Laptop intro ([src/components/intro/LaptopIntro.tsx](../src/components/intro/LaptopIntro.tsx))
+## Desk intro ([src/components/intro/DeskIntro.tsx](../src/components/intro/DeskIntro.tsx))
 
-Scroll-driven landing on desktop, modelled on mercury.com. The visitor first sees the headline over an illustrated, fire-lit room at night: a mantel fireplace with a crackling fire and a clock showing the visitor's own time, a snowy window, a wood floor and a rug, and an oak desk with a steaming mug of coffee, two notebooks and a pair of fountain pens. On the desk sits a MacBook, seen from slightly above so its keyboard deck shows, whose screen shows the **live** `<DesktopBody />`, with the About window open and a fake cursor touring the dock. Scrolling zooms into the laptop until its screen exactly fills the viewport, and the desktop becomes interactive.
+Scroll-driven landing, modelled on mercury.com. The visitor first sees the headline over an illustrated, fire-lit room at night: a mantel fireplace with a crackling fire and a clock showing the visitor's own time, a snowy window, a wood floor and a rug, and an oak desk with a steaming mug of coffee, two notebooks and a pair of fountain pens. On the desk stands a device whose screen shows the **live** shell, and scrolling zooms into it until its screen exactly fills the viewport and the shell becomes interactive.
 
-Props: `{ children: ReactNode }` — the screen content (`<DesktopBody />`, or `<Wallpaper />` in the pre-hydration frame).
+| Viewport | Device | Screen content |
+| --- | --- | --- |
+| Landscape, ≥ 1024 px, aspect ≥ 5:4 | MacBook, seen from slightly above so its keyboard deck shows | `<DesktopBody />` with the About window open and a fake cursor touring the dock |
+| Portrait, < 700 px wide | iPhone on an aluminium stand, in front of the fireplace | `<MobileShell />` home screen, a fingertip touring the dock |
+| Portrait, ≥ 700 px wide | iPad on an aluminium stand, fireplace to its left | `<MobileShell />` home screen, a fingertip touring the dock |
 
-**When it plays** — `useIntroPending()` from [src/lib/intro.ts](../src/lib/intro.ts) returns `true` until `finishIntro()` is called, and only while `INTRO_MEDIA_QUERY` matches: `(min-width: 1024px) and (prefers-reduced-motion: no-preference) and (min-aspect-ratio: 5/4)`. The same query is registered as the `intro:` Tailwind custom variant in [globals.css](../src/app/globals.css) for the server-rendered first frame — keep the two in sync. Reduced-motion visitors, desktop viewports squarer than 5:4, and the mobile shell (which takes every portrait viewport) never see the intro. The finished flag is module state, so the intro plays once per page load. The server snapshot is `true` so nothing (e.g. the consent auto-open) races ahead of it during hydration.
+Props: `{ children: ReactNode }` — the screen content (`<DesktopBody />` or `<MobileShell />`; in the pre-hydration frame both, each shown by CSS).
+
+**When it plays** — `useIntroPending()` from [src/lib/intro.ts](../src/lib/intro.ts) returns `true` until `finishIntro()` is called, and only while `LAPTOP_INTRO_QUERY` (`(min-width: 1024px) and (prefers-reduced-motion: no-preference) and (min-aspect-ratio: 5/4)`) or `DEVICE_INTRO_QUERY` (`(orientation: portrait) and (prefers-reduced-motion: no-preference)`) matches and the browser supports CSS `pow()` (`CSS.supports("scale", "pow(2, 1)")`), which the camera needs. The same queries, wrapped in `@supports (scale: pow(2, 1))`, are the `intro:` (laptop), `intro-device:`, `intro-phone:` (< 700 px wide) and `intro-tablet:` (≥ 700 px) custom variants in [globals.css](../src/app/globals.css) — keep them in sync. Reduced-motion visitors, desktop viewports squarer than 5:4 and phones on their side never see the intro. The finished flag is module state, so the intro plays once per page load. The server snapshot is `true` so nothing (e.g. the consent auto-open) races ahead of it during hydration.
+
+**One component, three devices** — nothing in DeskIntro branches on the device in JS. The device-specific pieces are all rendered and shown by the media variants (LaptopFrame is `intro-device:hidden`, DeviceFrame shows its phone or tablet part, DeskScene swaps prop layouts and stands, IntroWalkthrough swaps cursor for fingertip, and there are two "enter" buttons). The camera's rest pose is a set of CSS variables per device. So the single server-rendered copy is right for whichever device the visitor has.
 
 **Structure while active** (all inside the component's root):
 
@@ -46,68 +57,106 @@ Props: `{ children: ReactNode }` — the screen content (`<DesktopBody />`, or `
 <div scroller: h-full overflow-y-auto, scrollbar hidden>     ← useScroll({ container })
   <div h-[280vh]>                                            ← 180vh of scroll distance
     <div sticky top-0 h-dvh overflow-hidden>
-      <SceneBackdrop progress />   night view, then the room's wall, fireplace and floor (parallax layers)
+      <SceneBackdrop eased />   night view, then the room's wall, fireplace and floor (parallax layers)
       <header>      ABOUT.name + <h1>{ABOUT.title}</h1> in --scene-ink colours; fades out over the first 20%
-      <motion.div stage absolute inset-0 style={{ scale, y }}>
-        <DeskScene />                         rug, desk and props, anchored to the screen's bottom edge
-        <LaptopFrame />                       lid, keyboard deck, contact shadow (outside the screen box)
-        <motion.div screen absolute inset-0 overflow-hidden [contain:paint] inert>
+                    (smaller and higher on phones)
+      <motion.div intro-stage absolute inset-0 style={{ --intro-e }}>
+        <DeskScene />                         rug, desk, props and stand, below the screen's bottom edge
+        <LaptopFrame />                       lid, keyboard deck, contact shadow (laptop only)
+        <DeviceFrame part="body" />           phone/tablet body, buttons, stand ledge (devices only)
+        <motion.div screen intro-screen-corners absolute inset-0 overflow-hidden [contain:paint] inert
+                    style={{ --intro-r }}>
           {children}
-          <IntroWalkthrough />                fake cursor + app labels touring the dock
+          <IntroWalkthrough />                cursor/fingertip + app labels touring the dock
         </motion.div>
-        <button aria-label="Enter desktop">   transparent, over the screen; click → animated zoom
+        <DeviceFrame part="front" corners />  the phone's Dynamic Island, over the screen
+        <button aria-label="Enter desktop">          laptop; transparent, over the screen → animated zoom
+        <button aria-label="Open the home screen">   phone/tablet; same
       </motion.div>
       <p>Scroll to enter <ChevronDown /></p>   glass pill; fades out over the first 8%; reads
                                                "Swipe up to enter" on touch (`pointer-coarse:`)
 ```
 
-The screen box is exactly the viewport, so at scale 1 it fills the window and the frame, desk and rug sit off-screen. `contain: paint` makes the screen the containing block for the desktop's `fixed` chrome (wallpaper, menu bar, dock) and clips it to the screen's rounded corners.
+The screen box is exactly the viewport, so at scale 1 it fills the window and the frame, desk and rug sit off-screen. Because the box is viewport-shaped, a portrait viewport gets a phone- or tablet-shaped screen for free. `contain: paint` makes the screen the containing block for the shell's `fixed` chrome (wallpaper, menu bar, dock, status bar, home screen) and clips it to the screen's rounded corners.
 
-**Camera** ([src/components/intro/camera.ts](../src/components/intro/camera.ts)) — `scrollYProgress` is smoothed with `useSpring` (`stiffness 260, damping 40`). The stage (laptop, desk, rug) scales from `START_SCALE` (0.25) to 1, interpolated in log space with an ease-in-out so the perceived zoom speed is even, and its `y` offset runs from `START_OFFSET_VH` (−4vh) to `0`. Background layers have a `depth` below 1 and magnify by `layerScale(p, depth)` = (1 / START_SCALE)^(depth · ease(p)), shifted by `layerY(p, depth)` so they zoom about the same point as the laptop screen. Farther layers therefore grow less, which produces the parallax. The screen's top corner radius flattens from `0.7vw` to `0` over the last 20%. When progress passes 0.995 it calls `finishIntro()`. `REST_SCREEN_BOTTOM_VH` (58.5) is where the screen's bottom edge sits at rest; SceneBackdrop anchors its layers there.
+**Camera** — CSS, in the "Desk intro camera" section of [globals.css](../src/app/globals.css), driven from [camera.ts](../src/components/intro/camera.ts). `scrollYProgress` is smoothed with `useSpring` (`stiffness 260, damping 40`) and eased (`easeInOut`) into `--intro-e`, which DeskIntro sets on the stage and SceneBackdrop on each depth layer. `--intro-e` and the screen-corner factor `--intro-r` are registered with `@property` as non-inherited numbers, so the live shell inside the screen isn't restyled every frame. The utilities:
 
-**Finishing** — once `useIntroPending()` is `false`, every wrapper above `{children}` switches to `display: contents` and the scene elements unmount. `DesktopBody` keeps its tree position (no remount, no transform, no extra stacking context), so the desktop behaves exactly as it would without the intro.
+| Utility | Rule |
+| --- | --- |
+| `intro-stage` | `scale: pow(START, 1 − e)` — log-space zoom from the rest scale to 1, so the perceived zoom speed is even; `translate: 0 offset·(1 − e)`. |
+| `intro-layer` | For a layer at `--intro-depth` (< 1): `scale: (1/START)^(depth·e)`, shifted so it zooms about the screen's centre. Farther layers grow less, which produces the parallax. |
+| `intro-anchor` | `top` = where the screen's bottom edge rests: 50% + 50%·START + offset. |
+| `intro-screen-corners` | The screen's corner radii × `--intro-r`, which runs 1 → 0 over the last 20%. |
+
+Percentages are of the `h-dvh` sticky box, so the room stays aligned on phones whose browser toolbars make `vh` taller than the visible area. When progress passes 0.995 DeskIntro calls `finishIntro()`.
+
+**Rest poses** (`:root` variables, overridden under `@variant intro-phone` / `intro-tablet`). Room units are rest-vw of the laptop pose, where the laptop's screen is 25 units (~30 cm) wide; `--intro-start` = device width × room scale ÷ 100 and `--intro-desk-scale` = 25 ÷ device width are derived.
+
+| Variable | Laptop | Phone | Tablet | Meaning |
+| --- | --- | --- | --- | --- |
+| `--intro-device-width` | 25 | 5.4 (~6.5 cm) | 13.3 (~16 cm) | Screen width in room units, so every device is real size next to the mug. |
+| `--intro-room-scale` | 1 | 3.2 (2.7 squat, 3.6 tall) | 1.9 | How far the room is magnified at rest: the camera is closer to a small device. |
+| `--intro-room-pan` | 0 | 35vw | 22vw | Room shift in room units: the fireplace behind the phone, or to the tablet's left. |
+| `--intro-offset` | −4% | 27% (30.5% squat, 23.8% tall) | −0.6% | Screen centre's offset from the viewport centre at rest. |
+| `--intro-desk-lift` | 0 | 10vw (~3 cm) | 13vw (~4 cm) | How far the stand raises the device above the desk, in desk units. |
+| `--intro-radius-top` / `-bottom` | 0.7vw / 0 | 12vw / 12vw | 2.6vw / 2.6vw | Screen corner radii at rest. |
+
+Phones come in three shapes so the clock and fireplace fit between the headline and the desk: squat (`min-aspect-ratio: 3/5`, e.g. an iPhone SE in Safari), regular, and tall (`max-aspect-ratio: 9/17`, a phone with its toolbars hidden).
+
+**Finishing** — once `useIntroPending()` is `false`, every wrapper above `{children}` switches to `display: contents` and the scene elements unmount. The shell keeps its tree position (no remount, no transform, no extra stacking context), so it behaves exactly as it would without the intro.
 
 **Input**
 
 | Input | Effect |
 | --- | --- |
-| Wheel / trackpad scroll | Drives the zoom (scrolling back up zooms out until finished). |
-| Click the laptop screen / Enter on the focused screen button | Animates the scroller to the end (1.2 s). |
+| Wheel / trackpad scroll, touch swipe | Drives the zoom (scrolling back up zooms out until finished). |
+| Click or tap the screen / Enter on the focused screen button | Animates the scroller to the end (1.2 s). |
 | ↓, PageDown, End, Space, Enter (focus on `<body>`) | Same animated zoom. |
 | Esc | Finishes immediately. |
-| ⌘K / Ctrl+K | Finishes immediately; Spotlight's own listener opens it on the now-live desktop. |
+| ⌘K / Ctrl+K | Finishes immediately; Spotlight's own listener opens it on the now-live shell. |
 
 ## LaptopFrame ([src/components/intro/LaptopFrame.tsx](../src/components/intro/LaptopFrame.tsx))
 
-Stateless, `aria-hidden` MacBook hardware drawn around a viewport-sized screen box. All dimensions are in `vw` so proportions hold at any viewport size; the parent's `scale` sizes it. Colours come from the `--laptop-*` tokens in [globals.css](../src/app/globals.css) (silver in `glass-light`, space black in `glass-dark`) — see [styling-and-icons.md](styling-and-icons.md#laptop-intro-tokens).
+Stateless, `aria-hidden` MacBook hardware drawn around a viewport-sized screen box; `intro-device:hidden`, so it shows only on the laptop. All dimensions are in `vw` so proportions hold at any viewport size; the parent's `scale` sizes it. Colours come from the `--laptop-*` tokens in [globals.css](../src/app/globals.css) (silver in `glass-light`, space black in `glass-dark`) — see [styling-and-icons.md](styling-and-icons.md#laptop-intro-tokens).
 
 - **Lid** — a `div` around the screen box: black bezel (1.4vw at the sides and top, 2.1vw chin), aluminium rim, camera dot.
 - **Base** — an SVG at the screen's bottom edge (`top-full`, `viewBox 0 0 100 100` over `100vw`, so one unit is `1vw`, like DeskScene). The laptop is seen from slightly above, so the deck is drawn as a trapezoid that widens towards the viewer. Back to front: blurred contact shadow, hinge bar, front lip, deck surface (shaded under the lid), thumb scoop, speaker-grille dots, keyboard well, keys, trackpad. All paths come precomputed from `LAPTOP_BASE` in [scenery.ts](../src/components/intro/scenery.ts).
 
 The keyboard is a 14-inch MacBook Pro layout: a full-height function row, five letter rows, and the inverted-T arrows with half-height ↑/↓ (77 keys in one `<path>`). Speaker grilles flank it, and the trackpad sits centred below.
 
+## DeviceFrame ([src/components/intro/DeviceFrame.tsx](../src/components/intro/DeviceFrame.tsx))
+
+Stateless, `aria-hidden` phone and tablet hardware for portrait screens, drawn around the viewport-sized screen box in `vw` like LaptopFrame and coloured with the same `--laptop-*` tokens. Props: `{ part: "body" | "front"; corners?: MotionValue<number> }`.
+
+- `part="body"` (behind the screen): on `intro-phone:`, an iPhone body (4.5vw black bezel, 0.7vw metal rim, 16.5vw corners around the screen's 12vw), action and volume buttons on the left and a side button on the right; on `intro-tablet:`, an iPad body (5vw bezel, 0.4vw rim, 7.6vw corners around 2.6vw), a camera dot in the top bezel and a top button. Under either, the stand's ledge: a brushed-aluminium bar the device rests on (~75% of the screen width).
+- `part="front"` (over the screen): the phone's Dynamic Island (28vw × 8.4vw pill, 2.6vw from the top). Its opacity is `corners`, so it fades out as the screen corners flatten at the end of the zoom.
+
+DeskScene draws the rest of the stand (neck and base) on the desk; the neck rises behind the device, so the ledge always hides its top whatever the lift.
+
 ## SceneBackdrop ([src/components/intro/SceneBackdrop.tsx](../src/components/intro/SceneBackdrop.tsx))
 
-`aria-hidden` room behind the laptop, outside the stage. Props: `{ progress: MotionValue<number> }`. Each layer is a `DepthLayer` (local helper) whose `scale` / `y` come from `layerScale` / `layerY`:
+`aria-hidden` room behind the device, outside the stage. Props: `{ eased: MotionValue<number> }`. Each layer is a `DepthLayer` (local helper): an `intro-layer` element with `--intro-depth` and the per-frame `--intro-e`, holding an `intro-anchor` div at the screen's resting bottom edge, which holds a wrapper scaled by `--intro-room-scale` about that anchor:
 
 | Layer | Depth | Content |
 | --- | --- | --- |
 | Night view | 0.1 (`NIGHT_DEPTH`) | Seen only through the window: `--scene-night-*` sky, stars, moon with a glow, snowy hills with a band of pines, and falling snow. |
 | Room | 0.35 (`ROOM_DEPTH`) | Back wall with the window cut out, wood floor, baseboard, the window (frame, mullions, sill, tied-back curtains on a brass rod), `<Fireplace />`, a warm vignette, and a flickering firelight glow. |
 
-Both layers are drawn in **rest-vw**: vw at the camera's rest position, with y = 0 on the laptop screen's bottom edge and up negative. Each is a `div` anchored at `top: REST_SCREEN_BOTTOM_VH vh` holding an SVG whose user units are vw (`viewBox="-10 -60 120 100"` over `120vw × 100vw` for the room). Because the stage is drawn in vw from the same edge, the room lines up with the desk at every aspect ratio: one stage unit is `START_SCALE` (0.25) rest-vw, so the desk's back edge (stage y −18) sits at y −4.5, just in front of the floor line at `ROOM_FLOOR_Y` (−9). The wall is a single `evenodd` path with the window glass cut out, so the night layer shows through it and shifts behind the frame as the camera moves in.
+Both layers are drawn in **room units**: rest-vw of the laptop pose, with y = 0 on the device screen's bottom edge and up negative, in SVGs whose user units are vw. Because the stage is drawn in vw from the same edge, the room lines up with the desk at every aspect ratio: one desk unit is `DESK_UNIT` (0.25) room units, so the desk's back edge (desk y −18) sits at y −4.5, just in front of the floor line at `ROOM_FLOOR_Y` (−9). The wall is a single `evenodd` path with the window glass cut out, so the night layer shows through it and shifts behind the frame as the camera moves in.
+
+On phones and tablets the room is magnified about the anchor and **panned** by `--intro-room-pan` (a `Pan` wrapper, `translate-x-(--intro-room-pan)`) so the fireplace stands behind or beside the device. Only the parts with a horizontal position are panned: the wall (its own SVG, `viewBox="-10 -120 120 111"`, reaching high enough to fill a tall portrait screen), the window and fireplace (`viewBox="-10 -60 120 100"`), the night view and the firelight glow. The floor, its seams and the baseboard (`viewBox="-10 -10.2 120 50.2"`) and the vignette stay centred on the view, so the floorboards always converge on the device, whose desk isn't panned.
 
 The falling snow is a `motion.svg` holding the same 45 × 42 tile of flakes twice, stacked; it slides down one tile height every 18 s on a linear loop, so the repeat is seamless. The firelight is an HTML `div` with a radial gradient whose opacity flickers (2.2 s, mirrored), so the compositor animates it without repainting the wall.
 
 ## Fireplace ([src/components/intro/Fireplace.tsx](../src/components/intro/Fireplace.tsx))
 
-`<g>` drawn inside SceneBackdrop's room SVG, in the same rest-vw units, with the firebox centred on x = 15 so it shows left of the laptop and above the desk's back edge. Back to front: stone hearth slab with a glow on it, a running-bond brick panel (`brickCourses`) with a soldier course around the arched opening, the sooty firebox with darker bricks on its back wall, a flickering inner glow, the grate, a back log, the fire, the front log, pulsing embers and andirons. Then the painted mantelpiece (plinths, panelled pilasters, frieze, shelf), fairy lights draped under the shelf in four swags (alternate bulbs twinkle out of step), and `<MantelClock />` standing in the middle of the shelf.
+`<g>` drawn inside SceneBackdrop's room SVG, in the same room units, with the firebox centred on x = 15 so it shows left of the laptop and above the desk's back edge (behind the phone, or left of the tablet, once the room is panned). Back to front: stone hearth slab with a glow on it, a running-bond brick panel (`brickCourses`) with a soldier course around the arched opening, the sooty firebox with darker bricks on its back wall, a flickering inner glow, the grate, a back log, the fire, the front log, pulsing embers and andirons. Then the painted mantelpiece (plinths, panelled pilasters, frieze, shelf), fairy lights draped under the shelf in four swags (alternate bulbs twinkle out of step), and `<MantelClock />` standing in the middle of the shelf.
 
 The fire is a broad base flame that swells slowly, plus five `<Flame>` tongues of different heights, leans, durations and delays.
 
 ## MantelClock ([src/components/intro/MantelClock.tsx](../src/components/intro/MantelClock.tsx))
 
-A walnut tambour clock with a brass bezel and a cream face, in Fireplace's rest-vw units, showing the visitor's **local time**. It reads `useNow()` from [clock.ts](../src/lib/clock.ts): the hour and minute hands are `rotate()` transforms on the SVG (hour = (h mod 12 + m / 60) × 30°, minute = (m + s / 60) × 6°) and move each time `useNow()` ticks on the minute. A thin red second hand sweeps once a minute on a linear `motion` loop that starts from the current second. It sits in a group with a transparent disc the size of the face, so the group's `fill-box` centre, which motion rotates about, is the pivot.
+A walnut tambour clock with a brass bezel and a cream face, in Fireplace's room units, showing the visitor's **local time**. It reads `useNow()` from [clock.ts](../src/lib/clock.ts): the hour and minute hands are `rotate()` transforms on the SVG (hour = (h mod 12 + m / 60) × 30°, minute = (m + s / 60) × 6°) and move each time `useNow()` ticks on the minute. A thin red second hand sweeps once a minute on a linear `motion` loop that starts from the current second. It sits in a group with a transparent disc the size of the face, so the group's `fill-box` centre, which motion rotates about, is the pivot.
 
 The hands render only once `useNow()` returns a `Date`. It is `null` on the server and on the first client render, so the server HTML (the face without hands) matches what hydrates. On very wide viewports (21:9), the top of the clock is above the viewport at rest.
 
@@ -117,31 +166,32 @@ A flickering teardrop fire tongue standing on `(x, y)` in the parent SVG's units
 
 ## Scenery geometry ([src/components/intro/scenery.ts](../src/components/intro/scenery.ts))
 
-All generated scene geometry lives here: `mulberry32` (seeded PRNG), `sine` (arithmetic-only approximation of `Math.sin`), `round2`, `dotsPath` (circles as one path) and `flamePath`; `LAPTOP_BASE` for LaptopFrame; `DESK` and `RUG` for DeskScene; and, in rest-vw for SceneBackdrop and Fireplace, `ROOM_FLOOR_Y`, `floorSeams`, `brickCourses`, `nightHillY` / `nightNearY` / `crestPath`, `pinesPath`, `starDots` and `snowTile`.
+All generated scene geometry lives here: `mulberry32` (seeded PRNG), `sine` (arithmetic-only approximation of `Math.sin`), `round2`, `dotsPath` (circles as one path) and `flamePath`; `LAPTOP_BASE` for LaptopFrame; `DESK`, `RUG` and `deskBox` for DeskScene; and, in room units for SceneBackdrop and Fireplace, `ROOM_FLOOR_Y`, `floorSeams`, `brickCourses`, `nightHillY` / `nightNearY` / `crestPath`, `pinesPath`, `starDots` and `snowTile`.
 
 The scene is drawn to the scale of a 14-inch MacBook Pro, whose screen is about 30 cm wide, so 1 cm ≈ 3.3vw.
 
 `LAPTOP_BASE` lays out the deck in plan coordinates: `u` runs across 0–1, and `v` runs from the hinge (0) to the front edge (1). The camera looks squarely at the screen, and the lid is tilted back about 25°. So the 22 cm deck (73vw in plan) foreshortens to sin 25° ≈ 0.42 of its depth: the front edge sits 31vw below the back edge. The back edge is 102.8vw wide (the lid's width) at y = 2.6. Plan points are projected in perspective with a scale of `1 / (1 − c·v)`, which is 1 at the hinge and `DECK_SPREAD` (1.07) at the front edge. The result holds the path strings for every part of the base, plus `backY` / `frontY` for the gradients.
 
-`flatSpread(y)` extends the deck's vanishing lines: it returns the width multiplier (1 at the hinge line) for anything lying flat at projected depth `y`. `DESK` uses it to build a writing desk about 85 cm wide. Its top runs from y = −18 (behind the laptop) to y = 44 and is 280vw wide at the front edge. `DESK` holds the top and grain paths and the leg positions. `RUG` uses the same vanishing lines for a rug about 200 cm wide whose back edge (y = 24) is hidden behind the desk except at the sides; it holds the field, back border, fringe and thin cross stripes. `deskBox` builds a box lying square on the desk (its top, front face, the inner side that shows right of centre, a strap across it and the page block on its front face) along the same vanishing lines; DeskScene stacks two of them as notebooks. `floorSeams` runs the room's floorboards towards the same vanishing point, scaled into rest-vw.
+`flatSpread(y)` extends the deck's vanishing lines: it returns the width multiplier (1 at the hinge line) for anything lying flat at projected depth `y`. `DESK` uses it to build a writing desk about 85 cm wide. Its top runs from y = −18 (behind the laptop) to y = 44 and is 280vw wide at the front edge. `DESK` holds the top and grain paths and the leg positions. `RUG` uses the same vanishing lines for a rug about 200 cm wide whose back edge (y = 24) is hidden behind the desk except at the sides; it holds the field, back border, fringe and thin cross stripes. `deskBox` builds a box lying square on the desk (its top, front face, the inner side that shows right of centre, a strap across it and the page block on its front face) along the same vanishing lines; DeskScene stacks two of them as notebooks. `floorSeams` runs the room's floorboards towards the same vanishing point, scaled into room units by `DESK_UNIT` from [camera.ts](../src/components/intro/camera.ts).
 
 The geometry is server-rendered by Node (V8) and hydrated in every browser engine, so its output must be **bit-identical across JS engines**. If it isn't, React reports a hydration mismatch. The module therefore uses only `+ − × ÷ %` and `Math.round` / `min` / `max` / `floor` / `ceil` / `imul`, whose results IEEE 754 and the JS spec fix exactly. `Math.sin`, `Math.pow` / `**` and other library maths can differ in the last bit between engines; JavaScriptCore in Safari, for example, gave a different wildflower `cy` than V8. Values written to SVG attributes are also rounded (`toFixed`, or `round2` for numeric props).
 
 ## DeskScene ([src/components/intro/DeskScene.tsx](../src/components/intro/DeskScene.tsx))
 
-`aria-hidden` SVG inside the stage, positioned at the screen box's bottom edge (`top-full`, `viewBox 0 0 100 100` over `100vw` → one unit is `1vw`, `overflow-visible`). The units match LaptopFrame's, so the desk lines up under the laptop base at any aspect ratio. Back to front:
+`aria-hidden` SVG inside the stage, positioned at the screen box's bottom edge (`top-full`, `viewBox 0 0 100 100` over `100vw` → one unit is `1vw`, `overflow-visible`). The units match LaptopFrame's, so the desk lines up under the laptop base at any aspect ratio. A phone or tablet screen is narrower than the laptop's, so the SVG sits in a wrapper scaled by `--intro-desk-scale` (25 ÷ device width) about the screen's bottom centre, which keeps the desk the same size in the room, and an inner wrapper lowers it by `--intro-desk-lift`, the height of the device's stand. Back to front:
 
 1. Rug (`RUG` from [scenery.ts](../src/components/intro/scenery.ts)): plain rust field, cream back border with fringe and thin dark stripes, darkened towards its edges by a radial gradient. A soft shadow band falls across it below the desk's front edge.
 2. Desk (`DESK`): back legs, then the oak top surface (`--scene-wood-top`) with faint grain lines. The top shares the laptop base's vanishing lines, so the two read as one view from above. Then the 6vw front edge (`--scene-wood-face`) and walnut front legs (`--scene-desk-leg`).
-3. Props on the desk, drawn at real size in stage units. Back left: a coffee mug ~6.5 cm across and 7 cm tall (`MUG`), with a shaded body, a red band, its handle on the left, a rim with coffee inside and two steam wisps that fade and rise on a loop (3.2 s, staggered). Right: two notebooks from `deskBox`, a navy notebook (~16 × 12 cm) with a mustard ribbon bookmark under a tan leather pocket journal (~13 × 9 cm) with a black elastic strap, both showing their page edges. An uncapped black fountain pen with a gold nib lies on the journal, and a capped red one on the desk in front. Both lie as a right-handed writer sets a pen down: nib (or cap) pointing away and to the left, end cap towards the viewer on the right. The pens are drawn lying along −x from their end cap and placed by a `translate(…) rotate(…) scale(PEN_SCALE)` transform (0.8, so they are ~11.5 cm long), each with an offset shadow.
+3. On phones and tablets, the rest of the stand (`STANDS.phone` / `STANDS.tablet`, shown by `intro-phone:` / `intro-tablet:`): a soft shadow, an aluminium neck rising from y −30 (hidden behind the device and DeviceFrame's ledge) and a `deskBox` base plate, ~9 × 6.5 cm for the phone and ~14 × 8 cm for the tablet.
+4. Props on the desk, drawn at real size in desk units. The `Mug` and `NotebookStack` components are rendered twice: the laptop/tablet layout, and a phone layout (`hidden intro-phone:block`) with the mug at x 22 instead of −34 and the stack 46 units closer in (`notebookStack(-46)`), so both sit beside the small phone. Back left: a coffee mug ~6.5 cm across and 7 cm tall (`MUG`), with a shaded body, a red band, its handle on the left, a rim with coffee inside and two steam wisps that fade and rise on a loop (3.2 s, staggered). Right: two notebooks from `deskBox`, a navy notebook (~16 × 12 cm) with a mustard ribbon bookmark under a tan leather pocket journal (~13 × 9 cm) with a black elastic strap, both showing their page edges. An uncapped black fountain pen with a gold nib lies on the journal, and a capped red one on the desk in front. Both lie as a right-handed writer sets a pen down: nib (or cap) pointing away and to the left, end cap towards the viewer on the right. The pens are drawn lying along −x from their end cap and placed by a `translate(…) rotate(…) scale(PEN_SCALE)` transform (0.8, so they are ~11.5 cm long), each with an offset shadow.
 
 ## IntroWalkthrough ([src/components/intro/IntroWalkthrough.tsx](../src/components/intro/IntroWalkthrough.tsx))
 
-Rendered inside the screen box after `{children}`, so it is drawn in the desktop's own unscaled coordinates. It is `aria-hidden`, `pointer-events-none`, and at `z-60` so it sits above the dock and windows.
+Rendered inside the screen box after `{children}`, so it is drawn in the screen's own unscaled coordinates. It is `aria-hidden`, `pointer-events-none`, and at `z-60` so it sits above the dock and windows.
 
 - On mount (and on resize) it measures every `[data-dock-icon]` button in the screen, converting `getBoundingClientRect()` back to unscaled pixels with the screen's current scale.
-- Its stops are a rest point over the About window (64% / 40%), then each dock icon. Every 1.6 s it advances to the next stop.
-- A macOS-style arrow cursor (`--black` fill, `--white` outline) glides to each stop (0.8 s). At a dock icon, a dock-tooltip-style label fades in above it. The labels are "About me", "Projects", "Contact" and "Terminal", falling back to the icon's `aria-label`.
+- Its stops are a rest point (64% / 40%: over the About window, or the home screen's identity card), then each dock icon. Every 1.6 s it advances to the next stop.
+- A macOS-style arrow cursor (`--black` fill, `--white` outline) glides to each stop (0.8 s); on a phone or tablet (`intro-device:`) a translucent white fingertip dot does instead, centred on each stop. At a dock icon, a dock-tooltip-style label fades in above it. The labels are "About me", "Projects", "Contact" and "Terminal", falling back to the icon's `aria-label`.
 - It renders nothing when no dock icons are present (the pre-hydration frame), and unmounts with the rest of the scene when the intro finishes.
 
 ## Mobile shell ([src/components/mobile/](../src/components/mobile/))
@@ -199,7 +249,7 @@ const isOpen = windows.some(w => w.appId === app.id);
 
 Note: `OPEN` on an already-open app focuses (and unminimizes) it, per the reducer in [windows-store.ts](../src/lib/windows-store.ts).
 
-**Explore hint** — once the desktop is live (`useIntroPending()` is `false`, either because the laptop intro just finished or because it never played), the dock sets `hint` after `HINT_DELAY_MS` (500 ms) and clears it `HINT_DURATION_MS` (8 s) later. While `hint` is true, a glass chip ("Click an app to explore", `MousePointerClick` icon) floats above the pill (`AnimatePresence`, fade + 6px rise), and each icon bounces once, staggered by `BOUNCE_STAGGER_S` (0.12 s). Hovering the pill or clicking any icon dismisses it.
+**Explore hint** — once the desktop is live (`useIntroPending()` is `false`, either because the desk intro just finished or because it never played), the dock sets `hint` after `HINT_DELAY_MS` (500 ms) and clears it `HINT_DURATION_MS` (8 s) later. While `hint` is true, a glass chip ("Click an app to explore", `MousePointerClick` icon) floats above the pill (`AnimatePresence`, fade + 6px rise), and each icon bounces once, staggered by `BOUNCE_STAGGER_S` (0.12 s). Hovering the pill or clicking any icon dismisses it.
 
 ## DockIcon ([DockIcon.tsx](../src/components/desktop/DockIcon.tsx))
 
@@ -278,7 +328,7 @@ Two hooks live in this module:
 - **`useNow(): Date | null`** — the source-of-truth ticker. Returns `null` on first render (SSR-safe) and a `Date` after mount. Schedules a `setTimeout` aligned to the next minute boundary, then a 60-second `setInterval`. Both timer ids are tracked in closure-scoped variables and cleared in the effect's cleanup return.
 - **`useClock(): string`** — consumes `useNow()` and formats with `Intl.DateTimeFormat(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" })` (e.g. `"Sat 3:42 PM"`). Used by [MenuBar.tsx](../src/components/desktop/MenuBar.tsx).
 
-[MobileStatusBar.tsx](../src/components/mobile/MobileStatusBar.tsx) consumes `useNow()` directly and formats a shorter `h:mm a` locally — no second timer. The laptop intro's [MantelClock](#mantelclock-srccomponentsintromantelclocktsx) also reads `useNow()` to set its hands.
+[MobileStatusBar.tsx](../src/components/mobile/MobileStatusBar.tsx) consumes `useNow()` directly and formats a shorter `h:mm a` locally — no second timer. The desk intro's [MantelClock](#mantelclock-srccomponentsintromantelclocktsx) also reads `useNow()` to set its hands.
 
 ## useTheme ([src/lib/theme.ts](../src/lib/theme.ts))
 
@@ -326,13 +376,13 @@ Sheet stack is sorted **ascending by `z`** so the highest-z sheet renders last (
 
 `goHome` loops through non-minimized windows and dispatches `MINIMIZE` for each. Sheets slide off-screen via their `animate` prop; their app state stays mounted.
 
-`MobileShell` is also server-rendered in [Desktop.tsx](../src/components/desktop/Desktop.tsx)'s pre-hydration frame (inside `hidden mobile:block`), so phones and tablets get the status bar, home screen and dock in the initial HTML instead of a bare wallpaper. Once `useIsMobile()` resolves it remounts in the `isMobile === true` branch, before the browser paints.
+`MobileShell` is always wrapped in [`<DeskIntro>`](#desk-intro-srccomponentsintrodeskintrotsx): on a portrait screen with motion allowed it first appears on the screen of a phone or tablet standing on the desk, and becomes the live home screen when the zoom finishes; elsewhere (reduced motion, a phone on its side) DeskIntro collapses to `display: contents` and the shell shows straight away. It is also server-rendered in [Desktop.tsx](../src/components/desktop/Desktop.tsx)'s pre-hydration frame (once on its own, in `hidden mobile:block intro-device:hidden`, and once on the intro's screen), so phones and tablets get the scene or the home screen in the initial HTML instead of a bare wallpaper. Once `useIsMobile()` resolves it remounts in the `isMobile === true` branch, before the browser paints.
 
 ## HomeScreen ([src/components/mobile/HomeScreen.tsx](../src/components/mobile/HomeScreen.tsx))
 
 The mobile shell's home state: two iOS-style glass widgets over the wallpaper, so a visitor sees who this is and what they've built before opening anything. Props: `{ hidden: boolean }` — `true` while any sheet is visible.
 
-- **Identity widget** (`<section>`): an initials avatar (`bg-accent`), `ABOUT.name` and `ABOUT.location`, then `ABOUT.title` as the page's `<h1>` (mirroring the laptop intro's headline), then two `h-11` pill buttons: "About me" (`OPEN about`) and "Contact" (`OPEN contact`).
+- **Identity widget** (`<section>`): an initials avatar (`bg-accent`), `ABOUT.name` and `ABOUT.location`, then `ABOUT.title` as the page's `<h1>` (mirroring the desk intro's headline), then two `h-11` pill buttons: "About me" (`OPEN about`) and "Contact" (`OPEN contact`).
 - **Projects widget** (`<section>`): a "Projects" heading with a "See all" button (`OPEN finder`), then a horizontal, scroll-snapping carousel of every entry in `PROJECTS`. Each card is a `<button>` with a [`ProjectThumbnail`](#projectthumbnail-srccomponentsprojectthumbnailtsx) and the title (two lines max) that opens `preview` with `{ projectId }`. Cards are 62% of the widget on phones (so the next one peeks in), `w-56` from `sm`, `w-48` on `short:` and `w-64` on `tablet:`.
 
 Widget surface: `rounded-3xl border border-field-border bg-surface shadow-overlay backdrop-blur-(--glass-blur)` (the standard glass recipe with iOS widget corners).
@@ -432,12 +482,12 @@ The single owner of consent state. Calls [`useAnalyticsConsent()`](../src/lib/us
   - `consent === "denied"` + `!editing`: title "Analytics disabled" + body + `[Change preference]` action.
 - **Persistent (R8):** a `useEffect` calls `setPersistent(consent.enabled && consent.consent === null)`. While undecided the NC cannot be dismissed — but the rest of the page remains interactive (the backdrop is suppressed). User must Decline or Allow to dismiss the card. Decline is equally available — this is a forced explicit choice, not a forced consent.
 - **Deferred close (R8):** action handlers don't call `setOpen(false)` directly. They set `closeAfterChoiceRef.current = (isMobile || consent === null)` and let a third `useEffect` (declared after the persistent effect) issue the close once `consent` flips to non-null. Effect declaration order matters: the persistent effect runs first and releases the flag synchronously via `persistentRef.current = false`, so the deferred close is honored. Desktop closes only on first-time decision; change-preference picks keep NC open showing the new status. Mobile closes on every pick.
-- **Auto-open (desktop only):** a `useEffect` calls `setOpen(true)` only when `!isMobile && !introPending && enabled && consent === null`. `introPending` comes from `useIntroPending()` ([src/lib/intro.ts](../src/lib/intro.ts)), so the panel slides in once the [laptop intro](#laptop-intro-srccomponentsintrolaptopintrotsx) has handed over to the live desktop.
+- **Auto-open (desktop only):** a `useEffect` calls `setOpen(true)` only when `!isMobile && !introPending && enabled && consent === null`. `introPending` comes from `useIntroPending()` ([src/lib/intro.ts](../src/lib/intro.ts)), so the panel slides in once the [desk intro](#desk-intro-srccomponentsintrodeskintrotsx) has handed over to the live desktop.
 - **Mobile branch:** `<MobileConsentNotification>` renders when `enabled && (consent === null || open)`. The `consent === null` clause keeps the card visible the entire undecided period — including after a failed Accept where `promptVisible` flips false but `consent` stays null. `open` covers the post-decision clock-toggle re-decide path.
 - **Storage key:** `ga-consent` cookie (`"granted"` \| `"denied"`; absent → undecided). Read/written client-side through `readConsent` / `writeConsent` in [src/lib/analytics.ts](../src/lib/analytics.ts); read server-side via `readConsentServer()` in [src/lib/analytics-server.ts](../src/lib/analytics-server.ts) using `next/headers cookies()`. `writeConsent()` verifies persistence with a read-back since `document.cookie = ...` doesn't throw on rejection — fail-closed on Accept-with-storage-failure is preserved. The constant, `ConsentValue` type, and `parseConsent()` parser live in [src/lib/analytics-consent.ts](../src/lib/analytics-consent.ts) so neither side imports the other's runtime (`analytics.ts` pulls `@next/third-parties/google` which is `'use client'`; keeping it out of the server graph is intentional).
 - **`ga-disable` flag (R8):** [`useAnalyticsConsent`](../src/lib/useAnalyticsConsent.ts) writes `window['ga-disable-' + gaId]` from inside `accept()` / `decline()` synchronously (before consent state updates) and from a `useEffect` backstop. Without this, already-loaded gtag.js keeps sending after Decline; with it, the flag is correctly `false` by the time GA re-mounts on Denied → Allow so the first page_view isn't dropped.
 - **Env-var gate:** if `NEXT_PUBLIC_GA_ID` is unset, no `<GoogleAnalytics>` mounts and no consent card renders. The desktop NC shell still mounts (clock opens an empty panel). On mobile the clock stays plain text — no NC, no toggle target.
-- **SSR:** the mobile banner ships in the initial server HTML so it's a valid LCP candidate. [`AnalyticsConsentServer`](../src/components/analytics/AnalyticsConsentServer.tsx) reads the cookie via `next/headers` and passes the value into the client `AnalyticsConsent` via `initialConsent`; the hook seeds its `useState` from the prop instead of reading storage in a `useEffect`. The mobile branch is wrapped in `hidden mobile:block` (the `mobile:` variant is `useIsMobile`'s media query); the desktop card stays client-gated since desktop already meets LCP targets. `AnimatePresence initial={false}` skips the slide-in enter animation on first paint so the banner first-paints at `opacity: 1; transform: none` instead of `opacity: 0` (which the browser would not count as an LCP candidate).
+- **SSR:** the mobile banner ships in the initial server HTML so it's a valid LCP candidate. [`AnalyticsConsentServer`](../src/components/analytics/AnalyticsConsentServer.tsx) reads the cookie via `next/headers` and passes the value into the client `AnalyticsConsent` via `initialConsent`; the hook seeds its `useState` from the prop instead of reading storage in a `useEffect`. The mobile branch is wrapped in `hidden mobile:block` (the `mobile:` variant is `useIsMobile`'s media query), plus `intro-device:hidden` while `introPending` (also `true` on the server) so it stays hidden while the phone/tablet desk intro plays and appears on the home screen; where that intro doesn't play (reduced motion, a phone on its side) the banner still ships visible in the initial HTML. The desktop card stays client-gated since desktop already meets LCP targets. `AnimatePresence initial={false}` skips the slide-in enter animation on first paint so the banner first-paints at `opacity: 1; transform: none` instead of `opacity: 0` (which the browser would not count as an LCP candidate).
 
 The single-owner rule is strict: `useAnalyticsConsent()` must appear **only** in `AnalyticsConsent`. `setPersistent` from the NC context must only be called from `AnalyticsConsent`. NotificationCenter and MobileConsentNotification consume `accept`/`decline` as props.
 

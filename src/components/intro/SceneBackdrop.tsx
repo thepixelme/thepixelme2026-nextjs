@@ -1,8 +1,7 @@
 "use client";
 
-import { type MotionValue, motion, useTransform } from "motion/react";
+import { type MotionStyle, type MotionValue, motion } from "motion/react";
 import { type ReactNode, useId } from "react";
-import { layerScale, layerY, REST_SCREEN_BOTTOM_VH } from "./camera";
 import Fireplace from "./Fireplace";
 import {
   crestPath,
@@ -16,10 +15,12 @@ import {
   starDots,
 } from "./scenery";
 
-// Both layers are drawn in rest-vw (see scenery.ts) from an anchor on the
-// laptop screen's bottom edge at rest, so the room lines up with the desk at
-// any aspect ratio.
-const ANCHOR = { top: `${REST_SCREEN_BOTTOM_VH}vh` };
+// Both layers are drawn in room units (see scenery.ts) from an anchor on the
+// device screen's bottom edge at rest, so the room lines up with the desk at
+// any aspect ratio. On phones and tablets the room is magnified about that
+// anchor and panned so the fireplace stands behind the device; the floor and
+// the vignette stay centred on the view, so the floorboards still converge
+// on the device.
 const NIGHT_DEPTH = 0.1;
 const ROOM_DEPTH = 0.35;
 
@@ -32,27 +33,40 @@ const SNOW = snowTile(21, 70, 45, 42);
 
 // Window glass in the wall, which the night layer shows through.
 const GLASS = { x: 84.2, y: -45, width: 13, height: 33.8 };
-const WALL = `M-10,-60 H110 V${FLOOR} H-10 Z M${GLASS.x},${GLASS.y} V${GLASS.y + GLASS.height} H${GLASS.x + GLASS.width} V${GLASS.y} Z`;
+const WALL = `M-10,-120 H110 V${FLOOR} H-10 Z M${GLASS.x},${GLASS.y} V${GLASS.y + GLASS.height} H${GLASS.x + GLASS.width} V${GLASS.y} Z`;
 const CURTAIN =
   "M80.2,-47 L85.8,-47 C85.4,-36 83.6,-26 82.8,-21 C83.3,-16 84.1,-12 84.3,-9.2 L79.8,-9.2 C80,-14 80.2,-18 80.2,-21 Z";
 const CURTAIN_FOLDS =
   "M81.6,-47 C81.6,-37 81.4,-28 81.2,-21.6 M83.6,-47 C83.4,-38 82.7,-30 82.2,-21.6 M81.4,-20.4 C81.4,-16 81.1,-12.5 81,-9.4 M82.6,-20.4 C82.9,-16 83.2,-12.5 83.4,-9.4";
 
 function DepthLayer({
-  progress,
+  eased,
   depth,
   children,
 }: {
-  progress: MotionValue<number>;
+  eased: MotionValue<number>;
   depth: number;
   children: ReactNode;
 }) {
-  const scale = useTransform(progress, (p) => layerScale(p, depth));
-  const y = useTransform(progress, (p) => `${layerY(p, depth)}vh`);
   return (
-    <motion.div style={{ scale, y }} className="absolute inset-0">
-      {children}
+    <motion.div
+      style={{ "--intro-e": eased, "--intro-depth": depth } as MotionStyle}
+      className="intro-layer absolute inset-0"
+    >
+      <div className="intro-anchor absolute inset-x-0">
+        <div className="absolute inset-x-0 top-0 origin-top scale-(--intro-room-scale)">
+          {children}
+        </div>
+      </div>
     </motion.div>
+  );
+}
+
+function Pan({ children }: { children: ReactNode }) {
+  return (
+    <div className="absolute inset-x-0 top-0 translate-x-(--intro-room-pan)">
+      {children}
+    </div>
   );
 }
 
@@ -60,7 +74,7 @@ function NightView() {
   const id = useId();
 
   return (
-    <div className="absolute inset-x-0" style={ANCHOR}>
+    <Pan>
       <svg
         aria-hidden="true"
         viewBox="60 -60 80 60"
@@ -117,7 +131,7 @@ function NightView() {
           <path d={SNOW} className="fill-(--scene-snow)/90" />
         </motion.svg>
       </div>
-    </div>
+    </Pan>
   );
 }
 
@@ -215,24 +229,40 @@ function Room() {
   const id = useId();
 
   return (
-    <div className="absolute inset-x-0" style={ANCHOR}>
+    <>
+      {/* Wall down to the floor line (y −9), then floor and skirting from
+          y −10.2, in svgs sized to match their viewBoxes. */}
+      <Pan>
+        <svg
+          aria-hidden="true"
+          viewBox="-10 -120 120 111"
+          className="absolute -top-[120vw] -left-[10vw] h-[111vw] w-[120vw]"
+        >
+          <defs>
+            <linearGradient
+              id={`${id}-wall`}
+              x1="0"
+              y1="-75"
+              x2="0"
+              y2="-28"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop
+                offset="0"
+                className="[stop-color:var(--scene-wall-shade)]"
+              />
+              <stop offset="1" className="[stop-color:var(--scene-wall)]" />
+            </linearGradient>
+          </defs>
+          <path fillRule="evenodd" d={WALL} fill={`url(#${id}-wall)`} />
+        </svg>
+      </Pan>
       <svg
         aria-hidden="true"
-        viewBox="-10 -60 120 100"
-        className="absolute -top-[60vw] -left-[10vw] h-[100vw] w-[120vw]"
+        viewBox="-10 -10.2 120 50.2"
+        className="absolute -top-[10.2vw] -left-[10vw] h-[50.2vw] w-[120vw]"
       >
         <defs>
-          <linearGradient
-            id={`${id}-wall`}
-            x1="0"
-            y1="-75"
-            x2="0"
-            y2="-28"
-            gradientUnits="userSpaceOnUse"
-          >
-            <stop offset="0" className="[stop-color:var(--scene-wall-shade)]" />
-            <stop offset="1" className="[stop-color:var(--scene-wall)]" />
-          </linearGradient>
           <linearGradient
             id={`${id}-floor`}
             x1="0"
@@ -245,8 +275,6 @@ function Room() {
             <stop offset="1" className="[stop-color:var(--scene-floor)]" />
           </linearGradient>
         </defs>
-
-        <path fillRule="evenodd" d={WALL} fill={`url(#${id}-wall)`} />
         <rect
           x="-10"
           y={FLOOR}
@@ -267,35 +295,45 @@ function Room() {
           height="1.2"
           className="fill-(--scene-trim)"
         />
-        <Window />
-        <Fireplace />
       </svg>
+      <Pan>
+        <svg
+          aria-hidden="true"
+          viewBox="-10 -60 120 100"
+          className="absolute -top-[60vw] -left-[10vw] h-[100vw] w-[120vw]"
+        >
+          <Window />
+          <Fireplace />
+        </svg>
+      </Pan>
       <div className="absolute top-[-20vw] left-1/2 h-[84vw] w-[150vw] -translate-1/2 bg-radial from-transparent from-30% to-(--scene-wall-shade)/85 to-72%" />
-      <motion.div
-        className="absolute top-[-12vw] left-[15vw] h-[56vw] w-[80vw] -translate-1/2 rounded-full bg-radial from-(--scene-firelight)/55 to-transparent to-70%"
-        animate={{ opacity: [0.75, 1] }}
-        transition={{
-          duration: 2.2,
-          repeat: Number.POSITIVE_INFINITY,
-          repeatType: "mirror",
-          ease: "easeInOut",
-        }}
-      />
-    </div>
+      <Pan>
+        <motion.div
+          className="absolute top-[-12vw] left-[15vw] h-[56vw] w-[80vw] -translate-1/2 rounded-full bg-radial from-(--scene-firelight)/55 to-transparent to-70%"
+          animate={{ opacity: [0.75, 1] }}
+          transition={{
+            duration: 2.2,
+            repeat: Number.POSITIVE_INFINITY,
+            repeatType: "mirror",
+            ease: "easeInOut",
+          }}
+        />
+      </Pan>
+    </>
   );
 }
 
 export default function SceneBackdrop({
-  progress,
+  eased,
 }: {
-  progress: MotionValue<number>;
+  eased: MotionValue<number>;
 }) {
   return (
     <div aria-hidden="true" className="absolute inset-0">
-      <DepthLayer progress={progress} depth={NIGHT_DEPTH}>
+      <DepthLayer eased={eased} depth={NIGHT_DEPTH}>
         <NightView />
       </DepthLayer>
-      <DepthLayer progress={progress} depth={ROOM_DEPTH}>
+      <DepthLayer eased={eased} depth={ROOM_DEPTH}>
         <Room />
       </DepthLayer>
     </div>

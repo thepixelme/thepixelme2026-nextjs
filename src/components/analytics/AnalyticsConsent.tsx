@@ -81,13 +81,21 @@ export default function AnalyticsConsent({ initialConsent }: Props) {
 
   // Mobile banner — always rendered in HTML (SSR-friendly) and shown only
   // where the touch shell is, via the `mobile:` custom variant (same media
-  // query as `useIsMobile()`).
+  // query as `useIsMobile()`). While the desk intro may still play
+  // (`introPending` is true on the server too) it is also hidden wherever the
+  // phone/tablet intro does, and shows once the visitor is on the home screen.
   // `AnimatePresence initial={false}` skips the slide-in enter animation on
   // first paint so the banner is a valid LCP candidate (an opacity-0 element
   // would be ignored by the browser's LCP heuristic).
   const mobileVisible = consent.enabled && (consent.consent === null || open);
   const mobileBanner = (
-    <div className="hidden mobile:block">
+    <div
+      className={
+        introPending
+          ? "hidden mobile:block intro-device:hidden"
+          : "hidden mobile:block"
+      }
+    >
       <AnimatePresence initial={false}>
         {mobileVisible && (
           <MobileConsentNotification

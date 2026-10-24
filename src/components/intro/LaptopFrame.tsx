@@ -8,7 +8,10 @@ export default function LaptopFrame() {
   const id = useId();
 
   return (
-    <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 intro-device:hidden"
+    >
       <div className="absolute -inset-x-[1.4vw] -top-[1.4vw] -bottom-[2.1vw] rounded-t-[1.9vw] rounded-b-[0.4vw] bg-(--laptop-bezel) shadow-[0_0_0_0.16vw_var(--laptop-rim)]">
         <div className="absolute top-[0.5vw] left-1/2 size-[0.38vw] -translate-x-1/2 rounded-full bg-(--laptop-camera)" />
       </div>

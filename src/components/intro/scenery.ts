@@ -1,4 +1,4 @@
-import { START_SCALE } from "./camera";
+import { DESK_UNIT } from "./camera";
 
 // Generated geometry for the intro scene. It is rendered on the server (V8)
 // and hydrated in every browser engine, so it must come out bit-identical
@@ -309,13 +309,15 @@ export function deskBox({
   };
 }
 
-// The room behind the desk, for SceneBackdrop and Fireplace, in rest-vw: vw
-// at the camera's rest position, with y = 0 on the laptop screen's bottom edge
-// and up negative. A stage unit is START_SCALE rest-vw, so the desk's back
-// edge (stage y −18) sits at y −4.5.
+// The room behind the desk, for SceneBackdrop and Fireplace, in room units:
+// rest-vw of the laptop pose, with y = 0 on the device screen's bottom edge
+// and up negative. A desk unit is DESK_UNIT room units, so the desk's back
+// edge (desk y −18) sits at y −4.5. Phones and tablets magnify the room at
+// rest (see the intro camera in globals.css), so these units hold on every
+// device.
 export const ROOM_FLOOR_Y = -9;
 // Front-to-back lines on the floor meet where the deck's do.
-const ROOM_VANISH_Y = HORIZON_Y * START_SCALE;
+const ROOM_VANISH_Y = HORIZON_Y * DESK_UNIT;
 const PLANK_WIDTH = 2.6;
 
 export function floorSeams() {
