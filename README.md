@@ -60,6 +60,12 @@ npm run lint
 npm run format
 ```
 
+Regenerate the desktop wallpaper (`public/wallpapers/flow-*.jpg`) after editing the waves or palette in [scripts/generate-wallpaper.mjs](scripts/generate-wallpaper.mjs):
+
+```bash
+npm run wallpaper
+```
+
 ## Project layout
 
 ```
@@ -72,7 +78,8 @@ src/
     BrandIcon.tsx
   lib/         # windows-store (reducer), theme, clock, portfolio-data
   types/       # AppId, AppDef, WindowState, WindowBounds
-public/        # static assets (wallpapers/ is empty; Settings uses Unsplash URLs)
+public/        # static assets (wallpapers/ holds the generated flow-*.jpg wallpaper)
+scripts/       # generate-wallpaper.mjs (`npm run wallpaper`)
 ```
 
 Editorial content lives in [src/lib/portfolio-data.ts](src/lib/portfolio-data.ts) — bio, projects, resume entries, photos, social links.

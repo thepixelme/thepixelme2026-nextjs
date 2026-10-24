@@ -112,6 +112,7 @@ Mobile shell adds its own layers (only present when `useIsMobile()` is true):
 | Brand-icon SVG       | [src/components/BrandIcon.tsx](../src/components/BrandIcon.tsx) |
 | Mobile shell         | [src/components/mobile/](../src/components/mobile/)         |
 | Laptop scroll-zoom intro | [src/components/intro/](../src/components/intro/), state in [src/lib/intro.ts](../src/lib/intro.ts) |
+| Wallpaper generator  | [scripts/generate-wallpaper.mjs](../scripts/generate-wallpaper.mjs) (`npm run wallpaper`) |
 | Viewport switch hook | [src/lib/useIsMobile.ts](../src/lib/useIsMobile.ts)         |
 | Shared clock + raw-Date hook | [src/lib/clock.ts](../src/lib/clock.ts) (`useClock`, `useNow`) |
 

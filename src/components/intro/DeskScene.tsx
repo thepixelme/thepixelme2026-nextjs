@@ -2,48 +2,13 @@
 
 import { motion } from "motion/react";
 import { useId } from "react";
-import { mulberry32 } from "./random";
+import { foregroundY, hillPath, meadowDetail, meadowY } from "./scenery";
 
 // Units are vw with the origin at the laptop screen's bottom-left corner, so
 // the desk lines up with LaptopFrame (base bottom at y = 3.25) at any aspect.
 
-const meadowY = (x: number) =>
-  16 + 0.0006 * (x - 50) ** 2 + 1.2 * Math.sin(x / 23);
-const foregroundY = (x: number) =>
-  50 + 9 * Math.sin(x / 55 + 1) + 0.00025 * (x - 50) ** 2;
-
-function hillPath(crest: (x: number) => number) {
-  let d = "M-450,400";
-  for (let x = -450; x <= 550; x += 10) d += ` L${x},${crest(x).toFixed(2)}`;
-  return `${d} L550,400 Z`;
-}
-
 const MEADOW = hillPath(meadowY);
 const FOREGROUND = hillPath(foregroundY);
-
-// Grass tufts and wildflowers, growing with distance below the crest so the
-// meadow reads as receding.
-function meadowDetail() {
-  const rand = mulberry32(5);
-  let tufts = "";
-  const flowers: { x: number; y: number; r: number; tone: number }[] = [];
-  for (let i = 0; i < 90; i += 1) {
-    const x = -180 + rand() * 420;
-    const y = meadowY(x) + 2 + rand() * 60;
-    const s = 0.6 + (y - meadowY(x)) * 0.03;
-    tufts += `M${x.toFixed(1)},${y.toFixed(1)} l${(-0.7 * s).toFixed(2)},${(-2 * s).toFixed(2)} M${x.toFixed(1)},${y.toFixed(1)} l0,${(-2.5 * s).toFixed(2)} M${x.toFixed(1)},${y.toFixed(1)} l${(0.7 * s).toFixed(2)},${(-2 * s).toFixed(2)} `;
-    if (i % 3 === 0) {
-      flowers.push({
-        x: x + 2,
-        y: y - 0.5,
-        r: 0.35 * s,
-        tone: Math.floor(rand() * 3),
-      });
-    }
-  }
-  return { tufts, flowers };
-}
-
 const DETAIL = meadowDetail();
 const FLOWER_TONES = [
   "fill-(--scene-ceramic)",

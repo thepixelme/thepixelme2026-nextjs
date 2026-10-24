@@ -3,44 +3,7 @@
 import { type MotionValue, motion, useTransform } from "motion/react";
 import { type ReactNode, useId } from "react";
 import { layerScale, layerY } from "./camera";
-import { mulberry32 } from "./random";
-
-// Midpoint-displacement ridge across x 0..1000; y 0 is the highest peak.
-function ridgePoints(seed: number, height: number): [number, number][] {
-  const rand = mulberry32(seed);
-  const n = 128;
-  const ys = new Array<number>(n + 1).fill(0);
-  ys[0] = rand();
-  ys[n] = rand();
-  let spread = 1;
-  for (let step = n; step > 1; step /= 2) {
-    const half = step / 2;
-    for (let i = half; i < n; i += step) {
-      ys[i] = (ys[i - half] + ys[i + half]) / 2 + (rand() - 0.5) * spread;
-    }
-    spread *= 0.55;
-  }
-  const min = Math.min(...ys);
-  const range = Math.max(...ys) - min;
-  return ys.map((v, i) => [(i / n) * 1000, height * (1 - (v - min) / range)]);
-}
-
-function ridgePath(points: [number, number][]) {
-  return `M0,1000 L${points.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" L")} L1000,1000 Z`;
-}
-
-function forestPath(points: [number, number][], seed: number) {
-  const rand = mulberry32(seed);
-  let d = "";
-  for (let i = 0; i < points.length; i += 1) {
-    if (rand() < 0.35) continue;
-    const [x, y] = points[i];
-    const h = 14 + rand() * 18;
-    const w = 4 + rand() * 3;
-    d += `M${(x - w).toFixed(1)},${(y + 4).toFixed(1)} L${x.toFixed(1)},${(y - h).toFixed(1)} L${(x + w).toFixed(1)},${(y + 4).toFixed(1)} Z `;
-  }
-  return d;
-}
+import { forestPath, ridgePath, ridgePoints } from "./scenery";
 
 const RIDGES = [
   {

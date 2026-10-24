@@ -16,6 +16,7 @@ This file is the canonical style reference. Read it before writing any component
   - Keep theme values centralised in `globals.css` — do not redefine them per-component.
   - Use native `onClick` on `<button>` / `<a>` elements (the previous `onPress` convention was a HeroUI-ism and no longer applies).
 - **lucide-react ^1.61.0** — the only icon library. Do not introduce another.
+- **sharp** (devDependency) — only used by [scripts/generate-wallpaper.mjs](scripts/generate-wallpaper.mjs) to rasterise the wallpaper. Not imported by app code.
 - **Biome 2.6** — both linter and formatter. `npm run lint` (check) and `npm run format` (write). Markdown and SVG files are excluded in [biome.json](biome.json); Tailwind directives in CSS are enabled via `css.parser.tailwindDirectives`.
 
 ---
@@ -264,6 +265,8 @@ Default to server. Add `"use client"` only when the file uses:
 - Browser APIs (`window`, `localStorage`, `document`)
 
 App content components (FinderApp, AboutApp, etc.) will mostly be client components because they live inside windows that are part of the client-rendered desktop tree.
+
+Anything computed during render and written into server-rendered HTML must come out identical in every JS engine, or hydration fails in some browsers. Generated geometry (see [src/components/intro/scenery.ts](src/components/intro/scenery.ts)) sticks to `+ − × ÷ %` and `Math.round/min/max/floor/imul`. Never use `Math.sin`, `Math.pow` / `**` or other library maths there, and round values before they become attributes.
 
 ### 8.4 Styling
 

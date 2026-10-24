@@ -91,7 +91,13 @@ Stateless, `aria-hidden` MacBook hardware drawn around a viewport-sized screen b
 | Mid ridge | 0.45 | Ridge at `top-[45%]` |
 | Near ridge | 0.65 | Ridge at `top-[54%]` with a conifer forest along the crest |
 
-Ridges are generated at module load by midpoint displacement from a fixed seed ([random.ts](../src/components/intro/random.ts) `mulberry32`), so server and client render identical paths. Each ridge is an SVG (`viewBox 0 0 1000 1000`, `preserveAspectRatio="none"`) filled from the ridge colour to `--scene-haze`, with a soft mist band below the crest, and extends 60% past the viewport bottom so zooming never reveals a gap.
+Ridges are generated at module load by midpoint displacement from a fixed seed (`mulberry32` in [scenery.ts](../src/components/intro/scenery.ts)). Each ridge is an SVG (`viewBox 0 0 1000 1000`, `preserveAspectRatio="none"`) filled from the ridge colour to `--scene-haze`, with a soft mist band below the crest, and extends 60% past the viewport bottom so zooming never reveals a gap.
+
+## Scenery geometry ([src/components/intro/scenery.ts](../src/components/intro/scenery.ts))
+
+All generated scene geometry lives here: `mulberry32` (seeded PRNG), `sine` (arithmetic-only approximation of `Math.sin`), `ridgePoints` / `ridgePath` / `forestPath` for SceneBackdrop, and `meadowY` / `foregroundY` / `hillPath` / `meadowDetail` for DeskScene.
+
+The geometry is server-rendered by Node (V8) and hydrated in every browser engine, so its output must be **bit-identical across JS engines**. If it isn't, React reports a hydration mismatch. The module therefore uses only `+ − × ÷ %` and `Math.round` / `min` / `max` / `floor` / `imul`, whose results IEEE 754 and the JS spec fix exactly. `Math.sin`, `Math.pow` / `**` and other library maths can differ in the last bit between engines; JavaScriptCore in Safari, for example, gave a different wildflower `cy` than V8. Values written to SVG attributes are also rounded (`toFixed`, or `round2` for numeric props).
 
 ## DeskScene ([src/components/intro/DeskScene.tsx](../src/components/intro/DeskScene.tsx))
 
@@ -117,7 +123,7 @@ Below 1024 px, `<MobileShell />` replaces the entire desktop chrome with a botto
 
 ## Wallpaper ([Wallpaper.tsx](../src/components/desktop/Wallpaper.tsx))
 
-Sits behind everything as a fixed, full-viewport background. Stateless — renders the bundled "flow" wallpaper (layered violet / pink / orange waves, generated as SVG and rasterised to JPEG) via a responsive `<picture>`:
+Sits behind everything as a fixed, full-viewport background. Stateless — renders the bundled "flow" wallpaper via a responsive `<picture>`. The wallpaper is layered violet / pink / orange waves, drawn as SVG and rasterised to JPEG with `sharp` by [scripts/generate-wallpaper.mjs](../scripts/generate-wallpaper.mjs) (`npm run wallpaper`; the waves and palette are constants at the top of that script, and the output is deterministic).
 
 - `<source media="(orientation: portrait)" srcSet="/wallpapers/flow-768x1280.jpg" />` (768×1280 portrait crop, ~21KB)
 - `<img src="/wallpapers/flow-2560x1600.jpg" />` (2560×1600 landscape, ~69KB) as the default
