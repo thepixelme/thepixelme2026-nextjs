@@ -1,5 +1,5 @@
-const DEFAULT_LANDSCAPE = "/wallpapers/flow-2560x1600.jpg";
-const DEFAULT_PORTRAIT = "/wallpapers/flow-768x1280.jpg";
+const DEFAULT_LANDSCAPE = "/wallpapers/snowfall-2560x1600.jpg";
+const DEFAULT_PORTRAIT = "/wallpapers/snowfall-768x1280.jpg";
 
 export default function Wallpaper() {
   return (

@@ -200,10 +200,10 @@ Below 1024 px, and on portrait viewports of any width, `<MobileShell />` replace
 
 ## Wallpaper ([Wallpaper.tsx](../src/components/desktop/Wallpaper.tsx))
 
-Sits behind everything as a fixed, full-viewport background. Stateless — renders the bundled "flow" wallpaper via a responsive `<picture>`. The wallpaper is layered violet / pink / orange waves, drawn as SVG and rasterised to JPEG with `sharp` by [scripts/generate-wallpaper.mjs](../scripts/generate-wallpaper.mjs) (`npm run wallpaper`; the waves and palette are constants at the top of that script, and the output is deterministic).
+Sits behind everything as a fixed, full-viewport background. Stateless — renders the bundled "snowfall" wallpaper via a responsive `<picture>`. The wallpaper is the view from the intro room's window on a winter night: a starry sky with a full moon, snow-capped mountains, rolling snowy hills with pines, a cabin with lit windows and a smoking chimney, and falling snow. Its cool blues set the device's screen apart from the warm, fire-lit room around it. It is drawn as SVG and rasterised to JPEG with `sharp` by [scripts/generate-wallpaper.mjs](../scripts/generate-wallpaper.mjs) (`npm run wallpaper`; the hills, mountain peaks, moon and cabin positions and the palette are constants at the top of that script, and its randomness is seeded, so the output is deterministic).
 
-- `<source media="(orientation: portrait)" srcSet="/wallpapers/flow-768x1280.jpg" />` (768×1280 portrait crop, ~21KB)
-- `<img src="/wallpapers/flow-2560x1600.jpg" />` (2560×1600 landscape, ~69KB) as the default
+- `<source media="(orientation: portrait)" srcSet="/wallpapers/snowfall-768x1280.jpg" />` (768×1280 crop of the right-hand side, keeping the moon and the cabin, ~34KB)
+- `<img src="/wallpapers/snowfall-2560x1600.jpg" />` (2560×1600 landscape, ~108KB) as the default. The moon and cabin sit right of centre, clear of the About window and the dock.
 - The `<img>` carries `alt=""` + `aria-hidden="true"` (decorative) and `fixed inset-0 -z-10 h-full w-full object-cover` for the full-bleed backdrop.
 
 ## MenuBar ([MenuBar.tsx](../src/components/desktop/MenuBar.tsx))
