@@ -92,7 +92,7 @@ Detached floating positioning is part of the look: panel should leave a small ma
 
 ### 2.5 Laptop intro hardware
 
-The scroll-zoom intro draws a MacBook in CSS (lid) and SVG (keyboard deck). Its colours are the `--laptop-*` tokens in their own section of [src/app/globals.css](src/app/globals.css) — silver under `glass-light`, space black under `glass-dark`. The landscape, desk and props around it use the `--scene-*` tokens in the same section. They are defined once in `:root`, because the scene is an illustration and stays the same in both themes. Use both sets only inside [src/components/intro/](src/components/intro/). Full tables in [docs/styling-and-icons.md](docs/styling-and-icons.md#laptop-intro-tokens).
+The scroll-zoom intro draws a MacBook in CSS (lid) and SVG (keyboard deck). Its colours are the `--laptop-*` tokens in their own section of [src/app/globals.css](src/app/globals.css) — silver under `glass-light`, space black under `glass-dark`. The fire-lit room, desk and props around it, and the intro headline, use the `--scene-*` tokens in the same section. They are defined once in `:root`, because the scene is an illustration and stays the same in both themes. Use both sets only inside [src/components/intro/](src/components/intro/). Full tables in [docs/styling-and-icons.md](docs/styling-and-icons.md#laptop-intro-tokens).
 
 ### 2.6 Traffic-light colors
 
@@ -222,7 +222,7 @@ Use these named layers. Do not improvise z values.
 - **Mobile dock show/hide**: `motion/react` spring (`stiffness 320, damping 32`) on `{ y, opacity }`. Reduced motion collapses to `duration: 0`.
 - **Spotlight**: backdrop fade 100ms, dialog scale `0.97 → 1` 150ms.
 - **Traffic light hover**: glyphs `opacity-0 → opacity-100` on `.group:hover`, 80ms.
-- **Laptop intro** (desktop landing): scroll-driven via `useScroll({ container })` smoothed by `useSpring` (`stiffness 260, damping 40`), over 180vh of scroll. Laptop/desk stage scale `0.25 → 1` (log-space, ease-in-out), `y` `−4vh → 0`. Landscape layers zoom by the same curve raised to their depth (sky 0.08, ridges 0.25 / 0.45 / 0.65) for parallax. Camera math lives in [src/components/intro/camera.ts](src/components/intro/camera.ts). Headline fades over the first 20% of progress, scroll hint over the first 8%. Click / keyboard entry animates the scroll position over 1.2s with `ease [0.65, 0, 0.35, 1]`. Never animates layout properties — only `transform` on the stage and layer elements.
+- **Laptop intro** (desktop landing): scroll-driven via `useScroll({ container })` smoothed by `useSpring` (`stiffness 260, damping 40`), over 180vh of scroll. Laptop/desk stage scale `0.25 → 1` (log-space, ease-in-out), `y` `−4vh → 0`. Backdrop layers zoom by the same curve raised to their depth (night view through the window 0.1, room 0.35) for parallax. Ambient loops (flames, embers, firelight, fairy lights, candle halos, falling snow, mug steam) run continuously while the intro is up; flames flicker by scaling about their base. Camera math lives in [src/components/intro/camera.ts](src/components/intro/camera.ts). Headline fades over the first 20% of progress, scroll hint over the first 8%. Click / keyboard entry animates the scroll position over 1.2s with `ease [0.65, 0, 0.35, 1]`. Never animates layout properties — only `transform` on the stage and layer elements.
 - **Intro ambience**: clouds drift ±3–5vw over 38–50s (mirror loop); mug steam fades and rises over 3.2s; the walkthrough cursor glides between stops in 0.8s every 1.6s.
 - **Dock explore hint**: after the desktop goes live, each dock tile bounces once (`y: [0, -14, 0, -5, 0]`, 0.9s, staggered 0.12s) and the hint chip fades in with a 6px rise (0.25s). Reduced motion skips the bounce.
 
@@ -266,7 +266,7 @@ Default to server. Add `"use client"` only when the file uses:
 
 App content components (FinderApp, AboutApp, etc.) will mostly be client components because they live inside windows that are part of the client-rendered desktop tree.
 
-Anything computed during render and written into server-rendered HTML must come out identical in every JS engine, or hydration fails in some browsers. Generated geometry (see [src/components/intro/scenery.ts](src/components/intro/scenery.ts)) sticks to `+ − × ÷ %` and `Math.round/min/max/floor/imul`. Never use `Math.sin`, `Math.pow` / `**` or other library maths there, and round values before they become attributes.
+Anything computed during render and written into server-rendered HTML must come out identical in every JS engine, or hydration fails in some browsers. Generated geometry (see [src/components/intro/scenery.ts](src/components/intro/scenery.ts)) sticks to `+ − × ÷ %` and `Math.round/min/max/floor/ceil/imul`. Never use `Math.sin`, `Math.pow` / `**` or other library maths there, and round values before they become attributes.
 
 ### 8.4 Styling
 

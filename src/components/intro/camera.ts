@@ -1,9 +1,12 @@
 // The laptop plane rests at START_SCALE (screen size as a fraction of the
 // viewport), offset START_OFFSET_VH from centre, and zooms until the screen
 // fills the viewport. Layers further away (depth < 1) magnify less, which
-// gives the landscape its parallax.
+// gives the room its parallax.
 export const START_SCALE = 0.25;
 export const START_OFFSET_VH = -4;
+// Where the laptop screen's bottom edge rests, which the backdrop is drawn
+// around.
+export const REST_SCREEN_BOTTOM_VH = 50 + 50 * START_SCALE + START_OFFSET_VH;
 
 export const easeInOut = (t: number) =>
   t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;

@@ -367,29 +367,51 @@ html[data-theme="glass-dark"] {
   --laptop-shadow: oklch(0% 0 0 / 0.3);
 }
 
-/* Dawn landscape + desk the laptop sits on. An illustration, so the same in
-   both themes (like the wallpaper photo). Used by src/components/intro/. */
+/* Fire-lit room + desk the laptop sits on, on a snowy night. An illustration,
+   so the same in both themes (like the wallpaper photo). Used by
+   src/components/intro/. */
 :root {
-  --scene-sky-top: oklch(80% 0.06 245);
-  --scene-sky-mid: oklch(88% 0.05 30);
-  --scene-sky-horizon: oklch(94% 0.045 75);
-  --scene-sun: oklch(99% 0.04 90);
-  --scene-cloud: oklch(98% 0.012 60);
-  --scene-haze: oklch(92% 0.035 55);
-  --scene-ridge-far: oklch(80% 0.045 320);
-  --scene-ridge-mid: oklch(68% 0.05 300);
-  --scene-ridge-near: oklch(52% 0.05 265);
-  --scene-forest: oklch(38% 0.045 230);
-  --scene-meadow-far: oklch(72% 0.09 120);
-  --scene-meadow-near: oklch(46% 0.09 140);
-  --scene-wood-top: oklch(82% 0.07 70);
+  --scene-ink: oklch(24% 0.03 40);
+  --scene-ink-muted: oklch(32% 0.035 40);
+  --scene-wall: oklch(74% 0.06 52);
+  --scene-wall-shade: oklch(46% 0.06 40);
+  --scene-trim: oklch(95% 0.015 85);
+  --scene-trim-shade: oklch(83% 0.025 75);
+  --scene-floor: oklch(52% 0.075 52);
+  --scene-floor-seam: oklch(40% 0.06 45);
+  --scene-rug: oklch(54% 0.12 35);
+  --scene-rug-dark: oklch(36% 0.07 30);
+  --scene-rug-light: oklch(88% 0.04 80);
+  --scene-brick: oklch(54% 0.1 35);
+  --scene-brick-dark: oklch(44% 0.09 32);
+  --scene-mortar: oklch(72% 0.035 55);
+  --scene-stone: oklch(66% 0.015 60);
+  --scene-stone-face: oklch(52% 0.015 55);
+  --scene-soot: oklch(17% 0.01 40);
+  --scene-log: oklch(34% 0.05 45);
+  --scene-log-end: oklch(66% 0.08 65);
+  --scene-ember: oklch(66% 0.21 38);
+  --scene-flame-outer: oklch(68% 0.2 42);
+  --scene-flame-mid: oklch(81% 0.16 68);
+  --scene-flame-core: oklch(97% 0.07 95);
+  --scene-firelight: oklch(78% 0.15 60);
+  --scene-brass: oklch(76% 0.11 82);
+  --scene-brass-shade: oklch(58% 0.09 70);
+  --scene-wax: oklch(96% 0.02 85);
+  --scene-wax-shade: oklch(84% 0.04 75);
+  --scene-curtain: oklch(46% 0.07 160);
+  --scene-curtain-shade: oklch(36% 0.06 160);
+  --scene-night-top: oklch(24% 0.06 268);
+  --scene-night-horizon: oklch(44% 0.07 258);
+  --scene-moon: oklch(97% 0.03 95);
+  --scene-snow: oklch(95% 0.015 250);
+  --scene-snow-shade: oklch(76% 0.04 255);
+  --scene-pine: oklch(26% 0.035 225);
+  --scene-wood-top: oklch(77% 0.075 64);
   --scene-wood-face: oklch(64% 0.09 60);
-  --scene-desk-leg: oklch(24% 0.005 286);
+  --scene-desk-leg: oklch(42% 0.06 55);
   --scene-ceramic: oklch(96% 0.006 90);
   --scene-ceramic-shade: oklch(84% 0.02 60);
-  --scene-leaf: oklch(55% 0.12 150);
-  --scene-leaf-dark: oklch(40% 0.09 155);
-  --scene-leaf-edge: oklch(85% 0.12 110);
   --scene-book-red: oklch(55% 0.15 25);
   --scene-book-navy: oklch(40% 0.08 260);
   --scene-book-mustard: oklch(80% 0.12 85);

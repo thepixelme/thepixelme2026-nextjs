@@ -34,7 +34,7 @@ Structure:
 
 ## Laptop intro ([src/components/intro/LaptopIntro.tsx](../src/components/intro/LaptopIntro.tsx))
 
-Scroll-driven landing on desktop, modelled on mercury.com. The visitor first sees the headline over an illustrated dawn landscape: misty mountain ridges, a meadow, and an oak desk with a snake plant, a book stack and a steaming mug. On the desk sits a MacBook, seen from slightly above so its keyboard deck shows, whose screen shows the **live** `<DesktopBody />`, with the About window open and a fake cursor touring the dock. Scrolling zooms into the laptop until its screen exactly fills the viewport, and the desktop becomes interactive.
+Scroll-driven landing on desktop, modelled on mercury.com. The visitor first sees the headline over an illustrated, fire-lit room at night: a mantel fireplace with a crackling fire, a snowy window, a wood floor and a rug, and an oak desk with a tray of lit pillar candles, a book stack and a steaming mug. On the desk sits a MacBook, seen from slightly above so its keyboard deck shows, whose screen shows the **live** `<DesktopBody />`, with the About window open and a fake cursor touring the dock. Scrolling zooms into the laptop until its screen exactly fills the viewport, and the desktop becomes interactive.
 
 Props: `{ children: ReactNode }` — the screen content (`<DesktopBody />`, or `<Wallpaper />` in the pre-hydration frame).
 
@@ -46,10 +46,10 @@ Props: `{ children: ReactNode }` — the screen content (`<DesktopBody />`, or `
 <div scroller: h-full overflow-y-auto, scrollbar hidden>     ← useScroll({ container })
   <div h-[280vh]>                                            ← 180vh of scroll distance
     <div sticky top-0 h-dvh overflow-hidden>
-      <SceneBackdrop progress />   sky, sun, drifting clouds, three mountain ridges (parallax layers)
-      <header>      ABOUT.name + <h1>{ABOUT.title}</h1>; fades out over the first 20%
+      <SceneBackdrop progress />   night view, then the room's wall, fireplace and floor (parallax layers)
+      <header>      ABOUT.name + <h1>{ABOUT.title}</h1> in --scene-ink colours; fades out over the first 20%
       <motion.div stage absolute inset-0 style={{ scale, y }}>
-        <DeskScene />                         meadow, desk and props, anchored to the screen's bottom edge
+        <DeskScene />                         rug, desk and props, anchored to the screen's bottom edge
         <LaptopFrame />                       lid, keyboard deck, contact shadow (outside the screen box)
         <motion.div screen absolute inset-0 overflow-hidden [contain:paint] inert>
           {children}
@@ -60,9 +60,9 @@ Props: `{ children: ReactNode }` — the screen content (`<DesktopBody />`, or `
       <p>Scroll to enter <ChevronDown /></p>   glass pill; fades out over the first 8%
 ```
 
-The screen box is exactly the viewport, so at scale 1 it fills the window and the frame, desk and meadow sit off-screen. `contain: paint` makes the screen the containing block for the desktop's `fixed` chrome (wallpaper, menu bar, dock) and clips it to the screen's rounded corners.
+The screen box is exactly the viewport, so at scale 1 it fills the window and the frame, desk and rug sit off-screen. `contain: paint` makes the screen the containing block for the desktop's `fixed` chrome (wallpaper, menu bar, dock) and clips it to the screen's rounded corners.
 
-**Camera** ([src/components/intro/camera.ts](../src/components/intro/camera.ts)) — `scrollYProgress` is smoothed with `useSpring` (`stiffness 260, damping 40`). The stage (laptop, desk, meadow) scales from `START_SCALE` (0.25) to 1, interpolated in log space with an ease-in-out so the perceived zoom speed is even, and its `y` offset runs from `START_OFFSET_VH` (−4vh) to `0`. Background layers have a `depth` below 1 and magnify by `layerScale(p, depth)` = (1 / START_SCALE)^(depth · ease(p)), shifted by `layerY(p, depth)` so they zoom about the same point as the laptop screen. Farther layers therefore grow less, which produces the parallax. The screen's top corner radius flattens from `0.7vw` to `0` over the last 20%. When progress passes 0.995 it calls `finishIntro()`.
+**Camera** ([src/components/intro/camera.ts](../src/components/intro/camera.ts)) — `scrollYProgress` is smoothed with `useSpring` (`stiffness 260, damping 40`). The stage (laptop, desk, rug) scales from `START_SCALE` (0.25) to 1, interpolated in log space with an ease-in-out so the perceived zoom speed is even, and its `y` offset runs from `START_OFFSET_VH` (−4vh) to `0`. Background layers have a `depth` below 1 and magnify by `layerScale(p, depth)` = (1 / START_SCALE)^(depth · ease(p)), shifted by `layerY(p, depth)` so they zoom about the same point as the laptop screen. Farther layers therefore grow less, which produces the parallax. The screen's top corner radius flattens from `0.7vw` to `0` over the last 20%. When progress passes 0.995 it calls `finishIntro()`. `REST_SCREEN_BOTTOM_VH` (58.5) is where the screen's bottom edge sits at rest; SceneBackdrop anchors its layers there.
 
 **Finishing** — once `useIntroPending()` is `false`, every wrapper above `{children}` switches to `display: contents` and the scene elements unmount. `DesktopBody` keeps its tree position (no remount, no transform, no extra stacking context), so the desktop behaves exactly as it would without the intro.
 
@@ -87,37 +87,46 @@ The keyboard is a 14-inch MacBook Pro layout: a full-height function row, five l
 
 ## SceneBackdrop ([src/components/intro/SceneBackdrop.tsx](../src/components/intro/SceneBackdrop.tsx))
 
-`aria-hidden` landscape behind the laptop, outside the stage. Props: `{ progress: MotionValue<number> }`. Each layer is a `DepthLayer` (local helper) whose `scale` / `y` come from `layerScale` / `layerY`:
+`aria-hidden` room behind the laptop, outside the stage. Props: `{ progress: MotionValue<number> }`. Each layer is a `DepthLayer` (local helper) whose `scale` / `y` come from `layerScale` / `layerY`:
 
 | Layer | Depth | Content |
 | --- | --- | --- |
-| Sky | 0.08 | `--scene-sky-*` gradient, radial sun glow, three SVG clouds drifting back and forth (40–50 s, `repeatType: "mirror"`) |
-| Far ridge | 0.25 | Ridge at `top-[34%]` |
-| Mid ridge | 0.45 | Ridge at `top-[45%]` |
-| Near ridge | 0.65 | Ridge at `top-[54%]` with a conifer forest along the crest |
+| Night view | 0.1 (`NIGHT_DEPTH`) | Seen only through the window: `--scene-night-*` sky, stars, moon with a glow, snowy hills with a band of pines, and falling snow. |
+| Room | 0.35 (`ROOM_DEPTH`) | Back wall with the window cut out, wood floor, baseboard, the window (frame, mullions, sill, tied-back curtains on a brass rod), `<Fireplace />`, a warm vignette, and a flickering firelight glow. |
 
-Ridges are generated at module load by midpoint displacement from a fixed seed (`mulberry32` in [scenery.ts](../src/components/intro/scenery.ts)). Each ridge is an SVG (`viewBox 0 0 1000 1000`, `preserveAspectRatio="none"`) filled from the ridge colour to `--scene-haze`, with a soft mist band below the crest, and extends 60% past the viewport bottom so zooming never reveals a gap.
+Both layers are drawn in **rest-vw**: vw at the camera's rest position, with y = 0 on the laptop screen's bottom edge and up negative. Each is a `div` anchored at `top: REST_SCREEN_BOTTOM_VH vh` holding an SVG whose user units are vw (`viewBox="-10 -60 120 100"` over `120vw × 100vw` for the room). Because the stage is drawn in vw from the same edge, the room lines up with the desk at every aspect ratio: one stage unit is `START_SCALE` (0.25) rest-vw, so the desk's back edge (stage y −18) sits at y −4.5, just in front of the floor line at `ROOM_FLOOR_Y` (−9). The wall is a single `evenodd` path with the window glass cut out, so the night layer shows through it and shifts behind the frame as the camera moves in.
+
+The falling snow is a `motion.svg` holding the same 45 × 42 tile of flakes twice, stacked; it slides down one tile height every 18 s on a linear loop, so the repeat is seamless. The firelight is an HTML `div` with a radial gradient whose opacity flickers (2.2 s, mirrored), so the compositor animates it without repainting the wall.
+
+## Fireplace ([src/components/intro/Fireplace.tsx](../src/components/intro/Fireplace.tsx))
+
+`<g>` drawn inside SceneBackdrop's room SVG, in the same rest-vw units, with the firebox centred on x = 15 so it shows left of the laptop and above the desk's back edge. Back to front: stone hearth slab with a glow on it, a running-bond brick panel (`brickCourses`) with a soldier course around the arched opening, the sooty firebox with darker bricks on its back wall, a flickering inner glow, the grate, a back log, the fire, the front log, pulsing embers and andirons. Then the painted mantelpiece (plinths, panelled pilasters, frieze, shelf), fairy lights draped under the shelf in four swags (alternate bulbs twinkle out of step), and the mantel ornaments: two brass candlesticks with lit tapers, a leaning framed mountain painting, two books and a small brass clock.
+
+The fire is a broad base flame that swells slowly, plus five `<Flame>` tongues of different heights, leans, durations and delays.
+
+## Flame ([src/components/intro/Flame.tsx](../src/components/intro/Flame.tsx))
+
+A flickering teardrop flame standing on `(x, y)` in the parent SVG's units. Props: `{ x, y, height, lean?, duration?, delay?, candle? }`. Fire tongues have three layers (`--scene-flame-outer` / `-mid` / `-core`); with `candle` they are narrower and have only the amber and yellow layers. A `motion.g` loops `scaleY`, `scaleX` and `rotate` keyframes about the flame's base (`originY: 1`; motion sets `transform-box: fill-box` on SVG). Paths come from `flamePath` in [scenery.ts](../src/components/intro/scenery.ts). Used by Fireplace (tongues, mantel tapers) and DeskScene (pillar candles).
 
 ## Scenery geometry ([src/components/intro/scenery.ts](../src/components/intro/scenery.ts))
 
-All generated scene geometry lives here: `mulberry32` (seeded PRNG), `sine` (arithmetic-only approximation of `Math.sin`), `ridgePoints` / `ridgePath` / `forestPath` for SceneBackdrop, `meadowY` / `foregroundY` / `hillPath` / `meadowDetail` / `DESK` for DeskScene, and `LAPTOP_BASE` for LaptopFrame.
+All generated scene geometry lives here: `mulberry32` (seeded PRNG), `sine` (arithmetic-only approximation of `Math.sin`), `round2`, `dotsPath` (circles as one path) and `flamePath`; `LAPTOP_BASE` for LaptopFrame; `DESK` and `RUG` for DeskScene; and, in rest-vw for SceneBackdrop and Fireplace, `ROOM_FLOOR_Y`, `floorSeams`, `brickCourses`, `nightHillY` / `nightNearY` / `crestPath`, `pinesPath`, `starDots` and `snowTile`.
 
 The scene is drawn to the scale of a 14-inch MacBook Pro, whose screen is about 30 cm wide, so 1 cm ≈ 3.3vw.
 
 `LAPTOP_BASE` lays out the deck in plan coordinates: `u` runs across 0–1, and `v` runs from the hinge (0) to the front edge (1). The camera looks squarely at the screen, and the lid is tilted back about 25°. So the 22 cm deck (73vw in plan) foreshortens to sin 25° ≈ 0.42 of its depth: the front edge sits 31vw below the back edge. The back edge is 102.8vw wide (the lid's width) at y = 2.6. Plan points are projected in perspective with a scale of `1 / (1 − c·v)`, which is 1 at the hinge and `DECK_SPREAD` (1.07) at the front edge. The result holds the path strings for every part of the base, plus `backY` / `frontY` for the gradients.
 
-`flatSpread(y)` extends the deck's vanishing lines: it returns the width multiplier (1 at the hinge line) for anything lying flat at projected depth `y`. `DESK` uses it to build a desk about 110 cm wide. Its top runs from y = −18 (behind the laptop) to y = 44 and is 330vw wide at the front edge. `DESK` holds the top and grain paths and the leg positions.
+`flatSpread(y)` extends the deck's vanishing lines: it returns the width multiplier (1 at the hinge line) for anything lying flat at projected depth `y`. `DESK` uses it to build a desk about 110 cm wide. Its top runs from y = −18 (behind the laptop) to y = 44 and is 330vw wide at the front edge. `DESK` holds the top and grain paths and the leg positions. `RUG` uses the same vanishing lines for a rug about 200 cm wide whose back edge (y = 24) is hidden behind the desk except at the sides; it holds the field, back border, fringe, cross stripes and two rows of diamonds. `floorSeams` runs the room's floorboards towards the same vanishing point, scaled into rest-vw.
 
-The geometry is server-rendered by Node (V8) and hydrated in every browser engine, so its output must be **bit-identical across JS engines**. If it isn't, React reports a hydration mismatch. The module therefore uses only `+ − × ÷ %` and `Math.round` / `min` / `max` / `floor` / `imul`, whose results IEEE 754 and the JS spec fix exactly. `Math.sin`, `Math.pow` / `**` and other library maths can differ in the last bit between engines; JavaScriptCore in Safari, for example, gave a different wildflower `cy` than V8. Values written to SVG attributes are also rounded (`toFixed`, or `round2` for numeric props).
+The geometry is server-rendered by Node (V8) and hydrated in every browser engine, so its output must be **bit-identical across JS engines**. If it isn't, React reports a hydration mismatch. The module therefore uses only `+ − × ÷ %` and `Math.round` / `min` / `max` / `floor` / `ceil` / `imul`, whose results IEEE 754 and the JS spec fix exactly. `Math.sin`, `Math.pow` / `**` and other library maths can differ in the last bit between engines; JavaScriptCore in Safari, for example, gave a different wildflower `cy` than V8. Values written to SVG attributes are also rounded (`toFixed`, or `round2` for numeric props).
 
 ## DeskScene ([src/components/intro/DeskScene.tsx](../src/components/intro/DeskScene.tsx))
 
 `aria-hidden` SVG inside the stage, positioned at the screen box's bottom edge (`top-full`, `viewBox 0 0 100 100` over `100vw` → one unit is `1vw`, `overflow-visible`). The units match LaptopFrame's, so the desk lines up under the laptop base at any aspect ratio. Back to front:
 
-1. Meadow hill (crest `meadowY(x)`), plus seeded grass tufts and wildflowers that grow larger towards the viewer.
-2. Desk (`DESK` from [scenery.ts](../src/components/intro/scenery.ts)): back legs, then the oak top surface (`--scene-wood-top`) with faint grain lines. The top shares the laptop base's vanishing lines, so the two read as one view from above. Then the 6vw front edge (`--scene-wood-face`) and black steel front legs.
-3. A darker foreground hill (`foregroundY(x)`) the legs disappear into.
-4. Props on the desk: a snake plant in a ceramic pot (back left), and a stack of three books with a mug on top (right, further forward). Each is drawn small and placed by a `<g transform="translate(…) scale(…) translate(…)">` group that scales it to real size about its base: a ~30 cm plant (×1.25), ~18 cm books and a ~7 cm mug (×1.6). Two steam wisps above the mug fade and rise on a loop (3.2 s, staggered).
+1. Rug (`RUG` from [scenery.ts](../src/components/intro/scenery.ts)): rust field, cream back border with fringe, dark stripes and diamond rows, darkened towards its edges by a radial gradient. A soft shadow falls on it below the desk's front edge.
+2. Desk (`DESK`): back legs, then the oak top surface (`--scene-wood-top`) with faint grain lines. The top shares the laptop base's vanishing lines, so the two read as one view from above. Then the 6vw front edge (`--scene-wood-face`) and walnut front legs (`--scene-desk-leg`).
+3. Props on the desk: three lit pillar candles on a brass tray (back left, ~4–5 cm across and 15, 10 and 6 cm tall), and a stack of three books with a mug on top (right, further forward). Each candle has a wax gradient, a melted top, a wick, a pulsing halo and a `<Flame candle>`. The books and mug are drawn small and placed by a `<g transform="translate(…) scale(…) translate(…)">` group that scales them to real size about their base: ~18 cm books and a ~7 cm mug (×1.6). Two steam wisps above the mug fade and rise on a loop (3.2 s, staggered).
 
 ## IntroWalkthrough ([src/components/intro/IntroWalkthrough.tsx](../src/components/intro/IntroWalkthrough.tsx))
 

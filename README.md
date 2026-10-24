@@ -4,7 +4,7 @@ A personal portfolio for [thepixelme.com](https://thepixelme.com), built as an i
 
 ## Highlights
 
-- **Scroll-to-zoom intro** — on desktop the site opens on a MacBook sitting on a desk in an illustrated mountain landscape, showing the live desktop with About open and a cursor touring the dock; scrolling zooms through the parallax scene into its screen until you're in (skipped with reduced motion).
+- **Scroll-to-zoom intro** — on desktop the site opens on a MacBook sitting on a desk in a cozy, fire-lit room, showing the live desktop with About open and a cursor touring the dock; scrolling zooms through the parallax scene into its screen until you're in (skipped with reduced motion).
 - **Seven apps** in the dock — Finder (project browser), About Me, Resume, Contact, Terminal, Photos, System Settings.
 - **Real window manager** — drag by titlebar, resize from any edge or corner, traffic-light close/minimize/maximize, click-to-focus stacking.
 - **Spotlight (⌘K)** — fuzzy-find any app and open it with ↵.

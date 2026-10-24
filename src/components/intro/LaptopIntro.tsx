@@ -100,8 +100,10 @@ export default function LaptopIntro({ children }: { children: ReactNode }) {
               style={{ opacity: headlineOpacity, y: headlineY }}
               className="pointer-events-none absolute inset-x-0 top-[8vh] flex flex-col items-center gap-3 px-8 text-center"
             >
-              <p className="text-sm font-medium text-muted">{ABOUT.name}</p>
-              <h1 className="max-w-4xl text-balance text-4xl font-semibold tracking-tight xl:text-5xl">
+              <p className="text-sm font-medium text-(--scene-ink-muted)">
+                {ABOUT.name}
+              </p>
+              <h1 className="max-w-4xl text-balance text-4xl font-semibold tracking-tight text-(--scene-ink) xl:text-5xl">
                 {ABOUT.title}
               </h1>
             </motion.header>

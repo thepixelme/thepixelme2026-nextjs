@@ -93,20 +93,32 @@ Hardware colours for [LaptopFrame](desktop-shell.md#laptopframe-srccomponentsint
 | `--laptop-grille` | Speaker-grille dots either side of the keyboard. |
 | `--laptop-shadow` | Blurred contact shadow under the base. |
 
-The landscape and desk around the laptop use a second set, `--scene-*`, defined only in `:root` in the same section: the scene is an illustration, so it stays the same in both themes, like the wallpaper image. SVG fills use `fill-(--scene-…)` / `stroke-(--scene-…)`, gradient stops use `[stop-color:var(--scene-…)]`, and HTML layers use `from-(--scene-…)` etc. Not for use outside [src/components/intro/](../src/components/intro/).
+The room, desk and props around the laptop use a second set, `--scene-*`, defined only in `:root` in the same section: the scene is an illustration, so it stays the same in both themes, like the wallpaper image. SVG fills use `fill-(--scene-…)` / `stroke-(--scene-…)`, gradient stops use `[stop-color:var(--scene-…)]`, and HTML layers use `from-(--scene-…)` / `text-(--scene-…)` etc. Not for use outside [src/components/intro/](../src/components/intro/).
 
 | Tokens | Used for |
 | --- | --- |
-| `--scene-sky-top` / `-mid` / `-horizon`, `--scene-sun`, `--scene-cloud` | Sky gradient, sun glow, clouds |
-| `--scene-haze` | Valley mist; the colour every ridge fades into |
-| `--scene-ridge-far` / `-mid` / `-near`, `--scene-forest` | Mountain ridges, back to front; conifers on the near ridge |
-| `--scene-meadow-far` / `-near` | Meadow gradient, tufts, foreground hill |
-| `--scene-wood-top` / `-face`, `--scene-desk-leg` | Desk top, front edge, steel legs |
-| `--scene-ceramic` / `-shade` | Plant pot, mug, book-spine details |
-| `--scene-leaf` / `-dark` / `-edge` | Snake plant leaves and their yellow edges |
-| `--scene-book-red` / `-navy` / `-mustard` | Book spines, mug band, wildflowers |
+| `--scene-ink` / `-muted` | The intro headline and the name above it, dark enough to read on the wall |
+| `--scene-wall` / `-shade` | Back wall; `-shade` darkens its top and edges (vignette) |
+| `--scene-trim` / `-shade` | Baseboard, window frame and sill, painted mantelpiece and its panel lines, clock face, picture mat |
+| `--scene-floor` / `-seam` | Floorboards and the seams between them |
+| `--scene-rug` / `-dark` / `-light` | Rug field; stripes, diamonds and edge shading; border, fringe and diamond centres (also the painting's sky) |
+| `--scene-brick` / `-dark`, `--scene-mortar` | Fireplace brick panel in two tones, soldier course and firebox back wall; mortar |
+| `--scene-stone` / `-face` | Hearth slab top and front edge |
+| `--scene-soot` | Firebox, grate, andirons, wicks, clock hands, fairy-light wire |
+| `--scene-log` / `-end` | Logs and their cut ends |
+| `--scene-ember` | Pulsing embers under the logs |
+| `--scene-flame-outer` / `-mid` / `-core` | Fire and candle flames, outside in |
+| `--scene-firelight` | Glows: firelight on the wall, firebox and hearth, candle halos, fairy-light bulbs |
+| `--scene-brass` / `-shade` | Curtain rod and tie-backs, candlesticks, candle tray, clock |
+| `--scene-wax` / `-shade` | Candles |
+| `--scene-curtain` / `-shade` | Curtains and their folds (also the painting's hills) |
+| `--scene-night-top` / `-horizon`, `--scene-moon` | Night sky through the window, moon and stars |
+| `--scene-snow` / `-shade`, `--scene-pine` | Near and far snowy hills, falling snow, pines |
+| `--scene-wood-top` / `-face`, `--scene-desk-leg` | Desk top, front edge (and picture frame), walnut legs |
+| `--scene-ceramic` / `-shade` | Mug, book-spine details |
+| `--scene-book-red` / `-navy` / `-mustard` | Book spines, mug band, the painting's mountains and sun |
 | `--scene-steam` | Mug steam |
-| `--scene-shadow` | Contact shadows under props and the desk edge |
+| `--scene-shadow` | Contact shadows under props, the desk, the mantel shelf and the window sill |
 
 ### Hardcoded colors (allowed)
 

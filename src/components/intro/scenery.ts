@@ -1,6 +1,8 @@
+import { START_SCALE } from "./camera";
+
 // Generated geometry for the intro scene. It is rendered on the server (V8)
 // and hydrated in every browser engine, so it must come out bit-identical
-// everywhere: use only + - * / % and Math.round/min/max/floor/imul, which
+// everywhere: use only + - * / % and Math.round/min/max/floor/ceil/imul, which
 // IEEE 754 and the JS spec pin down exactly. Never Math.sin, Math.pow / **,
 // or other library maths — their last bits differ between engines (e.g.
 // JavaScriptCore in Safari) and break hydration.
@@ -26,79 +28,30 @@ export function sine(x: number) {
   return (sign * 16 * p) / (5 * Math.PI * Math.PI - 4 * p);
 }
 
-const round2 = (v: number) => Math.round(v * 100) / 100;
+export const round2 = (v: number) => Math.round(v * 100) / 100;
 
-// Midpoint-displacement ridge across x 0..1000; y 0 is the highest peak.
-export function ridgePoints(seed: number, height: number): [number, number][] {
-  const rand = mulberry32(seed);
-  const n = 128;
-  const ys = new Array<number>(n + 1).fill(0);
-  ys[0] = rand();
-  ys[n] = rand();
-  let spread = 1;
-  for (let step = n; step > 1; step /= 2) {
-    const half = step / 2;
-    for (let i = half; i < n; i += step) {
-      ys[i] = (ys[i - half] + ys[i + half]) / 2 + (rand() - 0.5) * spread;
-    }
-    spread *= 0.55;
-  }
-  const min = Math.min(...ys);
-  const range = Math.max(...ys) - min;
-  return ys.map((v, i) => [(i / n) * 1000, height * (1 - (v - min) / range)]);
+// Circles of { x, y, r } as one path, for star fields and snow.
+export function dotsPath(dots: { x: number; y: number; r: number }[]) {
+  return dots
+    .map(
+      ({ x, y, r }) =>
+        `M${round2(x - r)},${round2(y)} a${r},${r} 0 1,0 ${round2(2 * r)},0 a${r},${r} 0 1,0 ${round2(-2 * r)},0`,
+    )
+    .join(" ");
 }
 
-export function ridgePath(points: [number, number][]) {
-  return `M0,1000 L${points.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" L")} L1000,1000 Z`;
-}
-
-export function forestPath(points: [number, number][], seed: number) {
-  const rand = mulberry32(seed);
-  let d = "";
-  for (let i = 0; i < points.length; i += 1) {
-    if (rand() < 0.35) continue;
-    const [x, y] = points[i];
-    const h = 14 + rand() * 18;
-    const w = 4 + rand() * 3;
-    d += `M${(x - w).toFixed(1)},${(y + 4).toFixed(1)} L${x.toFixed(1)},${(y - h).toFixed(1)} L${(x + w).toFixed(1)},${(y + 4).toFixed(1)} Z `;
-  }
-  return d;
-}
-
-// Meadow crests for DeskScene, in vw below the laptop screen's bottom edge.
-export const meadowY = (x: number) =>
-  16 + 0.0006 * (x - 50) * (x - 50) + 1.2 * sine(x / 23);
-export const foregroundY = (x: number) =>
-  80 + 9 * sine(x / 55 + 1) + 0.00025 * (x - 50) * (x - 50);
-
-export function hillPath(crest: (x: number) => number) {
-  let d = "M-450,400";
-  for (let x = -450; x <= 550; x += 10) d += ` L${x},${crest(x).toFixed(2)}`;
-  return `${d} L550,400 Z`;
-}
-
-// Grass tufts and wildflowers, growing with distance below the crest so the
-// meadow reads as receding.
-export function meadowDetail() {
-  const rand = mulberry32(5);
-  let tufts = "";
-  const flowers: { x: number; y: number; r: number; tone: number }[] = [];
-  for (let i = 0; i < 90; i += 1) {
-    const x = -180 + rand() * 420;
-    const depth = 2 + rand() * 60;
-    const y = meadowY(x) + depth;
-    const s = 0.6 + depth * 0.03;
-    tufts += `M${x.toFixed(1)},${y.toFixed(1)} l${(-0.7 * s).toFixed(2)},${(-2 * s).toFixed(2)} M${x.toFixed(1)},${y.toFixed(1)} l0,${(-2.5 * s).toFixed(2)} M${x.toFixed(1)},${y.toFixed(1)} l${(0.7 * s).toFixed(2)},${(-2 * s).toFixed(2)} `;
-    if (i % 3 === 0) {
-      flowers.push({
-        x: round2(x + 2),
-        y: round2(y - 0.5),
-        r: round2(0.35 * s),
-        tone: Math.floor(rand() * 3),
-      });
-    }
-  }
-  return { tufts, flowers };
+// Teardrop flame of width w and height h standing on (x, y); `lean` shifts
+// the tip sideways.
+export function flamePath(
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  lean = 0,
+) {
+  const r = w / 2;
+  const n = (v: number) => round2(v);
+  return `M${n(x - r)},${n(y)} C${n(x - r * 1.15)},${n(y - h * 0.3)} ${n(x - r * 0.35 + lean * 0.5)},${n(y - h * 0.55)} ${n(x + lean)},${n(y - h)} C${n(x + r * 0.55 + lean * 0.5)},${n(y - h * 0.5)} ${n(x + r * 1.15)},${n(y - h * 0.3)} ${n(x + r)},${n(y)} Q${n(x)},${n(y + r * 0.7)} ${n(x - r)},${n(y)} Z`;
 }
 
 // Laptop base for LaptopFrame, seen from slightly above. Points on the deck
@@ -251,3 +204,178 @@ function deskGeometry() {
 }
 
 export const DESK = deskGeometry();
+
+// Rug under the desk, in stage units like DESK. Its sides follow the same
+// vanishing lines; only its back half is ever in view.
+const RUG_BACK_Y = 24;
+const RUG_FRONT_Y = 320;
+const RUG_BACK_HALF = 330;
+// Bands across the rug as [top, bottom].
+const RUG_BORDER = [24, 36];
+const RUG_LINES = [
+  [36, 38.5],
+  [80, 82.5],
+  [85, 87.5],
+  [128, 130.5],
+];
+const RUG_DIAMOND_ROWS = [
+  [52, 68],
+  [100, 116],
+];
+const RUG_DIAMOND_WIDTH = 22;
+
+function rugGeometry() {
+  const spread = (y: number) => flatSpread(y) / flatSpread(RUG_BACK_Y);
+  // x0 is a position along the back edge, carried forward along its
+  // vanishing line to depth y.
+  const at = (x0: number, y: number) => round2(50 + (x0 - 50) * spread(y));
+  const left = 50 - RUG_BACK_HALF;
+  const right = 50 + RUG_BACK_HALF;
+  const band = ([top, bottom]: number[]) =>
+    `M${at(left, top)},${top} L${at(right, top)},${top} L${at(right, bottom)},${bottom} L${at(left, bottom)},${bottom} Z`;
+  const diamond = (x0: number, w: number, top: number, bottom: number) => {
+    const mid = (top + bottom) / 2;
+    return `M${at(x0, mid)},${mid} L${at(x0 + w / 2, top)},${top} L${at(x0 + w, mid)},${mid} L${at(x0 + w / 2, bottom)},${bottom} Z `;
+  };
+  let diamonds = "";
+  let cores = "";
+  for (const [top, bottom] of RUG_DIAMOND_ROWS) {
+    const inset = (bottom - top) * 0.3;
+    for (let i = 0; i * RUG_DIAMOND_WIDTH < right - left; i += 1) {
+      const x0 = left + i * RUG_DIAMOND_WIDTH;
+      diamonds += diamond(x0, RUG_DIAMOND_WIDTH, top, bottom);
+      cores += diamond(
+        x0 + RUG_DIAMOND_WIDTH * 0.3,
+        RUG_DIAMOND_WIDTH * 0.4,
+        top + inset,
+        bottom - inset,
+      );
+    }
+  }
+  let fringe = "";
+  for (let i = 0; i * 4 <= right - left; i += 1) {
+    fringe += `M${left + i * 4},${RUG_BACK_Y} l0,-3.5 `;
+  }
+  return {
+    field: band([RUG_BACK_Y, RUG_FRONT_Y]),
+    border: band(RUG_BORDER),
+    lines: RUG_LINES.map(band).join(" "),
+    diamonds,
+    cores,
+    fringe,
+  };
+}
+
+export const RUG = rugGeometry();
+
+// The room behind the desk, for SceneBackdrop and Fireplace, in rest-vw: vw
+// at the camera's rest position, with y = 0 on the laptop screen's bottom edge
+// and up negative. A stage unit is START_SCALE rest-vw, so the desk's back
+// edge (stage y −18) sits at y −4.5.
+export const ROOM_FLOOR_Y = -9;
+// Front-to-back lines on the floor meet where the deck's do.
+const ROOM_VANISH_Y = HORIZON_Y * START_SCALE;
+const PLANK_WIDTH = 2.6;
+
+export function floorSeams() {
+  const rand = mulberry32(17);
+  const spread = (y: number) =>
+    (y - ROOM_VANISH_Y) / (ROOM_FLOOR_Y - ROOM_VANISH_Y);
+  const at = (x0: number, y: number) => round2(50 + (x0 - 50) * spread(y));
+  const bottom = 40;
+  let d = "";
+  for (let i = 0; i <= 52; i += 1) {
+    const x0 = -15 + i * PLANK_WIDTH;
+    d += `M${round2(x0)},${ROOM_FLOOR_Y} L${at(x0, bottom)},${bottom} `;
+    // One butt joint per plank row.
+    const y = round2(ROOM_FLOOR_Y + 1.5 + rand() * 28);
+    d += `M${at(x0, y)},${y} L${at(x0 + PLANK_WIDTH, y)},${y} `;
+  }
+  return d;
+}
+
+// Running-bond courses of w × h bricks filling a box from the bottom up,
+// clipped to it. Returns two paths so the bricks can take two tones.
+export function brickCourses(
+  box: { x0: number; y0: number; x1: number; y1: number },
+  w: number,
+  h: number,
+  gap: number,
+  seed: number,
+) {
+  const rand = mulberry32(seed);
+  const tones = ["", ""];
+  const rows = Math.ceil((box.y1 - box.y0) / (h + gap));
+  for (let r = 0; r < rows; r += 1) {
+    const bottom = box.y1 - r * (h + gap);
+    const top = Math.max(box.y0, bottom - h);
+    if (bottom - top < 0.1) continue;
+    const offset = r % 2 === 0 ? 0 : -(w + gap) / 2;
+    for (let k = 0; box.x0 + offset + k * (w + gap) < box.x1; k += 1) {
+      const xa = box.x0 + offset + k * (w + gap);
+      const left = Math.max(box.x0, xa);
+      const right = Math.min(box.x1, xa + w);
+      if (right - left < 0.15) continue;
+      tones[rand() < 0.35 ? 1 : 0] +=
+        `M${round2(left)},${round2(top)} h${round2(right - left)} v${round2(bottom - top)} h${round2(left - right)} Z `;
+    }
+  }
+  return tones;
+}
+
+// Snowy night outside the window: hill crests, pines, stars and a tile of
+// snowflakes stacked twice so it can scroll in a seamless loop.
+export const nightHillY = (x: number) =>
+  -16.8 + 1.2 * sine(x / 6.5) + 0.5 * sine(x / 2.2 + 1);
+export const nightNearY = (x: number) => -13.4 + 0.8 * sine(x / 5 + 2);
+
+export function crestPath(
+  crest: (x: number) => number,
+  x0: number,
+  x1: number,
+  bottom: number,
+) {
+  let d = `M${x0},${bottom}`;
+  for (let x = x0; x <= x1; x += 1) d += ` L${x},${round2(crest(x))}`;
+  return `${d} L${x1},${bottom} Z`;
+}
+
+export function pinesPath(seed: number, x0: number, x1: number) {
+  const rand = mulberry32(seed);
+  let d = "";
+  for (let x = x0; x < x1; x += 0.9 + rand() * 2.2) {
+    const h = 2.2 + rand() * 4;
+    const base = nightHillY(x) + 0.8;
+    for (let k = 0; k < 3; k += 1) {
+      const bottom = base - k * h * 0.27;
+      const half = (h * 0.5 * (1 - k * 0.22)) / 2;
+      d += `M${round2(x - half)},${round2(bottom)} L${round2(x)},${round2(bottom - h * 0.48)} L${round2(x + half)},${round2(bottom)} Z `;
+    }
+  }
+  return d;
+}
+
+export function starDots(
+  seed: number,
+  count: number,
+  box: { x0: number; y0: number; x1: number; y1: number },
+) {
+  const rand = mulberry32(seed);
+  return Array.from({ length: count }, () => ({
+    x: round2(box.x0 + rand() * (box.x1 - box.x0)),
+    y: round2(box.y0 + rand() * (box.y1 - box.y0)),
+    r: round2(0.06 + rand() * 0.12),
+  }));
+}
+
+export function snowTile(seed: number, count: number, w: number, h: number) {
+  const rand = mulberry32(seed);
+  const flakes: { x: number; y: number; r: number }[] = [];
+  for (let i = 0; i < count; i += 1) {
+    const x = round2(rand() * w);
+    const y = round2(rand() * h);
+    const r = round2(0.1 + rand() * 0.18);
+    flakes.push({ x, y, r }, { x, y: round2(y + h), r });
+  }
+  return dotsPath(flakes);
+}
