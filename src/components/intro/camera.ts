@@ -2,7 +2,7 @@
 // viewport), offset START_OFFSET_VH from centre, and zooms until the screen
 // fills the viewport. Layers further away (depth < 1) magnify less, which
 // gives the landscape its parallax.
-export const START_SCALE = 0.3;
+export const START_SCALE = 0.25;
 export const START_OFFSET_VH = -4;
 
 export const easeInOut = (t: number) =>

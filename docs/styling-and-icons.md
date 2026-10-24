@@ -76,15 +76,22 @@ Full recipes are in [STYLEGUIDE.md §2.4](../STYLEGUIDE.md). To keep the recipe 
 
 ### Laptop intro tokens
 
-Hardware colours for [LaptopFrame](desktop-shell.md#laptopframe-srccomponentsintrolaptopframetsx), defined in their own "Laptop intro hardware" section of [globals.css](../src/app/globals.css): `:root` holds the silver (light) values and `html.glass-dark` overrides them for space black. Consumed with the `(--var)` syntax (`bg-(--laptop-bezel)`, `from-(--laptop-deck-top)`, `shadow-[0_0_0_0.16vw_var(--laptop-rim)]`). Not for use outside the intro.
+Hardware colours for [LaptopFrame](desktop-shell.md#laptopframe-srccomponentsintrolaptopframetsx), defined in their own "Laptop intro hardware" section of [globals.css](../src/app/globals.css): `:root` holds the silver (light) values and `html.glass-dark` overrides them for space black. Consumed with the `(--var)` syntax (`bg-(--laptop-bezel)`, `shadow-[0_0_0_0.16vw_var(--laptop-rim)]`) on the lid, and as `fill-(--laptop-…)` / `stroke-(--laptop-…)` / `[stop-color:var(--laptop-…)]` on the base SVG. Not for use outside the intro.
 
 | Token | Purpose |
 | --- | --- |
 | `--laptop-bezel` | Black screen bezel (same in both themes). |
 | `--laptop-camera` | Camera dot in the top bezel. |
 | `--laptop-rim` | Thin aluminium edge around the lid. |
-| `--laptop-deck-top` / `-mid` / `-bottom` | Vertical gradient stops for the base's front face (and the thumb-scoop notch). |
-| `--laptop-shadow` | Floor shadow under the base. |
+| `--laptop-hinge` | Hinge bar between the lid and the deck. |
+| `--laptop-deck-top` | Main colour of the deck's top surface. |
+| `--laptop-deck-mid` | Shading on the deck under the lid, top of the front lip, and the thumb scoop. |
+| `--laptop-deck-bottom` | Bottom of the front lip's gradient, and the trackpad outline. |
+| `--laptop-keyboard` | Keyboard well around the keys. |
+| `--laptop-key` | Keycaps. |
+| `--laptop-trackpad` | Trackpad surface. |
+| `--laptop-grille` | Speaker-grille dots either side of the keyboard. |
+| `--laptop-shadow` | Blurred contact shadow under the base. |
 
 The landscape and desk around the laptop use a second set, `--scene-*`, defined only in `:root` in the same section: the scene is an illustration, so it stays the same in both themes, like the wallpaper image. SVG fills use `fill-(--scene-…)` / `stroke-(--scene-…)`, gradient stops use `[stop-color:var(--scene-…)]`, and HTML layers use `from-(--scene-…)` etc. Not for use outside [src/components/intro/](../src/components/intro/).
 

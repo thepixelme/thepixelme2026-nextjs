@@ -34,7 +34,7 @@ Structure:
 
 ## Laptop intro ([src/components/intro/LaptopIntro.tsx](../src/components/intro/LaptopIntro.tsx))
 
-Scroll-driven landing on desktop, modelled on mercury.com. The visitor first sees the headline over an illustrated dawn landscape: misty mountain ridges, a meadow, and an oak desk with a snake plant, a book stack and a steaming mug. On the desk sits a MacBook whose screen shows the **live** `<DesktopBody />`, with the About window open and a fake cursor touring the dock. Scrolling zooms into the laptop until its screen exactly fills the viewport, and the desktop becomes interactive.
+Scroll-driven landing on desktop, modelled on mercury.com. The visitor first sees the headline over an illustrated dawn landscape: misty mountain ridges, a meadow, and an oak desk with a snake plant, a book stack and a steaming mug. On the desk sits a MacBook, seen from slightly above so its keyboard deck shows, whose screen shows the **live** `<DesktopBody />`, with the About window open and a fake cursor touring the dock. Scrolling zooms into the laptop until its screen exactly fills the viewport, and the desktop becomes interactive.
 
 Props: `{ children: ReactNode }` — the screen content (`<DesktopBody />`, or `<Wallpaper />` in the pre-hydration frame).
 
@@ -50,7 +50,7 @@ Props: `{ children: ReactNode }` — the screen content (`<DesktopBody />`, or `
       <header>      ABOUT.name + <h1>{ABOUT.title}</h1>; fades out over the first 20%
       <motion.div stage absolute inset-0 style={{ scale, y }}>
         <DeskScene />                         meadow, desk and props, anchored to the screen's bottom edge
-        <LaptopFrame />                       bezel, camera, base, floor shadow (outside the screen box)
+        <LaptopFrame />                       lid, keyboard deck, contact shadow (outside the screen box)
         <motion.div screen absolute inset-0 overflow-hidden [contain:paint] inert>
           {children}
           <IntroWalkthrough />                fake cursor + app labels touring the dock
@@ -62,7 +62,7 @@ Props: `{ children: ReactNode }` — the screen content (`<DesktopBody />`, or `
 
 The screen box is exactly the viewport, so at scale 1 it fills the window and the frame, desk and meadow sit off-screen. `contain: paint` makes the screen the containing block for the desktop's `fixed` chrome (wallpaper, menu bar, dock) and clips it to the screen's rounded corners.
 
-**Camera** ([src/components/intro/camera.ts](../src/components/intro/camera.ts)) — `scrollYProgress` is smoothed with `useSpring` (`stiffness 260, damping 40`). The stage (laptop, desk, meadow) scales from `START_SCALE` (0.3) to 1, interpolated in log space with an ease-in-out so the perceived zoom speed is even, and its `y` offset runs from `START_OFFSET_VH` (−4vh) to `0`. Background layers have a `depth` below 1 and magnify by `layerScale(p, depth)` = (1 / START_SCALE)^(depth · ease(p)), shifted by `layerY(p, depth)` so they zoom about the same point as the laptop screen. Farther layers therefore grow less, which produces the parallax. The screen's top corner radius flattens from `0.7vw` to `0` over the last 20%. When progress passes 0.995 it calls `finishIntro()`.
+**Camera** ([src/components/intro/camera.ts](../src/components/intro/camera.ts)) — `scrollYProgress` is smoothed with `useSpring` (`stiffness 260, damping 40`). The stage (laptop, desk, meadow) scales from `START_SCALE` (0.25) to 1, interpolated in log space with an ease-in-out so the perceived zoom speed is even, and its `y` offset runs from `START_OFFSET_VH` (−4vh) to `0`. Background layers have a `depth` below 1 and magnify by `layerScale(p, depth)` = (1 / START_SCALE)^(depth · ease(p)), shifted by `layerY(p, depth)` so they zoom about the same point as the laptop screen. Farther layers therefore grow less, which produces the parallax. The screen's top corner radius flattens from `0.7vw` to `0` over the last 20%. When progress passes 0.995 it calls `finishIntro()`.
 
 **Finishing** — once `useIntroPending()` is `false`, every wrapper above `{children}` switches to `display: contents` and the scene elements unmount. `DesktopBody` keeps its tree position (no remount, no transform, no extra stacking context), so the desktop behaves exactly as it would without the intro.
 
@@ -80,6 +80,11 @@ The screen box is exactly the viewport, so at scale 1 it fills the window and th
 
 Stateless, `aria-hidden` MacBook hardware drawn around a viewport-sized screen box. All dimensions are in `vw` so proportions hold at any viewport size; the parent's `scale` sizes it. Colours come from the `--laptop-*` tokens in [globals.css](../src/app/globals.css) (silver in `glass-light`, space black in `glass-dark`) — see [styling-and-icons.md](styling-and-icons.md#laptop-intro-tokens).
 
+- **Lid** — a `div` around the screen box: black bezel (1.4vw at the sides and top, 2.1vw chin), aluminium rim, camera dot.
+- **Base** — an SVG at the screen's bottom edge (`top-full`, `viewBox 0 0 100 100` over `100vw`, so one unit is `1vw`, like DeskScene). The laptop is seen from slightly above, so the deck is drawn as a trapezoid that widens towards the viewer. Back to front: blurred contact shadow, hinge bar, front lip, deck surface (shaded under the lid), thumb scoop, speaker-grille dots, keyboard well, keys, trackpad. All paths come precomputed from `LAPTOP_BASE` in [scenery.ts](../src/components/intro/scenery.ts).
+
+The keyboard is a 14-inch MacBook Pro layout: a full-height function row, five letter rows, and the inverted-T arrows with half-height ↑/↓ (77 keys in one `<path>`). Speaker grilles flank it, and the trackpad sits centred below.
+
 ## SceneBackdrop ([src/components/intro/SceneBackdrop.tsx](../src/components/intro/SceneBackdrop.tsx))
 
 `aria-hidden` landscape behind the laptop, outside the stage. Props: `{ progress: MotionValue<number> }`. Each layer is a `DepthLayer` (local helper) whose `scale` / `y` come from `layerScale` / `layerY`:
@@ -95,7 +100,13 @@ Ridges are generated at module load by midpoint displacement from a fixed seed (
 
 ## Scenery geometry ([src/components/intro/scenery.ts](../src/components/intro/scenery.ts))
 
-All generated scene geometry lives here: `mulberry32` (seeded PRNG), `sine` (arithmetic-only approximation of `Math.sin`), `ridgePoints` / `ridgePath` / `forestPath` for SceneBackdrop, and `meadowY` / `foregroundY` / `hillPath` / `meadowDetail` for DeskScene.
+All generated scene geometry lives here: `mulberry32` (seeded PRNG), `sine` (arithmetic-only approximation of `Math.sin`), `ridgePoints` / `ridgePath` / `forestPath` for SceneBackdrop, `meadowY` / `foregroundY` / `hillPath` / `meadowDetail` / `DESK` for DeskScene, and `LAPTOP_BASE` for LaptopFrame.
+
+The scene is drawn to the scale of a 14-inch MacBook Pro, whose screen is about 30 cm wide, so 1 cm ≈ 3.3vw.
+
+`LAPTOP_BASE` lays out the deck in plan coordinates: `u` runs across 0–1, and `v` runs from the hinge (0) to the front edge (1). The camera looks squarely at the screen, and the lid is tilted back about 25°. So the 22 cm deck (73vw in plan) foreshortens to sin 25° ≈ 0.42 of its depth: the front edge sits 31vw below the back edge. The back edge is 102.8vw wide (the lid's width) at y = 2.6. Plan points are projected in perspective with a scale of `1 / (1 − c·v)`, which is 1 at the hinge and `DECK_SPREAD` (1.07) at the front edge. The result holds the path strings for every part of the base, plus `backY` / `frontY` for the gradients.
+
+`flatSpread(y)` extends the deck's vanishing lines: it returns the width multiplier (1 at the hinge line) for anything lying flat at projected depth `y`. `DESK` uses it to build a desk about 110 cm wide. Its top runs from y = −18 (behind the laptop) to y = 44 and is 330vw wide at the front edge. `DESK` holds the top and grain paths and the leg positions.
 
 The geometry is server-rendered by Node (V8) and hydrated in every browser engine, so its output must be **bit-identical across JS engines**. If it isn't, React reports a hydration mismatch. The module therefore uses only `+ − × ÷ %` and `Math.round` / `min` / `max` / `floor` / `imul`, whose results IEEE 754 and the JS spec fix exactly. `Math.sin`, `Math.pow` / `**` and other library maths can differ in the last bit between engines; JavaScriptCore in Safari, for example, gave a different wildflower `cy` than V8. Values written to SVG attributes are also rounded (`toFixed`, or `round2` for numeric props).
 
@@ -104,9 +115,9 @@ The geometry is server-rendered by Node (V8) and hydrated in every browser engin
 `aria-hidden` SVG inside the stage, positioned at the screen box's bottom edge (`top-full`, `viewBox 0 0 100 100` over `100vw` → one unit is `1vw`, `overflow-visible`). The units match LaptopFrame's, so the desk lines up under the laptop base at any aspect ratio. Back to front:
 
 1. Meadow hill (crest `meadowY(x)`), plus seeded grass tufts and wildflowers that grow larger towards the viewer.
-2. Desk: back legs, oak top surface (`--scene-wood-top`), front edge (`--scene-wood-face`), black steel front legs.
+2. Desk (`DESK` from [scenery.ts](../src/components/intro/scenery.ts)): back legs, then the oak top surface (`--scene-wood-top`) with faint grain lines. The top shares the laptop base's vanishing lines, so the two read as one view from above. Then the 6vw front edge (`--scene-wood-face`) and black steel front legs.
 3. A darker foreground hill (`foregroundY(x)`) the legs disappear into.
-4. Props on the desk: a snake plant in a ceramic pot (left), and a stack of three books with a mug on top (right). Two steam wisps above the mug fade and rise on a loop (3.2 s, staggered).
+4. Props on the desk: a snake plant in a ceramic pot (back left), and a stack of three books with a mug on top (right, further forward). Each is drawn small and placed by a `<g transform="translate(…) scale(…) translate(…)">` group that scales it to real size about its base: a ~30 cm plant (×1.25), ~18 cm books and a ~7 cm mug (×1.6). Two steam wisps above the mug fade and rise on a loop (3.2 s, staggered).
 
 ## IntroWalkthrough ([src/components/intro/IntroWalkthrough.tsx](../src/components/intro/IntroWalkthrough.tsx))
 

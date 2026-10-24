@@ -359,6 +359,11 @@ html[data-theme="glass-dark"] {
   --laptop-deck-top: oklch(94% 0.002 286);
   --laptop-deck-mid: oklch(85% 0.004 286);
   --laptop-deck-bottom: oklch(66% 0.005 286);
+  --laptop-hinge: oklch(32% 0.004 286);
+  --laptop-keyboard: oklch(16% 0.003 286);
+  --laptop-key: oklch(27% 0.004 286);
+  --laptop-trackpad: oklch(90% 0.003 286);
+  --laptop-grille: oklch(58% 0.004 286);
   --laptop-shadow: oklch(0% 0 0 / 0.3);
 }
 
@@ -398,6 +403,11 @@ html[data-theme="glass-dark"] {
   --laptop-deck-top: oklch(48% 0.004 286);
   --laptop-deck-mid: oklch(32% 0.004 286);
   --laptop-deck-bottom: oklch(20% 0.004 286);
+  --laptop-hinge: oklch(14% 0.003 286);
+  --laptop-keyboard: oklch(10% 0.002 286);
+  --laptop-key: oklch(20% 0.003 286);
+  --laptop-trackpad: oklch(44% 0.004 286);
+  --laptop-grille: oklch(24% 0.004 286);
   --laptop-shadow: oklch(0% 0 0 / 0.65);
 }
 

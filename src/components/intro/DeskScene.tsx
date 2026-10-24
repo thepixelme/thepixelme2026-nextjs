@@ -2,14 +2,17 @@
 
 import { motion } from "motion/react";
 import { useId } from "react";
-import { foregroundY, hillPath, meadowDetail, meadowY } from "./scenery";
+import { DESK, foregroundY, hillPath, meadowDetail, meadowY } from "./scenery";
 
 // Units are vw with the origin at the laptop screen's bottom-left corner, so
-// the desk lines up with LaptopFrame (base bottom at y = 3.25) at any aspect.
+// the desk lines up with LaptopFrame at any aspect. 1 cm ≈ 3.3 units (the
+// laptop's screen is ~30 cm wide); the props are drawn small and scaled up to
+// real size by their group transforms.
 
 const MEADOW = hillPath(meadowY);
 const FOREGROUND = hillPath(foregroundY);
 const DETAIL = meadowDetail();
+const DESK_FACE = 6;
 const FLOWER_TONES = [
   "fill-(--scene-ceramic)",
   "fill-(--scene-book-mustard)",
@@ -80,186 +83,186 @@ export default function DeskScene() {
       ))}
 
       {/* Desk: back legs, top surface, front face, front legs */}
-      <rect
-        x="-58"
-        y="3"
-        width="2.6"
-        height="140"
-        className="fill-(--scene-desk-leg)"
-      />
-      <rect
-        x="155.4"
-        y="3"
-        width="2.6"
-        height="140"
-        className="fill-(--scene-desk-leg)"
-      />
+      {DESK.backLegs.map((x) => (
+        <rect
+          key={x}
+          x={x}
+          y={DESK.backY + 2}
+          width="4"
+          height="200"
+          className="fill-(--scene-desk-leg)"
+        />
+      ))}
+      <path d={DESK.top} className="fill-(--scene-wood-top)" />
       <path
-        d="M-60,1.5 L160,1.5 L166,5 L-66,5 Z"
-        className="fill-(--scene-wood-top)"
+        d={DESK.grain}
+        fill="none"
+        strokeWidth="0.25"
+        strokeLinecap="round"
+        className="stroke-(--scene-wood-face)/25"
       />
       <rect
-        x="-66"
-        y="5"
-        width="232"
-        height="2.6"
-        rx="0.4"
+        x={DESK.left}
+        y={DESK.frontY}
+        width={DESK.width}
+        height={DESK_FACE}
+        rx="0.6"
         className="fill-(--scene-wood-face)"
       />
       <rect
-        x="-64"
-        y="7.6"
-        width="228"
-        height="0.9"
+        x={DESK.left + 3}
+        y={DESK.frontY + DESK_FACE}
+        width={DESK.width - 6}
+        height="1.5"
         className="fill-(--scene-shadow)"
       />
-      <rect
-        x="-64"
-        y="7.6"
-        width="3"
-        height="150"
-        className="fill-(--scene-desk-leg)"
-      />
-      <rect
-        x="161"
-        y="7.6"
-        width="3"
-        height="150"
-        className="fill-(--scene-desk-leg)"
-      />
+      {DESK.frontLegs.map((x) => (
+        <rect
+          key={x}
+          x={x}
+          y={DESK.frontY + DESK_FACE}
+          width="5"
+          height="150"
+          className="fill-(--scene-desk-leg)"
+        />
+      ))}
 
       <path d={FOREGROUND} className="fill-(--scene-meadow-near)" />
 
       {/* Snake plant */}
-      <ellipse
-        cx="-43"
-        cy="4.3"
-        rx="11"
-        ry="1.1"
-        className="fill-(--scene-shadow)"
-      />
-      {LEAVES.map((leaf) => (
-        <path
-          key={`${leaf.base}-${leaf.tipX}`}
-          d={leafPath(leaf)}
-          strokeWidth="0.35"
-          className={`stroke-(--scene-leaf-edge) ${leaf.dark ? "fill-(--scene-leaf-dark)" : "fill-(--scene-leaf)"}`}
+      <g transform="translate(-84 -4) scale(1.25) translate(40 -4.2)">
+        <ellipse
+          cx="-43"
+          cy="4.3"
+          rx="11"
+          ry="1.1"
+          className="fill-(--scene-shadow)"
         />
-      ))}
-      <path
-        d="M-49,-13.5 L-31,-13.5 L-33.5,3 Q-33.8,4.2 -35,4.2 L-45,4.2 Q-46.2,4.2 -46.5,3 Z"
-        className="fill-(--scene-ceramic)"
-      />
-      <rect
-        x="-50"
-        y="-16"
-        width="20"
-        height="2.8"
-        rx="0.6"
-        className="fill-(--scene-ceramic)"
-      />
-      <rect
-        x="-49"
-        y="-13.2"
-        width="18"
-        height="0.6"
-        className="fill-(--scene-ceramic-shade)"
-      />
+        {LEAVES.map((leaf) => (
+          <path
+            key={`${leaf.base}-${leaf.tipX}`}
+            d={leafPath(leaf)}
+            strokeWidth="0.35"
+            className={`stroke-(--scene-leaf-edge) ${leaf.dark ? "fill-(--scene-leaf-dark)" : "fill-(--scene-leaf)"}`}
+          />
+        ))}
+        <path
+          d="M-49,-13.5 L-31,-13.5 L-33.5,3 Q-33.8,4.2 -35,4.2 L-45,4.2 Q-46.2,4.2 -46.5,3 Z"
+          className="fill-(--scene-ceramic)"
+        />
+        <rect
+          x="-50"
+          y="-16"
+          width="20"
+          height="2.8"
+          rx="0.6"
+          className="fill-(--scene-ceramic)"
+        />
+        <rect
+          x="-49"
+          y="-13.2"
+          width="18"
+          height="0.6"
+          className="fill-(--scene-ceramic-shade)"
+        />
+      </g>
 
       {/* Books with a mug on top */}
-      <ellipse
-        cx="133"
-        cy="4.2"
-        rx="22"
-        ry="1.2"
-        className="fill-(--scene-shadow)"
-      />
-      {BOOKS.map((book) => (
-        <g key={book.y}>
-          <rect
-            x={book.x}
-            y={book.y}
-            width={book.w}
-            height={book.h}
-            rx="0.5"
-            className={book.color}
-          />
-          <rect
-            x={book.x + 3}
-            y={book.y}
-            width="0.6"
-            height={book.h}
-            className="fill-(--scene-ceramic)/50"
-          />
-          <rect
-            x={book.x + book.w - 3.6}
-            y={book.y}
-            width="0.6"
-            height={book.h}
-            className="fill-(--scene-ceramic)/50"
-          />
-          <rect
-            x={book.x + book.w / 2 - 6}
-            y={book.y + book.h / 2 - 0.5}
-            width="12"
-            height="1"
-            rx="0.3"
-            className="fill-(--scene-ceramic)/70"
-          />
-        </g>
-      ))}
-      <ellipse
-        cx="131"
-        cy="-13"
-        rx="8"
-        ry="0.6"
-        className="fill-(--scene-shadow)"
-      />
-      <path
-        d="M138,-25 a4.2,4.2 0 1 1 0,8.4"
-        fill="none"
-        strokeWidth="2.2"
-        className="stroke-(--scene-ceramic-shade)"
-      />
-      <rect
-        x="124"
-        y="-28"
-        width="14"
-        height="15"
-        rx="1.8"
-        className="fill-(--scene-ceramic)"
-      />
-      <rect
-        x="124"
-        y="-22"
-        width="14"
-        height="2.4"
-        className="fill-(--scene-book-red)"
-      />
-      <ellipse
-        cx="131"
-        cy="-28"
-        rx="6.6"
-        ry="0.9"
-        className="fill-(--scene-wood-face)"
-      />
-      {[127.5, 132.5].map((x, i) => (
-        <motion.path
-          key={x}
-          d={`M${x},-31 c-2,-3 2,-5 0,-8 c-2,-3 2,-5 0,-8`}
-          fill="none"
-          strokeWidth="0.8"
-          strokeLinecap="round"
-          className="stroke-(--scene-steam)"
-          animate={{ opacity: [0, 1, 0], y: [1, -3] }}
-          transition={{
-            duration: 3.2,
-            delay: i * 1.4,
-            repeat: Number.POSITIVE_INFINITY,
-            ease: "easeInOut",
-          }}
+      <g transform="translate(150 16) scale(1.6) translate(-135 -4.1)">
+        <ellipse
+          cx="133"
+          cy="4.2"
+          rx="22"
+          ry="1.2"
+          className="fill-(--scene-shadow)"
         />
-      ))}
+        {BOOKS.map((book) => (
+          <g key={book.y}>
+            <rect
+              x={book.x}
+              y={book.y}
+              width={book.w}
+              height={book.h}
+              rx="0.5"
+              className={book.color}
+            />
+            <rect
+              x={book.x + 3}
+              y={book.y}
+              width="0.6"
+              height={book.h}
+              className="fill-(--scene-ceramic)/50"
+            />
+            <rect
+              x={book.x + book.w - 3.6}
+              y={book.y}
+              width="0.6"
+              height={book.h}
+              className="fill-(--scene-ceramic)/50"
+            />
+            <rect
+              x={book.x + book.w / 2 - 6}
+              y={book.y + book.h / 2 - 0.5}
+              width="12"
+              height="1"
+              rx="0.3"
+              className="fill-(--scene-ceramic)/70"
+            />
+          </g>
+        ))}
+        <ellipse
+          cx="131"
+          cy="-13"
+          rx="8"
+          ry="0.6"
+          className="fill-(--scene-shadow)"
+        />
+        <path
+          d="M138,-25 a4.2,4.2 0 1 1 0,8.4"
+          fill="none"
+          strokeWidth="2.2"
+          className="stroke-(--scene-ceramic-shade)"
+        />
+        <rect
+          x="124"
+          y="-28"
+          width="14"
+          height="15"
+          rx="1.8"
+          className="fill-(--scene-ceramic)"
+        />
+        <rect
+          x="124"
+          y="-22"
+          width="14"
+          height="2.4"
+          className="fill-(--scene-book-red)"
+        />
+        <ellipse
+          cx="131"
+          cy="-28"
+          rx="6.6"
+          ry="0.9"
+          className="fill-(--scene-wood-face)"
+        />
+        {[127.5, 132.5].map((x, i) => (
+          <motion.path
+            key={x}
+            d={`M${x},-31 c-2,-3 2,-5 0,-8 c-2,-3 2,-5 0,-8`}
+            fill="none"
+            strokeWidth="0.8"
+            strokeLinecap="round"
+            className="stroke-(--scene-steam)"
+            animate={{ opacity: [0, 1, 0], y: [1, -3] }}
+            transition={{
+              duration: 3.2,
+              delay: i * 1.4,
+              repeat: Number.POSITIVE_INFINITY,
+              ease: "easeInOut",
+            }}
+          />
+        ))}
+      </g>
     </svg>
   );
 }

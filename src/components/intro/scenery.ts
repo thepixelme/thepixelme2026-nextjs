@@ -69,7 +69,7 @@ export function forestPath(points: [number, number][], seed: number) {
 export const meadowY = (x: number) =>
   16 + 0.0006 * (x - 50) * (x - 50) + 1.2 * sine(x / 23);
 export const foregroundY = (x: number) =>
-  50 + 9 * sine(x / 55 + 1) + 0.00025 * (x - 50) * (x - 50);
+  80 + 9 * sine(x / 55 + 1) + 0.00025 * (x - 50) * (x - 50);
 
 export function hillPath(crest: (x: number) => number) {
   let d = "M-450,400";
@@ -100,3 +100,154 @@ export function meadowDetail() {
   }
   return { tufts, flowers };
 }
+
+// Laptop base for LaptopFrame, seen from slightly above. Points on the deck
+// are given in plan coordinates — u across 0..1, v from the hinge (0) to the
+// front edge (1) — and projected in perspective onto a trapezoid that widens
+// towards the viewer, in the same vw units as DeskScene.
+// The camera looks squarely at the screen, so with the lid tilted back ~25°
+// the 22 cm deck foreshortens to sin 25° ≈ 0.42 of its plan depth (73vw).
+const DECK_BACK_Y = 2.6;
+const DECK_DEPTH = 31;
+const DECK_BACK_WIDTH = 102.8;
+const DECK_SPREAD = 1.07; // front edge width ÷ back edge width
+const DECK_FACE = 1.1;
+
+const WELL = { u0: 0.085, v0: 0.045, u1: 0.915, v1: 0.54 };
+const TRACKPAD = { u0: 0.29, v0: 0.585, u1: 0.71, v1: 0.95 };
+const GRILLE_US = [0.035, 0.05, 0.065, 0.935, 0.95, 0.965];
+
+// Widths in key units; every row spans 14.5. The ↑/↓ pair shares one slot.
+const KEY_ROWS = [
+  [1.5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.5],
+  [1.5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1.75, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.75],
+  [2.25, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2.25],
+  [1, 1, 1, 1.25, 5, 1.25, 1, 1, 1, 1],
+];
+const ARROW_STACK = { row: 5, key: 8 };
+const KEY_GAP = 0.16;
+const KEY_PAD = 0.25;
+
+// Scale grows as 1 / (1 - c·v): 1 at the hinge, DECK_SPREAD at the front.
+const DECK_C = 1 - 1 / DECK_SPREAD;
+const HORIZON_Y = DECK_BACK_Y - DECK_DEPTH / (DECK_SPREAD - 1);
+
+// Width multiplier (1 at the hinge line) for anything lying flat at projected
+// depth y, so the desk shares the deck's vanishing lines.
+export const flatSpread = (y: number) =>
+  (y - HORIZON_Y) / (DECK_BACK_Y - HORIZON_Y);
+
+function deckPoint(u: number, v: number, dy = 0) {
+  const s = 1 / (1 - DECK_C * v);
+  const x = 50 + (u - 0.5) * DECK_BACK_WIDTH * s;
+  const y = DECK_BACK_Y + (DECK_DEPTH * (s - 1)) / (DECK_SPREAD - 1) + dy;
+  return `${round2(x)},${round2(y)}`;
+}
+
+function deckQuad(u0: number, v0: number, u1: number, v1: number) {
+  return `M${deckPoint(u0, v0)} L${deckPoint(u1, v0)} L${deckPoint(u1, v1)} L${deckPoint(u0, v1)} Z`;
+}
+
+function deckRoundRect(
+  { u0, v0, u1, v1 }: { u0: number; v0: number; u1: number; v1: number },
+  ru: number,
+  rv: number,
+) {
+  const p = deckPoint;
+  return `M${p(u0 + ru, v0)} L${p(u1 - ru, v0)} Q${p(u1, v0)} ${p(u1, v0 + rv)} L${p(u1, v1 - rv)} Q${p(u1, v1)} ${p(u1 - ru, v1)} L${p(u0 + ru, v1)} Q${p(u0, v1)} ${p(u0, v1 - rv)} L${p(u0, v0 + rv)} Q${p(u0, v0)} ${p(u0 + ru, v0)} Z`;
+}
+
+function keyboardPath() {
+  const cols = KEY_ROWS[0].reduce((sum, w) => sum + w, 0);
+  const pu = (WELL.u1 - WELL.u0) / (cols + 2 * KEY_PAD);
+  const pv = (WELL.v1 - WELL.v0) / (KEY_ROWS.length + 2 * KEY_PAD);
+  const key = (x: number, y: number, w: number, h: number) =>
+    deckQuad(
+      WELL.u0 + (x + KEY_GAP / 2) * pu,
+      WELL.v0 + (y + KEY_GAP / 2) * pv,
+      WELL.u0 + (x + w - KEY_GAP / 2) * pu,
+      WELL.v0 + (y + h - KEY_GAP / 2) * pv,
+    );
+  let d = "";
+  KEY_ROWS.forEach((row, r) => {
+    let x = KEY_PAD;
+    const y = KEY_PAD + r;
+    row.forEach((w, i) => {
+      if (r === ARROW_STACK.row && i === ARROW_STACK.key) {
+        d += `${key(x, y, w, 0.5)} ${key(x, y + 0.5, w, 0.5)} `;
+      } else {
+        d += `${key(x, y, w, 1)} `;
+      }
+      x += w;
+    });
+  });
+  return d;
+}
+
+function laptopBase() {
+  const p = deckPoint;
+  const ru = 0.035;
+  const rv = 0.05;
+  const t = DECK_FACE;
+  return {
+    backY: DECK_BACK_Y,
+    frontY: DECK_BACK_Y + DECK_DEPTH,
+    deck: deckRoundRect({ u0: 0, v0: 0, u1: 1, v1: 1 }, ru, rv),
+    face: `M${p(0, 1 - rv)} Q${p(0, 1)} ${p(ru, 1)} L${p(1 - ru, 1)} Q${p(1, 1)} ${p(1, 1 - rv)} L${p(1, 1 - rv, t)} Q${p(1, 1, t)} ${p(1 - ru, 1, t)} L${p(ru, 1, t)} Q${p(0, 1, t)} ${p(0, 1 - rv, t)} Z`,
+    notch: `M${p(0.435, 1)} Q${p(0.5, 0.93)} ${p(0.565, 1)} Z`,
+    shadow: `M${p(0.03, 0.25)} L${p(0.97, 0.25)} L${p(1.03, 1, 1.6)} L${p(-0.03, 1, 1.6)} Z`,
+    grille: GRILLE_US.map((u) => `M${p(u, 0.07)} L${p(u, 0.52)}`).join(" "),
+    well: deckRoundRect(WELL, 0.008, 0.012),
+    keys: keyboardPath(),
+    trackpad: deckRoundRect(TRACKPAD, 0.012, 0.03),
+  };
+}
+
+export const LAPTOP_BASE = laptopBase();
+
+// Desk for DeskScene at real scale (~110 cm wide), running from behind the
+// laptop to in front of it. Its sides follow the deck's vanishing lines.
+const DESK_BACK_Y = -18;
+const DESK_FRONT_Y = 44;
+const DESK_FRONT_HALF = 165;
+// Grain strokes as [y, from, to], from/to as fractions of the half width.
+const DESK_GRAIN = [
+  [-12, -0.92, -0.6],
+  [-12, 0.55, 0.9],
+  [-3, -0.95, -0.7],
+  [4, 0.62, 0.96],
+  [12, -0.97, -0.66],
+  [18, 0.58, 0.94],
+  [26, -0.9, -0.4],
+  [30, 0.45, 0.97],
+  [38, -0.98, -0.55],
+  [40, 0.2, 0.75],
+];
+
+function deskGeometry() {
+  const half = (y: number) =>
+    (DESK_FRONT_HALF * flatSpread(y)) / flatSpread(DESK_FRONT_Y);
+  const x = (y: number, f: number) => round2(50 + f * half(y));
+  const top = `M${x(DESK_BACK_Y, -1)},${DESK_BACK_Y} L${x(DESK_BACK_Y, 1)},${DESK_BACK_Y} L${x(DESK_FRONT_Y, 1)},${DESK_FRONT_Y} L${x(DESK_FRONT_Y, -1)},${DESK_FRONT_Y} Z`;
+  const grain = DESK_GRAIN.map(
+    ([y, from, to]) => `M${x(y, from)},${y} L${x(y, to)},${y}`,
+  ).join(" ");
+  return {
+    top,
+    grain,
+    backY: DESK_BACK_Y,
+    frontY: DESK_FRONT_Y,
+    left: x(DESK_FRONT_Y, -1),
+    right: x(DESK_FRONT_Y, 1),
+    width: round2(x(DESK_FRONT_Y, 1) - x(DESK_FRONT_Y, -1)),
+    frontLegs: [
+      round2(x(DESK_FRONT_Y, -1) + 3),
+      round2(x(DESK_FRONT_Y, 1) - 8),
+    ],
+    backLegs: [round2(x(DESK_BACK_Y, -1) + 3), round2(x(DESK_BACK_Y, 1) - 7)],
+  };
+}
+
+export const DESK = deskGeometry();
