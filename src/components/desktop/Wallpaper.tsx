@@ -1,4 +1,4 @@
-const DEFAULT_LANDSCAPE = "/wallpapers/snowfall-2560x1600.jpg";
+export const DEFAULT_LANDSCAPE = "/wallpapers/snowfall-2560x1600.jpg";
 const DEFAULT_PORTRAIT = "/wallpapers/snowfall-768x1280.jpg";
 
 export default function Wallpaper() {

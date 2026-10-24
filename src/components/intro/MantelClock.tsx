@@ -3,7 +3,7 @@
 import { motion } from "motion/react";
 import { useNow } from "@/lib/clock";
 
-// Walnut tambour clock standing on the mantel shelf, in Fireplace's rest-vw
+// Walnut tambour clock standing on the mantel shelf, in Fireplace's room
 // units, showing the visitor's local time. The hands appear after mount:
 // the server can't know the visitor's time, and useNow() is null until then,
 // so the server HTML and the first client render match.

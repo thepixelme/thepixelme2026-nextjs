@@ -503,29 +503,48 @@ html[data-theme="glass-dark"] {
   initial-value: 1;
 }
 
-/* Rest pose per device. Room units are rest-vw of the laptop pose (see
-   scenery.ts), where the laptop's screen is 25 units (~30 cm) wide.
+/* Rest pose per device. Room units are the room's scale at rest (see
+   scenery.ts), where the laptop's screen is 25 units (~30 cm) wide. The
+   laptop scene is composed in a 16:10 frame, 100 × 62.5 units, fitted inside
+   the viewport: a wider or squarer viewport shows more wall and floor around
+   it, and nothing in it stretches.
+   --intro-unit: one room unit at rest, before --intro-room-scale.
+   --intro-glass-w: the screen's width once zoomed in; its height is always
+     the viewport's. The laptop's screen is 16:10, so on a wider viewport the
+     desktop spills past it at the end of the zoom, and on a squarer one the
+     screen runs past the viewport's sides.
+   --intro-start: the stage's scale at rest, so that the screen is
+     --intro-device-width units wide. tan(atan2(a, b)) is a ÷ b as a number.
    --intro-device-width: the device's screen width in room units.
    --intro-room-scale: how far the room is magnified at rest (camera closer).
-   --intro-room-pan: room shift, in room units, to put the fireplace behind
-     the device.
+   --intro-room-pan: room shift, in room units (cqw of the room frame), to
+     put the fireplace behind the device.
    --intro-offset: the screen centre's offset from the viewport centre at rest.
    --intro-desk-lift: how far the stand raises the device above the desk, in
-     desk units (1 cm ≈ 3.33). */
+     desk units (cqw of the screen; 1 cm ≈ 3.33). */
 :root {
+  --intro-unit: min(1vw, 1.6dvh);
+  --intro-glass-w: 160dvh;
   --intro-device-width: 25;
   --intro-room-scale: 1;
-  --intro-room-pan: 0vw;
-  --intro-offset: -4%;
-  --intro-desk-lift: 0vw;
-  --intro-radius-top: 0.7vw;
-  --intro-radius-bottom: 0vw;
-  --intro-start: calc(
-    var(--intro-device-width) *
-    var(--intro-room-scale) /
-    100
-  );
+  --intro-room-pan: 0cqw;
+  --intro-offset: calc(-2.5 * var(--intro-unit));
+  --intro-desk-lift: 0cqw;
+  --intro-radius-top: 0.7cqw;
+  --intro-radius-bottom: 0cqw;
+  --intro-start: calc(0.25 * min(1, tan(atan2(100vw, 160dvh))));
   --intro-desk-scale: calc(25 / var(--intro-device-width));
+
+  /* A phone or tablet screen is the viewport itself. */
+  @variant intro-device {
+    --intro-unit: 1vw;
+    --intro-glass-w: 100vw;
+    --intro-start: calc(
+      var(--intro-device-width) *
+      var(--intro-room-scale) /
+      100
+    );
+  }
 
   /* Phones in three shapes, so the fireplace and clock fit between the
      headline and the desk: squat (an iPhone SE in Safari), regular, and
@@ -533,11 +552,11 @@ html[data-theme="glass-dark"] {
   @variant intro-phone {
     --intro-device-width: 5.4;
     --intro-room-scale: 3.2;
-    --intro-room-pan: 35vw;
+    --intro-room-pan: 35cqw;
     --intro-offset: 27%;
-    --intro-desk-lift: 10vw;
-    --intro-radius-top: 12vw;
-    --intro-radius-bottom: 12vw;
+    --intro-desk-lift: 10cqw;
+    --intro-radius-top: 12cqw;
+    --intro-radius-bottom: 12cqw;
 
     @media (min-aspect-ratio: 3 / 5) {
       --intro-room-scale: 2.7;
@@ -553,11 +572,11 @@ html[data-theme="glass-dark"] {
   @variant intro-tablet {
     --intro-device-width: 13.3;
     --intro-room-scale: 1.9;
-    --intro-room-pan: 22vw;
+    --intro-room-pan: 22cqw;
     --intro-offset: -0.6%;
-    --intro-desk-lift: 13vw;
-    --intro-radius-top: 2.6vw;
-    --intro-radius-bottom: 2.6vw;
+    --intro-desk-lift: 13cqw;
+    --intro-radius-top: 2.6cqw;
+    --intro-radius-bottom: 2.6cqw;
   }
 }
 
@@ -587,6 +606,19 @@ html[data-theme="glass-dark"] {
 /* The screen's bottom edge at rest, which the room is drawn around. */
 @utility intro-anchor {
   top: calc(50% + 50% * var(--intro-start) + var(--intro-offset));
+}
+
+/* The live desktop is the viewport's size, centred on the screen. Where it is
+   wider than the screen it is clipped to the screen at rest, and spreads to
+   its full width as --intro-r runs to 0 at the end of the zoom. */
+@utility intro-screen-clip {
+  clip-path: inset(
+    0 max(0px, (100vw - var(--intro-glass-w)) / 2 * var(--intro-r)) round
+      calc(var(--intro-radius-top) * var(--intro-r))
+      calc(var(--intro-radius-top) * var(--intro-r))
+      calc(var(--intro-radius-bottom) * var(--intro-r))
+      calc(var(--intro-radius-bottom) * var(--intro-r))
+  );
 }
 
 @utility intro-screen-corners {

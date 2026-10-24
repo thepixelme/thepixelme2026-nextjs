@@ -57,9 +57,9 @@ export function flamePath(
 // Laptop base for LaptopFrame, seen from slightly above. Points on the deck
 // are given in plan coordinates — u across 0..1, v from the hinge (0) to the
 // front edge (1) — and projected in perspective onto a trapezoid that widens
-// towards the viewer, in the same vw units as DeskScene.
+// towards the viewer, in the same units as DeskScene (1% of the screen width).
 // The camera looks squarely at the screen, so with the lid tilted back ~25°
-// the 22 cm deck foreshortens to sin 25° ≈ 0.42 of its plan depth (73vw).
+// the 22 cm deck foreshortens to sin 25° ≈ 0.42 of its plan depth (73 units).
 const DECK_BACK_Y = 2.6;
 const DECK_DEPTH = 31;
 const DECK_BACK_WIDTH = 102.8;
@@ -205,11 +205,12 @@ function deskGeometry() {
 
 export const DESK = deskGeometry();
 
-// Rug under the desk, in stage units like DESK. Its sides follow the same
-// vanishing lines; only its back half is ever in view.
+// Rug under the desk (~3 m wide), in stage units like DESK. Its sides follow
+// the same vanishing lines; only its back half is ever in view, and its sides
+// only on very wide viewports.
 const RUG_BACK_Y = 24;
 const RUG_FRONT_Y = 320;
-const RUG_BACK_HALF = 330;
+const RUG_BACK_HALF = 500;
 // Bands across the rug as [top, bottom].
 const RUG_BORDER = [24, 36];
 const RUG_LINES = [
@@ -310,8 +311,8 @@ export function deskBox({
 }
 
 // The room behind the desk, for SceneBackdrop and Fireplace, in room units:
-// rest-vw of the laptop pose, with y = 0 on the device screen's bottom edge
-// and up negative. A desk unit is DESK_UNIT room units, so the desk's back
+// 1% of the width of the laptop pose's 16:10 frame, with y = 0 on the device
+// screen's bottom edge and up negative. A desk unit is DESK_UNIT room units, so the desk's back
 // edge (desk y −18) sits at y −4.5. Phones and tablets magnify the room at
 // rest (see the intro camera in globals.css), so these units hold on every
 // device.
@@ -327,12 +328,19 @@ export function floorSeams() {
   const at = (x0: number, y: number) => round2(50 + (x0 - 50) * spread(y));
   const bottom = 40;
   let d = "";
-  for (let i = 0; i <= 52; i += 1) {
+  const plank = (i: number, r: () => number) => {
     const x0 = -15 + i * PLANK_WIDTH;
     d += `M${round2(x0)},${ROOM_FLOOR_Y} L${at(x0, bottom)},${bottom} `;
     // One butt joint per plank row.
-    const y = round2(ROOM_FLOOR_Y + 1.5 + rand() * 28);
+    const y = round2(ROOM_FLOOR_Y + 1.5 + r() * 28);
     d += `M${at(x0, y)},${y} L${at(x0 + PLANK_WIDTH, y)},${y} `;
+  };
+  for (let i = 0; i <= 52; i += 1) plank(i, rand);
+  // Planks past the 16:10 frame, out to x −90 and 190, for wide viewports.
+  const outer = mulberry32(23);
+  for (let i = 1; i <= 29; i += 1) {
+    plank(-i, outer);
+    plank(52 + i, outer);
   }
   return d;
 }

@@ -100,12 +100,12 @@ export default function DeskIntro({ children }: { children: ReactNode }) {
           {active && (
             <motion.header
               style={{ opacity: headlineOpacity, y: headlineY }}
-              className="pointer-events-none absolute inset-x-0 top-[8%] flex flex-col items-center gap-3 px-8 text-center intro-phone:top-[4.5%] intro-phone:gap-2 intro-phone:px-6"
+              className="pointer-events-none absolute inset-x-0 top-[8%] flex flex-col items-center gap-3 px-8 text-center intro:top-[calc(50%-26.25*var(--intro-unit))] intro-phone:top-[4.5%] intro-phone:gap-2 intro-phone:px-6"
             >
               <p className="text-sm font-medium text-(--scene-ink-muted)">
                 {ABOUT.name}
               </p>
-              <h1 className="max-w-4xl text-balance text-4xl font-semibold tracking-tight text-(--scene-ink) xl:text-5xl intro-phone:text-[1.75rem] intro-phone:leading-tight">
+              <h1 className="max-w-4xl text-balance text-4xl font-semibold tracking-tight text-(--scene-ink) xl:text-5xl intro:text-[length:min(3rem,3.33*var(--intro-unit))] intro:leading-[1.05] intro-phone:text-[1.75rem] intro-phone:leading-tight">
                 {ABOUT.title}
               </h1>
             </motion.header>
@@ -114,38 +114,49 @@ export default function DeskIntro({ children }: { children: ReactNode }) {
             style={{ "--intro-e": eased } as MotionStyle}
             className={active ? "intro-stage absolute inset-0" : "contents"}
           >
-            {active && <DeskScene />}
-            {active && <LaptopFrame />}
-            {active && <DeviceFrame part="body" />}
-            <motion.div
-              inert={active}
-              style={{ "--intro-r": corners } as MotionStyle}
+            {/* The device's screen, a size container so the hardware and the
+                desk are drawn in cqw of it: 16:10 on the laptop, the
+                viewport on a phone or tablet. */}
+            <div
               className={
                 active
-                  ? "intro-screen-corners absolute inset-0 overflow-hidden [contain:paint]"
+                  ? "@container absolute top-0 left-1/2 h-full w-(--intro-glass-w) -translate-x-1/2"
                   : "contents"
               }
             >
-              {children}
-              {active && <IntroWalkthrough />}
-            </motion.div>
-            {active && <DeviceFrame part="front" corners={corners} />}
-            {active && (
-              <>
-                <button
-                  type="button"
-                  aria-label="Enter desktop"
-                  onClick={zoomIn}
-                  className={`${enterClass} intro-device:hidden`}
-                />
-                <button
-                  type="button"
-                  aria-label="Open the home screen"
-                  onClick={zoomIn}
-                  className={`${enterClass} hidden intro-device:block`}
-                />
-              </>
-            )}
+              {active && <DeskScene />}
+              {active && <LaptopFrame />}
+              {active && <DeviceFrame part="body" />}
+              <motion.div
+                inert={active}
+                style={{ "--intro-r": corners } as MotionStyle}
+                className={
+                  active
+                    ? "intro-screen-clip absolute top-0 left-1/2 h-full w-screen -translate-x-1/2 overflow-hidden [contain:paint]"
+                    : "contents"
+                }
+              >
+                {children}
+                {active && <IntroWalkthrough />}
+              </motion.div>
+              {active && <DeviceFrame part="front" corners={corners} />}
+              {active && (
+                <>
+                  <button
+                    type="button"
+                    aria-label="Enter desktop"
+                    onClick={zoomIn}
+                    className={`${enterClass} intro-device:hidden`}
+                  />
+                  <button
+                    type="button"
+                    aria-label="Open the home screen"
+                    onClick={zoomIn}
+                    className={`${enterClass} hidden intro-device:block`}
+                  />
+                </>
+              )}
+            </div>
           </motion.div>
           {active && (
             <motion.p

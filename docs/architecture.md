@@ -31,7 +31,7 @@ The page ([src/app/page.tsx](../src/app/page.tsx)) is a server component that re
 </WindowsProvider>
 ```
 
-While the intro plays, `<DesktopBody />` (or `<MobileShell />`) renders inside the device's screen box, which is scaled and has `contain: paint`, so the shell's `fixed` chrome is positioned and clipped relative to the device screen rather than the viewport. When the intro finishes, every `DeskIntro` wrapper switches to `display: contents`: the shell keeps its tree position (no remount) and lays out exactly as it would without the intro. The intro's camera is CSS, with a rest pose per device (laptop, phone, tablet) chosen by media query, so its server-rendered first frame needs no JS.
+While the intro plays, `<DesktopBody />` (or `<MobileShell />`) renders in a viewport-sized box centred on the device's screen, which is scaled and has `contain: paint`, so the shell's `fixed` chrome is positioned and clipped relative to the device screen rather than the viewport. The laptop's screen is always 16:10 and its scene is fitted inside the viewport, so nothing stretches on wide or square windows; the shell's box is clipped to the screen at rest and spreads to the full viewport at the end of the zoom. When the intro finishes, every `DeskIntro` wrapper switches to `display: contents`: the shell keeps its tree position (no remount) and lays out exactly as it would without the intro. The intro's camera is CSS, with a rest pose per device (laptop, phone, tablet) chosen by media query, so its server-rendered first frame needs no JS.
 
 `<WindowsProvider>` lives above the switch so window state survives a viewport resize across the breakpoint. `spotlightOpen` is local state in each branch (`DesktopBody` owns its own; `MobileShell` owns its own).
 

@@ -45,6 +45,13 @@ Scroll-driven landing, modelled on mercury.com. The visitor first sees the headl
 | Portrait, < 700 px wide | iPhone on an aluminium stand, in front of the fireplace | `<MobileShell />` home screen, a fingertip touring the dock |
 | Portrait, ≥ 700 px wide | iPad on an aluminium stand, fireplace to its left | `<MobileShell />` home screen, a fingertip touring the dock |
 
+**Fixed proportions** — on the laptop, the room, desk and props are composed in a 16:10 frame (100 × 62.5 room units) that is fitted inside the viewport, like `object-fit: contain`. A wider viewport shows more wall, floor and rug to the sides; a squarer one shows more wall above and floor below. Nothing in the frame stretches, and the MacBook's screen is always 16:10. The live desktop is still laid out at the viewport's size, centred on that screen, so it never re-lays out when the intro finishes:
+
+- Viewport wider than 16:10: the desktop is clipped to the screen at rest (its outer edges, such as the ends of the menu bar, are cropped), and over the last 20% of the zoom it spreads past the lid to the viewport's full width.
+- Viewport squarer than 16:10: the desktop doesn't reach the screen's sides, so LaptopFrame continues its wallpaper and menu bar there. At the end of the zoom the screen's sides are beyond the viewport's.
+
+On phones and tablets the screen is the viewport itself, so a portrait viewport gets a phone- or tablet-shaped screen.
+
 Props: `{ children: ReactNode }` — the screen content (`<DesktopBody />` or `<MobileShell />`; in the pre-hydration frame both, each shown by CSS).
 
 **When it plays** — `useIntroPending()` from [src/lib/intro.ts](../src/lib/intro.ts) returns `true` until `finishIntro()` is called, and only while `LAPTOP_INTRO_QUERY` (`(min-width: 1024px) and (prefers-reduced-motion: no-preference) and (min-aspect-ratio: 5/4)`) or `DEVICE_INTRO_QUERY` (`(orientation: portrait) and (prefers-reduced-motion: no-preference)`) matches and the browser supports CSS `pow()` (`CSS.supports("scale", "pow(2, 1)")`), which the camera needs. The same queries, wrapped in `@supports (scale: pow(2, 1))`, are the `intro:` (laptop), `intro-device:`, `intro-phone:` (< 700 px wide) and `intro-tablet:` (≥ 700 px) custom variants in [globals.css](../src/app/globals.css) — keep them in sync. Reduced-motion visitors, desktop viewports squarer than 5:4 and phones on their side never see the intro. The finished flag is module state, so the intro plays once per page load. The server snapshot is `true` so nothing (e.g. the consent auto-open) races ahead of it during hydration.
@@ -59,25 +66,29 @@ Props: `{ children: ReactNode }` — the screen content (`<DesktopBody />` or `<
     <div sticky top-0 h-dvh overflow-hidden>
       <SceneBackdrop eased />   night view, then the room's wall, fireplace and floor (parallax layers)
       <header>      ABOUT.name + <h1>{ABOUT.title}</h1> in --scene-ink colours; fades out over the first 20%
-                    (smaller and higher on phones)
+                    (on the laptop, placed and capped in room units so it keeps its place over the
+                    16:10 frame; smaller and higher on phones)
       <motion.div intro-stage absolute inset-0 style={{ --intro-e }}>
-        <DeskScene />                         rug, desk, props and stand, below the screen's bottom edge
-        <LaptopFrame />                       lid, keyboard deck, contact shadow (laptop only)
-        <DeviceFrame part="body" />           phone/tablet body, buttons, stand ledge (devices only)
-        <motion.div screen intro-screen-corners absolute inset-0 overflow-hidden [contain:paint] inert
-                    style={{ --intro-r }}>
-          {children}
-          <IntroWalkthrough />                cursor/fingertip + app labels touring the dock
-        </motion.div>
-        <DeviceFrame part="front" corners />  the phone's Dynamic Island, over the screen
-        <button aria-label="Enter desktop">          laptop; transparent, over the screen → animated zoom
-        <button aria-label="Open the home screen">   phone/tablet; same
+        <div @container h-full w-(--intro-glass-w), centred>   the device's screen: 16:10 on the laptop,
+                                                               the viewport on a phone or tablet
+          <DeskScene />                         rug, desk, props and stand, below the screen's bottom edge
+          <LaptopFrame />                       lid, screen behind the desktop, keyboard deck (laptop only)
+          <DeviceFrame part="body" />           phone/tablet body, buttons, stand ledge (devices only)
+          <motion.div intro-screen-clip h-full w-screen, centred, overflow-hidden [contain:paint] inert
+                      style={{ --intro-r }}>   the live shell's box: always the viewport's size
+            {children}
+            <IntroWalkthrough />                cursor/fingertip + app labels touring the dock
+          </motion.div>
+          <DeviceFrame part="front" corners />  the phone's Dynamic Island, over the screen
+          <button aria-label="Enter desktop">          laptop; transparent, over the screen → animated zoom
+          <button aria-label="Open the home screen">   phone/tablet; same
+        </div>
       </motion.div>
       <p>Scroll to enter <ChevronDown /></p>   glass pill; fades out over the first 8%; reads
                                                "Swipe up to enter" on touch (`pointer-coarse:`)
 ```
 
-The screen box is exactly the viewport, so at scale 1 it fills the window and the frame, desk and rug sit off-screen. Because the box is viewport-shaped, a portrait viewport gets a phone- or tablet-shaped screen for free. `contain: paint` makes the screen the containing block for the shell's `fixed` chrome (wallpaper, menu bar, dock, status bar, home screen) and clips it to the screen's rounded corners.
+At scale 1 the screen is the viewport's height (and, on a phone or tablet, its width), so the shell's box is exactly the viewport and the frame, desk and rug sit off-screen. The screen box is a size container: LaptopFrame, DeviceFrame and DeskScene are drawn in `cqw` of it (1cqw = 1% of the screen's width), never `vw`. `contain: paint` makes the shell's box the containing block for its `fixed` chrome (wallpaper, menu bar, dock, status bar, home screen), and `intro-screen-clip` clips it to the screen's rounded corners.
 
 **Camera** — CSS, in the "Desk intro camera" section of [globals.css](../src/app/globals.css), driven from [camera.ts](../src/components/intro/camera.ts). `scrollYProgress` is smoothed with `useSpring` (`stiffness 260, damping 40`) and eased (`easeInOut`) into `--intro-e`, which DeskIntro sets on the stage and SceneBackdrop on each depth layer. `--intro-e` and the screen-corner factor `--intro-r` are registered with `@property` as non-inherited numbers, so the live shell inside the screen isn't restyled every frame. The utilities:
 
@@ -86,20 +97,24 @@ The screen box is exactly the viewport, so at scale 1 it fills the window and th
 | `intro-stage` | `scale: pow(START, 1 − e)` — log-space zoom from the rest scale to 1, so the perceived zoom speed is even; `translate: 0 offset·(1 − e)`. |
 | `intro-layer` | For a layer at `--intro-depth` (< 1): `scale: (1/START)^(depth·e)`, shifted so it zooms about the screen's centre. Farther layers grow less, which produces the parallax. |
 | `intro-anchor` | `top` = where the screen's bottom edge rests: 50% + 50%·START + offset. |
-| `intro-screen-corners` | The screen's corner radii × `--intro-r`, which runs 1 → 0 over the last 20%. |
+| `intro-screen-clip` | `clip-path: inset()` on the shell's box: in from each side by half of how much wider than the screen it is, × `--intro-r` (which runs 1 → 0 over the last 20%), with the screen's corner radii × `--intro-r`. So it shows only the screen at rest, then spreads to the full viewport. |
+| `intro-screen-corners` | The screen's corner radii × `--intro-r`; on the enter buttons. |
 
 Percentages are of the `h-dvh` sticky box, so the room stays aligned on phones whose browser toolbars make `vh` taller than the visible area. When progress passes 0.995 DeskIntro calls `finishIntro()`.
 
-**Rest poses** (`:root` variables, overridden under `@variant intro-phone` / `intro-tablet`). Room units are rest-vw of the laptop pose, where the laptop's screen is 25 units (~30 cm) wide; `--intro-start` = device width × room scale ÷ 100 and `--intro-desk-scale` = 25 ÷ device width are derived.
+**Rest poses** (`:root` variables, overridden under `@variant intro-device`, then `intro-phone` / `intro-tablet`). Room units are 1% of the width of the laptop pose's 16:10 frame, where the laptop's screen is 25 units (~30 cm) wide. `--intro-desk-scale` = 25 ÷ device width is derived.
 
 | Variable | Laptop | Phone | Tablet | Meaning |
 | --- | --- | --- | --- | --- |
+| `--intro-unit` | `min(1vw, 1.6dvh)` | 1vw | 1vw | One room unit at rest, before `--intro-room-scale`. On the laptop, the 16:10 frame fitted inside the viewport. |
+| `--intro-glass-w` | 160dvh | 100vw | 100vw | The screen's width at scale 1; its height is the viewport's. |
+| `--intro-start` | 0.25 × min(1, aspect ÷ 1.6) | device width × room scale ÷ 100 | same | The stage's scale at rest, so the screen is `--intro-device-width` units wide. aspect ÷ 1.6 is `tan(atan2(100vw, 160dvh))`, the ratio of two lengths as a plain number that `pow()` can take. |
 | `--intro-device-width` | 25 | 5.4 (~6.5 cm) | 13.3 (~16 cm) | Screen width in room units, so every device is real size next to the mug. |
 | `--intro-room-scale` | 1 | 3.2 (2.7 squat, 3.6 tall) | 1.9 | How far the room is magnified at rest: the camera is closer to a small device. |
-| `--intro-room-pan` | 0 | 35vw | 22vw | Room shift in room units: the fireplace behind the phone, or to the tablet's left. |
-| `--intro-offset` | −4% | 27% (30.5% squat, 23.8% tall) | −0.6% | Screen centre's offset from the viewport centre at rest. |
-| `--intro-desk-lift` | 0 | 10vw (~3 cm) | 13vw (~4 cm) | How far the stand raises the device above the desk, in desk units. |
-| `--intro-radius-top` / `-bottom` | 0.7vw / 0 | 12vw / 12vw | 2.6vw / 2.6vw | Screen corner radii at rest. |
+| `--intro-room-pan` | 0 | 35cqw | 22cqw | Room shift in room units: the fireplace behind the phone, or to the tablet's left. |
+| `--intro-offset` | −2.5 units | 27% (30.5% squat, 23.8% tall) | −0.6% | Screen centre's offset from the viewport centre at rest. |
+| `--intro-desk-lift` | 0 | 10cqw (~3 cm) | 13cqw (~4 cm) | How far the stand raises the device above the desk, in desk units. |
+| `--intro-radius-top` / `-bottom` | 0.7cqw / 0 | 12cqw / 12cqw | 2.6cqw / 2.6cqw | Screen corner radii at rest. |
 
 Phones come in three shapes so the clock and fireplace fit between the headline and the desk: squat (`min-aspect-ratio: 3/5`, e.g. an iPhone SE in Safari), regular, and tall (`max-aspect-ratio: 9/17`, a phone with its toolbars hidden).
 
@@ -117,36 +132,39 @@ Phones come in three shapes so the clock and fireplace fit between the headline 
 
 ## LaptopFrame ([src/components/intro/LaptopFrame.tsx](../src/components/intro/LaptopFrame.tsx))
 
-Stateless, `aria-hidden` MacBook hardware drawn around a viewport-sized screen box; `intro-device:hidden`, so it shows only on the laptop. All dimensions are in `vw` so proportions hold at any viewport size; the parent's `scale` sizes it. Colours come from the `--laptop-*` tokens in [globals.css](../src/app/globals.css) (silver in `glass-light`, space black in `glass-dark`) — see [styling-and-icons.md](styling-and-icons.md#laptop-intro-tokens).
+Stateless, `aria-hidden` MacBook hardware drawn around the 16:10 screen box; `intro-device:hidden`, so it shows only on the laptop. All dimensions are in `cqw` of the screen box, so proportions hold at any viewport size; the parent's `scale` sizes it. Colours come from the `--laptop-*` tokens in [globals.css](../src/app/globals.css) (silver in `glass-light`, space black in `glass-dark`) — see [styling-and-icons.md](styling-and-icons.md#laptop-intro-tokens).
 
-- **Lid** — a `div` around the screen box: black bezel (1.4vw at the sides and top, 2.1vw chin), aluminium rim, camera dot.
-- **Base** — an SVG at the screen's bottom edge (`top-full`, `viewBox 0 0 100 100` over `100vw`, so one unit is `1vw`, like DeskScene). The laptop is seen from slightly above, so the deck is drawn as a trapezoid that widens towards the viewer. Back to front: blurred contact shadow, hinge bar, front lip, deck surface (shaded under the lid), thumb scoop, speaker-grille dots, keyboard well, keys, trackpad. All paths come precomputed from `LAPTOP_BASE` in [scenery.ts](../src/components/intro/scenery.ts).
+- **Lid** — a `div` around the screen box: black bezel (1.4cqw at the sides and top, 2.1cqw chin), aluminium rim, camera dot.
+- **Screen** — behind the live desktop, filling the screen box with rounded top corners: the desktop's landscape wallpaper (`DEFAULT_LANDSCAPE` from [Wallpaper.tsx](../src/components/desktop/Wallpaper.tsx), 16:10 like the screen, so it lines up with the desktop's own wallpaper) and a strip styled like the menu bar. It shows only where a viewport squarer than 16:10 leaves the desktop short of the screen's sides. Where the desktop ends, a faint sub-pixel seam can show in the menu bar: the desktop's wallpaper and its translucent menu bar share that antialiased edge.
+- **Base** — an SVG at the screen's bottom edge (`top-full`, `viewBox 0 0 100 100` over `100cqw`, so one unit is `1cqw`, like DeskScene). The laptop is seen from slightly above, so the deck is drawn as a trapezoid that widens towards the viewer. Back to front: blurred contact shadow, hinge bar, front lip, deck surface (shaded under the lid), thumb scoop, speaker-grille dots, keyboard well, keys, trackpad. All paths come precomputed from `LAPTOP_BASE` in [scenery.ts](../src/components/intro/scenery.ts).
 
 The keyboard is a 14-inch MacBook Pro layout: a full-height function row, five letter rows, and the inverted-T arrows with half-height ↑/↓ (77 keys in one `<path>`). Speaker grilles flank it, and the trackpad sits centred below.
 
 ## DeviceFrame ([src/components/intro/DeviceFrame.tsx](../src/components/intro/DeviceFrame.tsx))
 
-Stateless, `aria-hidden` phone and tablet hardware for portrait screens, drawn around the viewport-sized screen box in `vw` like LaptopFrame and coloured with the same `--laptop-*` tokens. Props: `{ part: "body" | "front"; corners?: MotionValue<number> }`.
+Stateless, `aria-hidden` phone and tablet hardware for portrait screens, drawn around the viewport-sized screen box in `cqw` of it like LaptopFrame and coloured with the same `--laptop-*` tokens. Props: `{ part: "body" | "front"; corners?: MotionValue<number> }`.
 
-- `part="body"` (behind the screen): on `intro-phone:`, an iPhone body (4.5vw black bezel, 0.7vw metal rim, 16.5vw corners around the screen's 12vw), action and volume buttons on the left and a side button on the right; on `intro-tablet:`, an iPad body (5vw bezel, 0.4vw rim, 7.6vw corners around 2.6vw), a camera dot in the top bezel and a top button. Under either, the stand's ledge: a brushed-aluminium bar the device rests on (~75% of the screen width).
-- `part="front"` (over the screen): the phone's Dynamic Island (28vw × 8.4vw pill, 2.6vw from the top). Its opacity is `corners`, so it fades out as the screen corners flatten at the end of the zoom.
+- `part="body"` (behind the screen): on `intro-phone:`, an iPhone body (4.5cqw black bezel, 0.7cqw metal rim, 16.5cqw corners around the screen's 12cqw), action and volume buttons on the left and a side button on the right; on `intro-tablet:`, an iPad body (5cqw bezel, 0.4cqw rim, 7.6cqw corners around 2.6cqw), a camera dot in the top bezel and a top button. Under either, the stand's ledge: a brushed-aluminium bar the device rests on (~75% of the screen width).
+- `part="front"` (over the screen): the phone's Dynamic Island (28cqw × 8.4cqw pill, 2.6cqw from the top). Its opacity is `corners`, so it fades out as the screen corners flatten at the end of the zoom.
 
 DeskScene draws the rest of the stand (neck and base) on the desk; the neck rises behind the device, so the ledge always hides its top whatever the lift.
 
 ## SceneBackdrop ([src/components/intro/SceneBackdrop.tsx](../src/components/intro/SceneBackdrop.tsx))
 
-`aria-hidden` room behind the device, outside the stage. Props: `{ eased: MotionValue<number> }`. Each layer is a `DepthLayer` (local helper): an `intro-layer` element with `--intro-depth` and the per-frame `--intro-e`, holding an `intro-anchor` div at the screen's resting bottom edge, which holds a wrapper scaled by `--intro-room-scale` about that anchor:
+`aria-hidden` room behind the device, outside the stage. Props: `{ eased: MotionValue<number> }`. Each layer is a `DepthLayer` (local helper): an `intro-layer` element with `--intro-depth` and the per-frame `--intro-e`, holding an `intro-anchor` div at the screen's resting bottom edge, which holds the **room frame**: a size container 100 `--intro-unit`s wide, centred on the device and scaled by `--intro-room-scale` about the anchor:
 
 | Layer | Depth | Content |
 | --- | --- | --- |
 | Night view | 0.1 (`NIGHT_DEPTH`) | Seen only through the window: `--scene-night-*` sky, stars, moon with a glow, snowy hills with a band of pines, and falling snow. |
 | Room | 0.35 (`ROOM_DEPTH`) | Back wall with the window cut out, wood floor, baseboard, the window (frame, mullions, sill, tied-back curtains on a brass rod), `<Fireplace />`, a warm vignette, and a flickering firelight glow. |
 
-Both layers are drawn in **room units**: rest-vw of the laptop pose, with y = 0 on the device screen's bottom edge and up negative, in SVGs whose user units are vw. Because the stage is drawn in vw from the same edge, the room lines up with the desk at every aspect ratio: one desk unit is `DESK_UNIT` (0.25) room units, so the desk's back edge (desk y −18) sits at y −4.5, just in front of the floor line at `ROOM_FLOOR_Y` (−9). The wall is a single `evenodd` path with the window glass cut out, so the night layer shows through it and shifts behind the frame as the camera moves in.
+Both layers are drawn in **room units**, 1cqw of the room frame, with x = 50 on the device's centre, y = 0 on the device screen's bottom edge and up negative, in SVGs whose user units are cqw. Because the stage is drawn from the same edge in the same proportions, the room lines up with the desk at every aspect ratio: one desk unit is `DESK_UNIT` (0.25) room units, so the desk's back edge (desk y −18) sits at y −4.5, just in front of the floor line at `ROOM_FLOOR_Y` (−9). The wall is a single `evenodd` path with the window glass cut out, so the night layer shows through it and shifts behind the frame as the camera moves in.
 
-On phones and tablets the room is magnified about the anchor and **panned** by `--intro-room-pan` (a `Pan` wrapper, `translate-x-(--intro-room-pan)`) so the fireplace stands behind or beside the device. Only the parts with a horizontal position are panned: the wall (its own SVG, `viewBox="-10 -120 120 111"`, reaching high enough to fill a tall portrait screen), the window and fireplace (`viewBox="-10 -60 120 100"`), the night view and the firelight glow. The floor, its seams and the baseboard (`viewBox="-10 -10.2 120 50.2"`) and the vignette stay centred on the view, so the floorboards always converge on the device, whose desk isn't panned.
+On phones and tablets the room is magnified about the anchor and **panned** by `--intro-room-pan` (a `Pan` wrapper, `translate-x-(--intro-room-pan)`) so the fireplace stands behind or beside the device. Only the parts with a horizontal position are panned: the wall (its own SVG, `viewBox="-90 -120 280 111"`, reaching high enough to fill a tall portrait screen), the window and fireplace (`viewBox="-10 -60 120 100"`), the night view and the firelight glow. The floor, its seams and the baseboard (`viewBox="-90 -10.2 280 50.2"`) and the vignette stay centred on the view, so the floorboards always converge on the device, whose desk isn't panned.
 
-The falling snow is a `motion.svg` holding the same 45 × 42 tile of flakes twice, stacked; it slides down one tile height every 18 s on a linear loop, so the repeat is seamless. The firelight is an HTML `div` with a radial gradient whose opacity flickers (2.2 s, mirrored), so the compositor animates it without repainting the wall.
+The wall, floor and baseboard run from x −90 to 190, far past the 16:10 frame, so a wide viewport (up to about 4:1) shows more of them. The vignette is a radial gradient with a fixed ellipse (106 × 59.4 units about the fireplace and desk) in a much larger box, so everything beyond the ellipse, including the extra wall and floor, is evenly dimmed.
+
+The falling snow is a `motion.svg` holding the same 45 × 42 tile of flakes twice, stacked; it slides down one tile height (`y` from −50% to 0%) every 18 s on a linear loop, so the repeat is seamless. The firelight is an HTML `div` with a radial gradient whose opacity flickers (2.2 s, mirrored), so the compositor animates it without repainting the wall.
 
 ## Fireplace ([src/components/intro/Fireplace.tsx](../src/components/intro/Fireplace.tsx))
 
@@ -158,7 +176,7 @@ The fire is a broad base flame that swells slowly, plus five `<Flame>` tongues o
 
 A walnut tambour clock with a brass bezel and a cream face, in Fireplace's room units, showing the visitor's **local time**. It reads `useNow()` from [clock.ts](../src/lib/clock.ts): the hour and minute hands are `rotate()` transforms on the SVG (hour = (h mod 12 + m / 60) × 30°, minute = (m + s / 60) × 6°) and move each time `useNow()` ticks on the minute. A thin red second hand sweeps once a minute on a linear `motion` loop that starts from the current second. It sits in a group with a transparent disc the size of the face, so the group's `fill-box` centre, which motion rotates about, is the pivot.
 
-The hands render only once `useNow()` returns a `Date`. It is `null` on the server and on the first client render, so the server HTML (the face without hands) matches what hydrates. On very wide viewports (21:9), the top of the clock is above the viewport at rest.
+The hands render only once `useNow()` returns a `Date`. It is `null` on the server and on the first client render, so the server HTML (the face without hands) matches what hydrates.
 
 ## Flame ([src/components/intro/Flame.tsx](../src/components/intro/Flame.tsx))
 
@@ -168,20 +186,20 @@ A flickering teardrop fire tongue standing on `(x, y)` in the parent SVG's units
 
 All generated scene geometry lives here: `mulberry32` (seeded PRNG), `sine` (arithmetic-only approximation of `Math.sin`), `round2`, `dotsPath` (circles as one path) and `flamePath`; `LAPTOP_BASE` for LaptopFrame; `DESK`, `RUG` and `deskBox` for DeskScene; and, in room units for SceneBackdrop and Fireplace, `ROOM_FLOOR_Y`, `floorSeams`, `brickCourses`, `nightHillY` / `nightNearY` / `crestPath`, `pinesPath`, `starDots` and `snowTile`.
 
-The scene is drawn to the scale of a 14-inch MacBook Pro, whose screen is about 30 cm wide, so 1 cm ≈ 3.3vw.
+The scene is drawn to the scale of a 14-inch MacBook Pro, whose screen is about 30 cm wide, so 1 cm ≈ 3.3 desk units (1% of the screen's width).
 
-`LAPTOP_BASE` lays out the deck in plan coordinates: `u` runs across 0–1, and `v` runs from the hinge (0) to the front edge (1). The camera looks squarely at the screen, and the lid is tilted back about 25°. So the 22 cm deck (73vw in plan) foreshortens to sin 25° ≈ 0.42 of its depth: the front edge sits 31vw below the back edge. The back edge is 102.8vw wide (the lid's width) at y = 2.6. Plan points are projected in perspective with a scale of `1 / (1 − c·v)`, which is 1 at the hinge and `DECK_SPREAD` (1.07) at the front edge. The result holds the path strings for every part of the base, plus `backY` / `frontY` for the gradients.
+`LAPTOP_BASE` lays out the deck in plan coordinates: `u` runs across 0–1, and `v` runs from the hinge (0) to the front edge (1). The camera looks squarely at the screen, and the lid is tilted back about 25°. So the 22 cm deck (73 units in plan) foreshortens to sin 25° ≈ 0.42 of its depth: the front edge sits 31 units below the back edge. The back edge is 102.8 units wide (the lid's width) at y = 2.6. Plan points are projected in perspective with a scale of `1 / (1 − c·v)`, which is 1 at the hinge and `DECK_SPREAD` (1.07) at the front edge. The result holds the path strings for every part of the base, plus `backY` / `frontY` for the gradients.
 
-`flatSpread(y)` extends the deck's vanishing lines: it returns the width multiplier (1 at the hinge line) for anything lying flat at projected depth `y`. `DESK` uses it to build a writing desk about 85 cm wide. Its top runs from y = −18 (behind the laptop) to y = 44 and is 280vw wide at the front edge. `DESK` holds the top and grain paths and the leg positions. `RUG` uses the same vanishing lines for a rug about 200 cm wide whose back edge (y = 24) is hidden behind the desk except at the sides; it holds the field, back border, fringe and thin cross stripes. `deskBox` builds a box lying square on the desk (its top, front face, the inner side that shows right of centre, a strap across it and the page block on its front face) along the same vanishing lines; DeskScene stacks two of them as notebooks. `floorSeams` runs the room's floorboards towards the same vanishing point, scaled into room units by `DESK_UNIT` from [camera.ts](../src/components/intro/camera.ts).
+`flatSpread(y)` extends the deck's vanishing lines: it returns the width multiplier (1 at the hinge line) for anything lying flat at projected depth `y`. `DESK` uses it to build a writing desk about 85 cm wide. Its top runs from y = −18 (behind the laptop) to y = 44 and is 280 units wide at the front edge. `DESK` holds the top and grain paths and the leg positions. `RUG` uses the same vanishing lines for a rug about 300 cm wide whose back edge (y = 24) is hidden behind the desk except at the sides, and whose own sides show only on very wide viewports; it holds the field, back border, fringe and thin cross stripes. `deskBox` builds a box lying square on the desk (its top, front face, the inner side that shows right of centre, a strap across it and the page block on its front face) along the same vanishing lines; DeskScene stacks two of them as notebooks. `floorSeams` runs the room's floorboards towards the same vanishing point, scaled into room units by `DESK_UNIT` from [camera.ts](../src/components/intro/camera.ts): 53 planks across the 16:10 frame, then more out to x −90 and 190 from a second seed, so the frame's joints don't move.
 
 The geometry is server-rendered by Node (V8) and hydrated in every browser engine, so its output must be **bit-identical across JS engines**. If it isn't, React reports a hydration mismatch. The module therefore uses only `+ − × ÷ %` and `Math.round` / `min` / `max` / `floor` / `ceil` / `imul`, whose results IEEE 754 and the JS spec fix exactly. `Math.sin`, `Math.pow` / `**` and other library maths can differ in the last bit between engines; JavaScriptCore in Safari, for example, gave a different wildflower `cy` than V8. Values written to SVG attributes are also rounded (`toFixed`, or `round2` for numeric props).
 
 ## DeskScene ([src/components/intro/DeskScene.tsx](../src/components/intro/DeskScene.tsx))
 
-`aria-hidden` SVG inside the stage, positioned at the screen box's bottom edge (`top-full`, `viewBox 0 0 100 100` over `100vw` → one unit is `1vw`, `overflow-visible`). The units match LaptopFrame's, so the desk lines up under the laptop base at any aspect ratio. A phone or tablet screen is narrower than the laptop's, so the SVG sits in a wrapper scaled by `--intro-desk-scale` (25 ÷ device width) about the screen's bottom centre, which keeps the desk the same size in the room, and an inner wrapper lowers it by `--intro-desk-lift`, the height of the device's stand. Back to front:
+`aria-hidden` SVG inside the screen box, positioned at its bottom edge (`top-full`, `viewBox 0 0 100 100` over `100cqw` → one unit is `1cqw`, 1% of the screen's width, `overflow-visible`). The units match LaptopFrame's, so the desk lines up under the laptop base at any aspect ratio. A phone or tablet screen is narrower than the laptop's, so the SVG sits in a wrapper scaled by `--intro-desk-scale` (25 ÷ device width) about the screen's bottom centre, which keeps the desk the same size in the room, and an inner wrapper lowers it by `--intro-desk-lift`, the height of the device's stand. Back to front:
 
 1. Rug (`RUG` from [scenery.ts](../src/components/intro/scenery.ts)): plain rust field, cream back border with fringe and thin dark stripes, darkened towards its edges by a radial gradient. A soft shadow band falls across it below the desk's front edge.
-2. Desk (`DESK`): back legs, then the oak top surface (`--scene-wood-top`) with faint grain lines. The top shares the laptop base's vanishing lines, so the two read as one view from above. Then the 6vw front edge (`--scene-wood-face`) and walnut front legs (`--scene-desk-leg`).
+2. Desk (`DESK`): back legs, then the oak top surface (`--scene-wood-top`) with faint grain lines. The top shares the laptop base's vanishing lines, so the two read as one view from above. Then the 6-unit front edge (`--scene-wood-face`) and walnut front legs (`--scene-desk-leg`).
 3. On phones and tablets, the rest of the stand (`STANDS.phone` / `STANDS.tablet`, shown by `intro-phone:` / `intro-tablet:`): a soft shadow, an aluminium neck rising from y −30 (hidden behind the device and DeviceFrame's ledge) and a `deskBox` base plate, ~9 × 6.5 cm for the phone and ~14 × 8 cm for the tablet.
 4. Props on the desk, drawn at real size in desk units. The `Mug` and `NotebookStack` components are rendered twice: the laptop/tablet layout, and a phone layout (`hidden intro-phone:block`) with the mug at x 22 instead of −34 and the stack 46 units closer in (`notebookStack(-46)`), so both sit beside the small phone. Back left: a coffee mug ~6.5 cm across and 7 cm tall (`MUG`), with a shaded body, a red band, its handle on the left, a rim with coffee inside and two steam wisps that fade and rise on a loop (3.2 s, staggered). Right: two notebooks from `deskBox`, a navy notebook (~16 × 12 cm) with a mustard ribbon bookmark under a tan leather pocket journal (~13 × 9 cm) with a black elastic strap, both showing their page edges. An uncapped black fountain pen with a gold nib lies on the journal, and a capped red one on the desk in front. Both lie as a right-handed writer sets a pen down: nib (or cap) pointing away and to the left, end cap towards the viewer on the right. The pens are drawn lying along −x from their end cap and placed by a `translate(…) rotate(…) scale(PEN_SCALE)` transform (0.8, so they are ~11.5 cm long), each with an offset shadow.
 

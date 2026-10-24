@@ -4,10 +4,10 @@ import { motion } from "motion/react";
 import { useId } from "react";
 import { DESK, deskBox, RUG } from "./scenery";
 
-// Desk units are vw with the origin at the laptop screen's bottom-left
-// corner, so the desk lines up with LaptopFrame at any aspect. 1 cm ≈ 3.3
-// units (the laptop's screen is ~30 cm wide), and the props are drawn at that
-// scale. A phone or tablet screen is narrower, so DeskIntro magnifies this
+// Desk units are cqw of the screen box with the origin at the laptop screen's
+// bottom-left corner, so the desk lines up with LaptopFrame at any aspect.
+// 1 cm ≈ 3.3 units (the laptop's screen is ~30 cm wide), and the props are
+// drawn at that scale. A phone or tablet screen is narrower, so DeskIntro magnifies this
 // svg by --intro-desk-scale about the screen's bottom centre (keeping the
 // desk the same size in the room) and lowers it by --intro-desk-lift, the
 // height of the device's stand.
@@ -298,7 +298,7 @@ export default function DeskScene() {
         <svg
           aria-hidden="true"
           viewBox="0 0 100 100"
-          className="absolute top-0 left-0 h-[100vw] w-full overflow-visible"
+          className="absolute top-0 left-0 h-[100cqw] w-full overflow-visible"
         >
           <defs>
             <linearGradient id={`${id}-ceramic`} x1="0" y1="0" x2="1" y2="0">
@@ -362,16 +362,16 @@ export default function DeskScene() {
           <path d={RUG.border} className="fill-(--scene-rug-light)" />
           <path d={RUG.lines} className="fill-(--scene-rug-dark)" />
           <rect
-            x="-300"
+            x="-600"
             y="20"
-            width="700"
+            width="1300"
             height="200"
             fill={`url(#${id}-rug-shade)`}
           />
           <rect
-            x="-400"
+            x="-600"
             y={DESK.frontY + DESK_FACE}
-            width="900"
+            width="1300"
             height="50"
             fill={`url(#${id}-under)`}
           />

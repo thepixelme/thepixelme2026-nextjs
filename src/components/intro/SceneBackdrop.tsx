@@ -17,10 +17,13 @@ import {
 
 // Both layers are drawn in room units (see scenery.ts) from an anchor on the
 // device screen's bottom edge at rest, so the room lines up with the desk at
-// any aspect ratio. On phones and tablets the room is magnified about that
-// anchor and panned so the fireplace stands behind the device; the floor and
-// the vignette stay centred on the view, so the floorboards still converge
-// on the device.
+// any aspect ratio. A room unit is 1cqw of a room frame 100 --intro-units
+// wide, centred on the device. The wall and floor run far past that
+// frame, so a wide viewport shows more of them rather than stretching
+// anything. On phones and tablets the room is magnified about the anchor and
+// panned so the fireplace stands behind the device; the floor and the
+// vignette stay centred on the view, so the floorboards still converge on
+// the device.
 const NIGHT_DEPTH = 0.1;
 const ROOM_DEPTH = 0.35;
 
@@ -33,7 +36,7 @@ const SNOW = snowTile(21, 70, 45, 42);
 
 // Window glass in the wall, which the night layer shows through.
 const GLASS = { x: 84.2, y: -45, width: 13, height: 33.8 };
-const WALL = `M-10,-120 H110 V${FLOOR} H-10 Z M${GLASS.x},${GLASS.y} V${GLASS.y + GLASS.height} H${GLASS.x + GLASS.width} V${GLASS.y} Z`;
+const WALL = `M-90,-120 H190 V${FLOOR} H-90 Z M${GLASS.x},${GLASS.y} V${GLASS.y + GLASS.height} H${GLASS.x + GLASS.width} V${GLASS.y} Z`;
 const CURTAIN =
   "M80.2,-47 L85.8,-47 C85.4,-36 83.6,-26 82.8,-21 C83.3,-16 84.1,-12 84.3,-9.2 L79.8,-9.2 C80,-14 80.2,-18 80.2,-21 Z";
 const CURTAIN_FOLDS =
@@ -54,7 +57,7 @@ function DepthLayer({
       className="intro-layer absolute inset-0"
     >
       <div className="intro-anchor absolute inset-x-0">
-        <div className="absolute inset-x-0 top-0 origin-top scale-(--intro-room-scale)">
+        <div className="@container absolute top-0 left-1/2 w-[calc(100*var(--intro-unit))] -translate-x-1/2 origin-top scale-(--intro-room-scale)">
           {children}
         </div>
       </div>
@@ -78,7 +81,7 @@ function NightView() {
       <svg
         aria-hidden="true"
         viewBox="60 -60 80 60"
-        className="absolute -top-[60vw] left-[60vw] h-[60vw] w-[80vw]"
+        className="absolute -top-[60cqw] left-[60cqw] h-[60cqw] w-[80cqw]"
       >
         <defs>
           <linearGradient
@@ -116,12 +119,12 @@ function NightView() {
         <path d={PINES} className="fill-(--scene-pine)" />
         <path d={NEAR_HILL} className="fill-(--scene-snow)" />
       </svg>
-      <div className="absolute -top-[50vw] left-[70vw] h-[42vw] w-[45vw] overflow-hidden">
+      <div className="absolute -top-[50cqw] left-[70cqw] h-[42cqw] w-[45cqw] overflow-hidden">
         <motion.svg
           aria-hidden="true"
           viewBox="0 0 45 84"
-          className="h-[84vw] w-[45vw]"
-          animate={{ y: ["-42vw", "0vw"] }}
+          className="h-[84cqw] w-[45cqw]"
+          animate={{ y: ["-50%", "0%"] }}
           transition={{
             duration: 18,
             repeat: Number.POSITIVE_INFINITY,
@@ -231,12 +234,13 @@ function Room() {
   return (
     <>
       {/* Wall down to the floor line (y −9), then floor and skirting from
-          y −10.2, in svgs sized to match their viewBoxes. */}
+          y −10.2, in svgs sized to match their viewBoxes. Both run from
+          x −90 to 190, well past the 16:10 frame, for wide viewports. */}
       <Pan>
         <svg
           aria-hidden="true"
-          viewBox="-10 -120 120 111"
-          className="absolute -top-[120vw] -left-[10vw] h-[111vw] w-[120vw]"
+          viewBox="-90 -120 280 111"
+          className="absolute -top-[120cqw] -left-[90cqw] h-[111cqw] w-[280cqw]"
         >
           <defs>
             <linearGradient
@@ -259,8 +263,8 @@ function Room() {
       </Pan>
       <svg
         aria-hidden="true"
-        viewBox="-10 -10.2 120 50.2"
-        className="absolute -top-[10.2vw] -left-[10vw] h-[50.2vw] w-[120vw]"
+        viewBox="-90 -10.2 280 50.2"
+        className="absolute -top-[10.2cqw] -left-[90cqw] h-[50.2cqw] w-[280cqw]"
       >
         <defs>
           <linearGradient
@@ -276,9 +280,9 @@ function Room() {
           </linearGradient>
         </defs>
         <rect
-          x="-10"
+          x="-90"
           y={FLOOR}
-          width="120"
+          width="280"
           height={40 - FLOOR}
           fill={`url(#${id}-floor)`}
         />
@@ -289,9 +293,9 @@ function Room() {
           className="stroke-(--scene-floor-seam)"
         />
         <rect
-          x="-10"
+          x="-90"
           y={FLOOR - 1.2}
-          width="120"
+          width="280"
           height="1.2"
           className="fill-(--scene-trim)"
         />
@@ -300,16 +304,18 @@ function Room() {
         <svg
           aria-hidden="true"
           viewBox="-10 -60 120 100"
-          className="absolute -top-[60vw] -left-[10vw] h-[100vw] w-[120vw]"
+          className="absolute -top-[60cqw] -left-[10cqw] h-[100cqw] w-[120cqw]"
         >
           <Window />
           <Fireplace />
         </svg>
       </Pan>
-      <div className="absolute top-[-20vw] left-1/2 h-[84vw] w-[150vw] -translate-1/2 bg-radial from-transparent from-30% to-(--scene-wall-shade)/85 to-72%" />
+      {/* Vignette: an ellipse about the fireplace and desk, solid shade
+          beyond it, so the far wall and floor on a wide viewport stay dim. */}
+      <div className="absolute top-[-20cqw] left-1/2 h-[300cqw] w-[500cqw] -translate-1/2 bg-[radial-gradient(106cqw_59.4cqw_in_oklab,transparent_30%,color-mix(in_oklab,var(--scene-wall-shade)_85%,transparent)_72%)]" />
       <Pan>
         <motion.div
-          className="absolute top-[-12vw] left-[15vw] h-[56vw] w-[80vw] -translate-1/2 rounded-full bg-radial from-(--scene-firelight)/55 to-transparent to-70%"
+          className="absolute top-[-12cqw] left-[15cqw] h-[56cqw] w-[80cqw] -translate-1/2 rounded-full bg-radial from-(--scene-firelight)/55 to-transparent to-70%"
           animate={{ opacity: [0.75, 1] }}
           transition={{
             duration: 2.2,

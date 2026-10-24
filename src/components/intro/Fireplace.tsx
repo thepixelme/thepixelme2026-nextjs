@@ -7,7 +7,7 @@ import MantelClock from "./MantelClock";
 import { brickCourses, ROOM_FLOOR_Y as FLOOR, round2 } from "./scenery";
 
 // Mantelpiece, fire, fairy lights and mantel clock for SceneBackdrop's room,
-// drawn in its rest-vw units (see scenery.ts). The firebox is centred on x = 15, so at
+// drawn in its room units (see scenery.ts). The firebox is centred on x = 15, so at
 // rest it shows to the left of the laptop, above the desk's back edge.
 
 const BRICKS = brickCourses(

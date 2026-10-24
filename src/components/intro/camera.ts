@@ -7,5 +7,5 @@ export const easeInOut = (t: number) =>
   t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
 
 // Room units per desk unit: the laptop rests at a quarter of the viewport, so
-// one unit of DeskScene (1vw on the laptop's own screen) is 0.25 room units.
+// one unit of DeskScene (1% of the laptop's screen width) is 0.25 room units.
 export const DESK_UNIT = 0.25;

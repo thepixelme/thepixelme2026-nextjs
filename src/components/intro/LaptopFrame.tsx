@@ -1,9 +1,10 @@
 import { useId } from "react";
+import { DEFAULT_LANDSCAPE } from "@/components/desktop/Wallpaper";
 import { LAPTOP_BASE as BASE } from "./scenery";
 
-// Drawn around a screen box that is exactly the viewport, in vw units so the
-// proportions hold at any size; the parent scales the whole thing. The base
-// SVG's origin is the screen's bottom-left corner (one unit = 1vw).
+// Drawn around the 16:10 screen box in cqw of it, so the proportions hold at
+// any size; the parent scales the whole thing. The base SVG's origin is the
+// screen's bottom-left corner (one unit = 1cqw).
 export default function LaptopFrame() {
   const id = useId();
 
@@ -12,13 +13,25 @@ export default function LaptopFrame() {
       aria-hidden="true"
       className="pointer-events-none absolute inset-0 intro-device:hidden"
     >
-      <div className="absolute -inset-x-[1.4vw] -top-[1.4vw] -bottom-[2.1vw] rounded-t-[1.9vw] rounded-b-[0.4vw] bg-(--laptop-bezel) shadow-[0_0_0_0.16vw_var(--laptop-rim)]">
-        <div className="absolute top-[0.5vw] left-1/2 size-[0.38vw] -translate-x-1/2 rounded-full bg-(--laptop-camera)" />
+      <div className="absolute -inset-x-[1.4cqw] -top-[1.4cqw] -bottom-[2.1cqw] rounded-t-[1.9cqw] rounded-b-[0.4cqw] bg-(--laptop-bezel) shadow-[0_0_0_0.16cqw_var(--laptop-rim)]">
+        <div className="absolute top-[0.5cqw] left-1/2 size-[0.38cqw] -translate-x-1/2 rounded-full bg-(--laptop-camera)" />
+      </div>
+      {/* The screen behind the live desktop. On a viewport squarer than
+          16:10 the desktop doesn't reach the screen's sides, so its wallpaper
+          (16:10 too, so it lines up) and menu bar carry on here. */}
+      <div className="absolute inset-0 overflow-hidden rounded-t-[0.7cqw]">
+        <img
+          src={DEFAULT_LANDSCAPE}
+          alt=""
+          decoding="async"
+          className="size-full object-cover"
+        />
+        <div className="absolute inset-x-0 top-0 h-7 border-b border-separator bg-surface backdrop-blur-(--glass-blur)" />
       </div>
       <svg
         aria-hidden="true"
         viewBox="0 0 100 100"
-        className="absolute top-full left-0 h-[100vw] w-full overflow-visible"
+        className="absolute top-full left-0 h-[100cqw] w-full overflow-visible"
       >
         <defs>
           <linearGradient
