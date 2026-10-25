@@ -2,13 +2,15 @@ import type { Project } from "./types";
 
 export const lamgigPlatform: Project = {
   id: "lamgig-platform",
-  title: "LamGig — All-in-one business dashboard for small businesses",
+  title: "LamGig: The growth platform for small businesses",
   tags: [
     "Web",
+    "App",
     "Next.js",
     "PostgreSQL",
     "React",
     "TypeScript",
+    "Swift",
     "Node.js",
     "Supabase",
     "Stripe",
@@ -46,10 +48,10 @@ export const lamgigPlatform: Project = {
     },
   ],
   summary:
-    "A multi-tenant SaaS dashboard where small business owners run their whole operation — menu, online orders, payments, customer marketing, and a loyalty program — from one simple, safe place.",
+    "A multi-tenant platform that gives small businesses the technology big chains pay six figures for: their own website and iOS and Android apps, online ordering and payments, customer accounts, a loyalty program, and automated email and push marketing, all run from one dashboard.",
   description:
-    "I founded LamGig and designed and built the dashboard and everything behind it myself in about three months: the multi-tenant backend, the database, payments, messaging, and the owner-facing interface. It's the kind of system companies usually staff with a full product team — roughly 150,000 lines of code.",
-  role: "Founder — product, design, and sole engineer",
+    "I founded LamGig and designed and built the entire platform myself in about three months. That covers the multi-tenant backend and database, the owner dashboard and LamGig's staff console, payments, email and push messaging, the customer website, and native iOS and Android apps. It comes to more than 200,000 lines of code, which is the kind of system a company would normally give to a full product team.",
+  role: "Founder, designer, and sole engineer",
   stack: [
     "Next.js 16",
     "React 19",
@@ -59,6 +61,8 @@ export const lamgigPlatform: Project = {
     "Stripe Connect",
     "Resend",
     "APNs + FCM",
+    "SwiftUI",
+    "Kotlin + Jetpack Compose",
     "Tailwind CSS + shadcn/ui",
     "Zod",
     "Upstash Redis",
@@ -68,49 +72,49 @@ export const lamgigPlatform: Project = {
     "Vitest",
   ],
   status:
-    "Live in production and ready for real payments. The full dashboard runs end to end on staging with a demo cafe, ahead of its first pilot business.",
+    "Live in production and set up for real payments. The whole platform, including the website and both apps, runs end to end on staging with a demo cafe, ahead of its first pilot business.",
   problem:
-    "Big chains run on enterprise software: online ordering, customer data, automated marketing, and loyalty programs. A neighborhood cafe can't afford that, so it juggles a handful of disconnected subscriptions that don't share customers or data.\n\nThe LamGig dashboard puts all of it in one place. The hard part was making it simple enough for an owner who logs in once a month, yet robust enough to handle money, customer data, and messaging for many businesses at once.",
+    "Big chains run on enterprise software for online ordering, customer data, automated marketing, and loyalty. A neighborhood cafe can't afford any of that, so it pays for a handful of separate subscriptions that don't share customers or data.\n\nLamGig gives that cafe the whole set on one platform. Its website and apps carry its own brand, and ordering, payments, the customer list, loyalty, and marketing all work from the same data. The hard part was keeping it simple for an owner who logs in once a month while making it solid enough to handle money, customer data, and messaging for many businesses at once.",
   highlights: [
     {
-      title: "A live order counter in the browser",
-      body: "New orders appear on the Orders screen the moment they're paid, with a chime so nobody misses one, and move across New, Preparing, and Ready with a single tap. Staff can pause online ordering for 30 minutes or until close, mark items sold out for the day, and issue refunds, and the Home screen flags anything that needs attention, like orders running late.",
+      title: "One publish updates the website and both apps",
+      body: "Owners change their menu, prices, hours, and branding in plain forms and publish when they're ready. The website and the native iOS and Android apps all read the same published content, so a new price reaches a customer's phone within a minute, with no app update. Each publish is saved as a numbered version, and rolling back takes one click. Rollback is instant because nothing gets rebuilt; the live pointer just moves back to the earlier version. If a publish fails halfway, it picks up where it stopped, and each of those failure points has an automated test that breaks it on purpose.",
     },
     {
-      title: "Payments with revenue built in",
-      body: "Payments run on Stripe Connect, so each business is paid straight to its own bank account while LamGig's platform fee is collected automatically on every order. Production is set up for real money, with an emergency kill switch, nightly payment reconciliation, the ability to rebuild any order from Stripe's records, and merchant terms each business accepts before taking payments.",
+      title: "Online ordering with a live counter",
+      body: "Customers order pickup on the business's own website and pay by card or mobile wallet. The order appears on the dashboard's Orders screen as soon as it's paid, with a chime so nobody misses it, and staff move it through New, Preparing, and Ready with one tap. They can pause online ordering for 30 minutes or until close, mark items sold out for the day, and issue refunds. The Home screen flags anything that needs attention, like orders running late.",
     },
     {
-      title: "Edit, publish, and undo in one click",
-      body: "Owners update their menu, prices, hours, and branding in plain forms, then publish when they're ready. Every publish is saved as a numbered version, and going back to an earlier one takes a single click. It's instant because nothing is rebuilt; the live version simply points back. If a publish is interrupted halfway, it resumes exactly where it left off, and every one of those failure points has an automated test that deliberately breaks it.",
+      title: "Payments with LamGig's revenue built in",
+      body: "Payments run on Stripe Connect. Each business is paid straight to its own bank account, and LamGig's platform fee comes out of every order automatically. Production is set up for real money. LamGig's staff can stop ordering for one business or the whole platform in an emergency, a job reconciles payments every night, any order can be rebuilt from Stripe's records, and each business accepts merchant terms before it can take a payment.",
     },
     {
-      title: "Marketing that runs itself, politely",
-      body: "Owners can send email campaigns and push notifications, or switch on five ready-made automations: welcome, thank-you, win-back, birthday, and loyalty milestone. The guardrails are built in: customers must opt in, unsubscribing takes one click, bounced addresses are suppressed, nobody gets more than one marketing message every three days, and notifications only go out between 9 a.m. and 8 p.m. local time. Every report shows the orders each message brought in, so owners can see what their marketing actually earns.",
+      title: "Email and push marketing with guardrails",
+      body: "Owners can send email campaigns and push notifications, or turn on five ready-made automations: welcome, thank-you, win-back, birthday, and loyalty milestone. Customers have to opt in, unsubscribing takes one click, bounced addresses are suppressed, nobody gets more than one marketing message every three days, and notifications only go out between 9 a.m. and 8 p.m. local time. Each report shows the orders a message brought in, so owners can see what their marketing earns.",
     },
     {
-      title: "A loyalty program owners control",
-      body: "Each business sets its own points rules: points per dollar, a daily check-in bonus, joining and birthday rewards. Staff can add points for in-store purchases right from the dashboard when a member shows their six-digit code. Rule changes are scheduled 30 days out and members are emailed automatically, the dashboard estimates the value of points outstanding for the books, and a member credited more than three times in a day is flagged to the owner.",
+      title: "Customer accounts and a loyalty program",
+      body: "Customers sign in with an email code, a password, Google, or Apple, and the same account works on the website and in both apps. Each business sets its own points rules: points per dollar, a daily check-in in the app, and points for joining and on birthdays. At the counter, a member shows a six-digit code from the app and staff add points for the purchase from the dashboard. Rule changes are scheduled 30 days out and members are emailed about them automatically. The dashboard also estimates what outstanding points are worth for the books, and flags any member credited more than three times in a day.",
     },
     {
-      title: "Enterprise-grade security and reliability, from a team of one",
-      body: "Every business's data is walled off inside the database itself, not just hidden in the interface, and team members get admin, editor, or viewer access. LamGig's own staff work from a dedicated staff console to set up businesses, review activity, and resolve stuck operations, and a customer's data can be erased on request at one business or across the whole platform. Behind it all sit 39 automated verification suites, 127 test files, and a release process where nothing reaches production without a manual sign-off.",
+      title: "Security and reliability from a team of one",
+      body: "Postgres row-level security keeps each business's data separate inside the database itself, and team members get admin, editor, or viewer access. LamGig's own staff work from a separate staff console where they set up businesses, review activity, and clear stuck operations. A customer's data can be erased on request at one business or across the whole platform. Behind all of it are 39 automated verification suites, 136 test files, and a release process where nothing reaches production without a manual sign-off.",
     },
   ],
   designNotes:
-    "The dashboard is written for a busy owner, not a developer. Technical ideas like drafts, versions, and rollbacks are explained in plain words where they appear (“Version 13 is live — published by you”), every form says what each field is for, and risky actions explain what will change before they happen.\n\nEvery role sees only what it can use: viewers get read-only screens, editors can change content, and admins manage the team, payments, and publishing.",
+    "The dashboard is written for a busy cafe owner. Ideas like drafts, versions, and rollbacks get a plain explanation right where they appear, every form says what each field is for, and risky actions spell out what will change before anything happens.\n\nEach role sees only what it can use. Viewers get read-only screens, editors can change content, and admins manage the team, payments, and publishing.\n\nThe customer side works the same way. The website and apps take every color, font, word, and price from what the owner published, so the business looks like itself everywhere and nobody has to touch code to change it.",
   learnings: [
     {
       lead: "Design for the once-a-month user.",
-      body: "Owners don't log in every day, so they never build muscle memory. Plain language and guardrails beat clever shortcuts: every screen has to make sense to someone who has forgotten how it works.",
+      body: "Owners don't log in every day, so they never build muscle memory. Plain language and guardrails work better for them than clever shortcuts, and every screen has to make sense to someone who has forgotten how it works.",
     },
     {
-      lead: "Build the brain, buy only the delivery.",
-      body: "Instead of renting a marketing suite, LamGig runs its own segments, automations, and frequency rules, and pays only for sending: email through Resend, and push straight to Apple and Google with no vendor in between. That keeps costs low and keeps the customer relationship in the business's hands.",
+      lead: "Build the marketing engine, pay only for sending.",
+      body: "Instead of renting a marketing suite, LamGig runs its own segments, automations, and frequency rules. It pays only to send: email through Resend, and push straight to Apple and Google with no vendor in between. That keeps costs low and keeps the customer relationship with the business.",
     },
     {
       lead: "Prove it on real infrastructure, with real money.",
-      body: "Each phase ended with a sign-off run against real services: real Gmail and Outlook inboxes, live Stripe configuration in production, and alerts fired on purpose in production to prove they work. Anything not actually exercised is recorded as untested, which kept a one-person project honest as it grew.",
+      body: "Each phase ended with a sign-off run against real services: real Gmail and Outlook inboxes, live Stripe configuration in production, push delivered to a real iPhone through Apple, and alerts fired on purpose in production to prove they work. Anything I didn't actually run is recorded as untested, which kept a one-person project honest as it grew.",
     },
   ],
 };
