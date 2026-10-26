@@ -94,7 +94,8 @@ The [docs/](docs/) folder describes the codebase in detail:
 - [docs/apps.md](docs/apps.md) — the `AppDef` contract and a section per app.
 - [docs/styling-and-icons.md](docs/styling-and-icons.md) — glass theme tokens, Tailwind v4 patterns, lucide and simple-icons usage.
 - [docs/data.md](docs/data.md) — `portfolio-data.ts` types and current values.
-- [docs/analytics.md](docs/analytics.md) — `NEXT_PUBLIC_GA_ID`, consent banner, event catalog.
+- [docs/analytics.md](docs/analytics.md) — `NEXT_PUBLIC_GA_ID`, consent banner, `trackEvent()` contract.
+- [docs/analytics-events.md](docs/analytics-events.md) — every GA4 event and parameter, GA console setup, and how to read the data.
 - [docs/analytics-testing.md](docs/analytics-testing.md) — manual QA walkthrough for the consent flow (Allow/Decline, change preference, withdrawal, mobile, storage failures).
 
 Project-wide design conventions and macOS UI patterns are in [STYLEGUIDE.md](STYLEGUIDE.md) at the repo root.

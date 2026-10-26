@@ -2,6 +2,7 @@
 
 import { Search, User } from "lucide-react";
 import { useMemo } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { useNow } from "@/lib/clock";
 import { useNotificationCenter } from "@/lib/notification-center";
 import { useWindowsDispatch } from "@/lib/windows-store";
@@ -36,7 +37,9 @@ export default function MobileStatusBar({ onOpenSpotlight }: Props) {
       <button
         type="button"
         aria-label="Nhat, open About"
-        onClick={() => dispatch({ type: "OPEN", appId: "about" })}
+        onClick={() =>
+          dispatch({ type: "OPEN", appId: "about", source: "status_bar" })
+        }
         className="-ml-1.5 flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs font-medium hover:bg-surface-tertiary"
       >
         <User size={14} />
@@ -46,7 +49,10 @@ export default function MobileStatusBar({ onOpenSpotlight }: Props) {
         <button
           type="button"
           aria-label="Open Spotlight"
-          onClick={onOpenSpotlight}
+          onClick={() => {
+            trackEvent({ name: "spotlight_open", method: "click" });
+            onOpenSpotlight();
+          }}
           className="grid h-11 w-11 place-items-center rounded-md hover:bg-surface-tertiary"
         >
           <Search size={14} />

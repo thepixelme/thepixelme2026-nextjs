@@ -130,6 +130,8 @@ Phones come in three shapes so the clock and fireplace fit between the headline 
 | Esc | Finishes immediately. |
 | ⌘K / Ctrl+K | Finishes immediately; Spotlight's own listener opens it on the now-live shell. |
 
+How the visitor got in is sent as the `method` of the `intro_complete` analytics event: `scroll` (a scroll or swipe reached the end), `click` or `keyboard` (the animated zoom was started that way), or `skip` (Esc / ⌘K). `finishIntro()` returns `true` only for the call that actually finished the intro, so the event fires once even though the progress callback keeps firing past 0.995. See [analytics-events.md](analytics-events.md#intro_complete).
+
 ## LaptopFrame ([src/components/intro/LaptopFrame.tsx](../src/components/intro/LaptopFrame.tsx))
 
 Stateless, `aria-hidden` MacBook hardware drawn around the 16:10 screen box; `intro-device:hidden`, so it shows only on the laptop. All dimensions are in `cqw` of the screen box, so proportions hold at any viewport size; the parent's `scale` sizes it. Colours come from the `--laptop-*` tokens in [globals.css](../src/app/globals.css) (silver in `glass-light`, space black in `glass-dark`) — see [styling-and-icons.md](styling-and-icons.md#laptop-intro-tokens).
@@ -238,12 +240,12 @@ Layout:
 
 Left side (`<nav>`, `gap-4`):
 
-- About button — single `<button aria-label="About menu">` containing `<User size={14}>` plus a semibold `<span>` with the site owner's name ("Nhat Nguyen"). On click, dispatches `OPEN { appId: "about" }`. There is no actual dropdown menu. (Replaces the canonical macOS Apple logo + active-app name — this portfolio is about Nhat, not Apple, and there is no concept of an "active app" in the macOS sense.)
-- Nav buttons — two `<button>`s for top-level portfolio navigation, each dispatching `OPEN` against the [APPS](../src/components/apps/registry.ts) registry: `Portfolio` → `finder`, `Contact` → `contact`. They replace the canonical "File / Edit / View / Window / Help" menus, which would otherwise be inert decoration in a single-purpose portfolio site.
+- About button — single `<button aria-label="About menu">` containing `<User size={14}>` plus a semibold `<span>` with the site owner's name ("Nhat Nguyen"). On click, dispatches `OPEN { appId: "about", source: "menu_bar" }`. There is no actual dropdown menu. (Replaces the canonical macOS Apple logo + active-app name — this portfolio is about Nhat, not Apple, and there is no concept of an "active app" in the macOS sense.)
+- Nav buttons — two `<button>`s for top-level portfolio navigation, each dispatching `OPEN` (with `source: "menu_bar"`) against the [APPS](../src/components/apps/registry.ts) registry: `Projects` → `finder`, `Contact` → `contact`. They replace the canonical "File / Edit / View / Window / Help" menus, which would otherwise be inert decoration in a single-purpose portfolio site.
 
 Right side:
 
-- Search button — `<button aria-label="Open Spotlight">` calling `onOpenSpotlight`. Renders `<Search size={14}>`.
+- Search button — `<button aria-label="Open Spotlight">` that sends the `spotlight_open` analytics event (`method: "click"`) and calls `onOpenSpotlight`. Renders `<Search size={14}>`.
 - Clock — `<span className="tabular-nums">{time}</span>` where `time` comes from `useClock()`.
 
 ## Dock ([Dock.tsx](../src/components/desktop/Dock.tsx))
@@ -261,7 +263,7 @@ const isOpen = windows.some(w => w.appId === app.id);
   label={app.title}
   open={isOpen}
   bounceDelay={hint ? i * BOUNCE_STAGGER_S : undefined}
-  onClick={() => { setHint(false); dispatch({ type: "OPEN", appId: app.id }); }}
+  onClick={() => { setHint(false); dispatch({ type: "OPEN", appId: app.id, source: "dock" }); }}
 />
 ```
 
@@ -301,7 +303,7 @@ Internal state: `query: string` (the input value), `activeIndex: number` (the hi
 
 Window keyboard listener (added on mount, removed on unmount):
 
-- `Cmd+K` or `Ctrl+K` → `e.preventDefault()` and `onOpenChange(true)`.
+- `Cmd+K` or `Ctrl+K` → `e.preventDefault()` and `onOpenChange(true)`; when Spotlight wasn't already open, also sends `spotlight_open` (`method: "shortcut"`).
 - `Escape` → `onOpenChange(false)`.
 
 Open/close effect:
@@ -335,7 +337,7 @@ Structure (when `open` is true):
 </div>
 ```
 
-`launch(appId)` dispatches `OPEN { appId }` and calls `onOpenChange(false)` (the close effect resets `query` and `activeIndex`).
+`launch(appId)` sends `spotlight_select` (the app and the query's length, never its text), dispatches `OPEN { appId, source: "spotlight" }` and calls `onOpenChange(false)` (the close effect resets `query` and `activeIndex`).
 
 The list contains only apps. There are no project entries, recent searches, or other groups.
 
@@ -401,7 +403,7 @@ Sheet stack is sorted **ascending by `z`** so the highest-z sheet renders last (
 The mobile shell's home state: two iOS-style glass widgets over the wallpaper, so a visitor sees who this is and what they've built before opening anything. Props: `{ hidden: boolean }` — `true` while any sheet is visible.
 
 - **Identity widget** (`<section>`): an initials avatar (`bg-accent`), `ABOUT.name` and `ABOUT.location`, then `ABOUT.title` as the page's `<h1>` (mirroring the desk intro's headline), then two `h-11` pill buttons: "About me" (`OPEN about`) and "Contact" (`OPEN contact`).
-- **Projects widget** (`<section>`): a "Projects" heading with a "See all" button (`OPEN finder`), then a horizontal, scroll-snapping carousel of every entry in `PROJECTS`. Each card is a `<button>` with a [`ProjectThumbnail`](#projectthumbnail-srccomponentsprojectthumbnailtsx) and the title (two lines max) that opens `preview` with `{ projectId }`. Cards are 62% of the widget on phones (so the next one peeks in), `w-56` from `sm`, `w-48` on `short:` and `w-64` on `tablet:`.
+- **Projects widget** (`<section>`): a "Projects" heading with a "See all" button (`OPEN finder`), then a horizontal, scroll-snapping carousel of every entry in `PROJECTS`. Each card is a `<button>` with a [`ProjectThumbnail`](#projectthumbnail-srccomponentsprojectthumbnailtsx) and the title (two lines max) that opens `preview` with `{ projectId }`. Every open from the home screen carries `source: "home_screen"`. Cards are 62% of the widget on phones (so the next one peeks in), `w-56` from `sm`, `w-48` on `short:` and `w-64` on `tablet:`.
 
 Widget surface: `rounded-3xl border border-field-border bg-surface shadow-overlay backdrop-blur-(--glass-blur)` (the standard glass recipe with iOS widget corners).
 
@@ -417,12 +419,12 @@ Shared `aspect-video` project preview used by Finder's grid and the home screen 
 
 Fixed top, `z-50`. Height `calc(2.75rem + env(safe-area-inset-top))` with `pt-[env(safe-area-inset-top)]` so the 44 pt content sits below the notch.
 
-- Left: About `<button aria-label="About menu">` containing `<User size={14}>` plus a semibold `<span>` with "Nhat" (first name only — full "Nhat Nguyen" would crowd the narrower mobile bar alongside the 44 pt tap target). On click, dispatches `OPEN { appId: "about" }`. Mirrors the desktop MenuBar's identity affordance.
-- Right: `<Search size={14}/>` button (`h-11 w-11` hit area) that calls `onOpenSpotlight()`, then the clock — `useNow()` formatted as `h:mm a`. **When `NEXT_PUBLIC_GA_ID` is set (R8)**, the clock renders as a `<button>` calling `toggle()` from `useNotificationCenter()` — the mobile re-decide path for analytics consent (opens the standalone consent card). When env is unset, stays plain `<span>` (no NC panel on mobile, so a toggle would have no visible effect).
+- Left: About `<button aria-label="About menu">` containing `<User size={14}>` plus a semibold `<span>` with "Nhat" (first name only — full "Nhat Nguyen" would crowd the narrower mobile bar alongside the 44 pt tap target). On click, dispatches `OPEN { appId: "about", source: "status_bar" }`. Mirrors the desktop MenuBar's identity affordance.
+- Right: `<Search size={14}/>` button (`h-11 w-11` hit area) that sends `spotlight_open` (`method: "click"`) and calls `onOpenSpotlight()`, then the clock — `useNow()` formatted as `h:mm a`. **When `NEXT_PUBLIC_GA_ID` is set (R8)**, the clock renders as a `<button>` calling `toggle()` from `useNotificationCenter()` — the mobile re-decide path for analytics consent (opens the standalone consent card). When env is unset, stays plain `<span>` (no NC panel on mobile, so a toggle would have no visible effect).
 
 ## MobileDock ([src/components/mobile/MobileDock.tsx](../src/components/mobile/MobileDock.tsx))
 
-The mobile counterpart of the desktop `<Dock>`. Single bottom pill that mirrors the desktop's glass styling and reuses [`DockIcon`](../src/components/desktop/DockIcon.tsx) with `compact` enabled (no hover tooltip, no hover lift/scale).
+The mobile counterpart of the desktop `<Dock>`. Single bottom pill that mirrors the desktop's glass styling and reuses [`DockIcon`](../src/components/desktop/DockIcon.tsx) with `compact` enabled (no hover tooltip, no hover lift/scale). Tapping an icon dispatches `OPEN { appId, source: "mobile_dock" }`.
 
 Props: `{ hidden: boolean }` — driven by whether any non-minimized sheet is visible.
 
@@ -458,7 +460,7 @@ Layout (phones): full screen, `pt-[calc(2.75rem+env(safe-area-inset-top))]` rese
 
 Layout (`tablet:`, ≥ 700 × 700 px): a floating card like an iPadOS window — inset `1.5rem` from the sides, starting `0.75rem` below the status bar and ending `2.75rem` above the bottom edge (plus safe areas) so the home indicator sits below it, with `rounded-2xl`, a `border-field-border` border, `shadow-overlay`, `overflow-hidden` and no vertical padding. The wallpaper shows around it. Body is `min-h-0 flex-1 overflow-auto` with an inner `h-full` wrapper so app components that rely on `h-full` (Terminal especially) keep working.
 
-Header has a left `<button>` ("Done" + `ChevronLeft size={16}`) dispatching `{ type: "CLOSE", id: win.id }`. The window title is centered and `pointer-events-none`.
+Header has a left `<button>` ("Done" + `ChevronLeft size={16}`) that sends `window_action` (`action: "close"`) and dispatches `{ type: "CLOSE", id: win.id }`. The window title is centered and `pointer-events-none`.
 
 Defensive guard: if no matching app exists in `APPS`, returns `null` (mirrors `WindowManager.tsx`).
 

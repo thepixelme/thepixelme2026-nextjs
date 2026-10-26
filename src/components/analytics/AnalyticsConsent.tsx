@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import MobileConsentNotification from "@/components/notifications/MobileConsentNotification";
 import NotificationCard from "@/components/notifications/NotificationCard";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
+import { flushPendingEvents } from "@/lib/analytics";
 import type { ConsentValue } from "@/lib/analytics-consent";
 import { useIntroPending } from "@/lib/intro";
 import { useNotificationCenter } from "@/lib/notification-center";
@@ -61,8 +62,22 @@ export default function AnalyticsConsent({ initialConsent }: Props) {
     }
   }, [consent.consent, setOpen]);
 
+  // (4) Send the events trackEvent() queued before gtag existed. The
+  //     <GoogleAnalytics> child's Script effect has already run gtag's inline
+  //     init (which defines window.gtag) by the time this parent effect runs.
+  useEffect(() => {
+    if (consent.analyticsEnabled) flushPendingEvents();
+  }, [consent.analyticsEnabled]);
+
+  // Dev-server hits carry debug_mode, so they show in GA's DebugView and the
+  // Developer traffic data filter can drop them (docs/analytics-events.md).
   const gaMount =
-    consent.analyticsEnabled && gaId ? <GoogleAnalytics gaId={gaId} /> : null;
+    consent.analyticsEnabled && gaId ? (
+      <GoogleAnalytics
+        gaId={gaId}
+        debugMode={process.env.NODE_ENV === "development"}
+      />
+    ) : null;
 
   // Capture close intent at the moment of click (before consent state updates).
   // Desktop: close only on a first-time decision so change-preference picks

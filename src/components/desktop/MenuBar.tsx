@@ -1,6 +1,7 @@
 "use client";
 
 import { Search, User } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
 import { useClock } from "@/lib/clock";
 import { useNotificationCenter } from "@/lib/notification-center";
 import { useWindowsDispatch } from "@/lib/windows-store";
@@ -21,7 +22,9 @@ export default function MenuBar({ onOpenSpotlight }: Props) {
           type="button"
           aria-label="Nhat Nguyen, open About"
           className="flex h-5 items-center gap-1.5 rounded-md px-2 transition-colors duration-150 ease-out hover:bg-surface-tertiary"
-          onClick={() => dispatch({ type: "OPEN", appId: "about" })}
+          onClick={() =>
+            dispatch({ type: "OPEN", appId: "about", source: "menu_bar" })
+          }
         >
           <User size={14} />
           <span className="font-semibold">Nhat Nguyen</span>
@@ -29,14 +32,18 @@ export default function MenuBar({ onOpenSpotlight }: Props) {
         <button
           type="button"
           className="flex h-5 items-center rounded-md px-2 text-foreground/70 transition-colors duration-150 ease-out hover:bg-surface-tertiary hover:text-foreground"
-          onClick={() => dispatch({ type: "OPEN", appId: "finder" })}
+          onClick={() =>
+            dispatch({ type: "OPEN", appId: "finder", source: "menu_bar" })
+          }
         >
           Projects
         </button>
         <button
           type="button"
           className="flex h-5 items-center rounded-md px-2 text-foreground/70 transition-colors duration-150 ease-out hover:bg-surface-tertiary hover:text-foreground"
-          onClick={() => dispatch({ type: "OPEN", appId: "contact" })}
+          onClick={() =>
+            dispatch({ type: "OPEN", appId: "contact", source: "menu_bar" })
+          }
         >
           Contact
         </button>
@@ -45,7 +52,10 @@ export default function MenuBar({ onOpenSpotlight }: Props) {
         <button
           type="button"
           aria-label="Open Spotlight"
-          onClick={onOpenSpotlight}
+          onClick={() => {
+            trackEvent({ name: "spotlight_open", method: "click" });
+            onOpenSpotlight();
+          }}
           className="flex h-5 items-center rounded-md px-1.5 transition-colors duration-150 ease-out hover:bg-surface-tertiary hover:text-foreground"
         >
           <Search size={14} />

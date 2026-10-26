@@ -18,7 +18,8 @@ Before working on any feature, **read the relevant doc(s) in [docs/](docs/)** to
 - [docs/apps.md](docs/apps.md) — `AppDef` contract, `APPS` registry, per-app sections.
 - [docs/styling-and-icons.md](docs/styling-and-icons.md) — glass theme tokens, Tailwind v4 patterns, lucide + simple-icons.
 - [docs/data.md](docs/data.md) — `portfolio-data.ts` types and current values.
-- [docs/analytics.md](docs/analytics.md) — `NEXT_PUBLIC_GA_ID`, consent banner, event catalog.
+- [docs/analytics.md](docs/analytics.md) — `NEXT_PUBLIC_GA_ID`, consent banner, `trackEvent()` contract.
+- [docs/analytics-events.md](docs/analytics-events.md) — every GA4 event and parameter, GA console setup (custom dimensions, key events), and how to read the data.
 
 **When you ship a feature, update the docs in the same change** so they keep matching reality. Specifically:
 

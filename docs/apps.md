@@ -60,7 +60,7 @@ The registry is consumed by:
 
 ## FinderApp ([FinderApp.tsx](../src/components/apps/FinderApp.tsx))
 
-Two-pane layout: a sidebar of saved filters on the left, a project grid on the right. Finder is a pure list — it does not host any project detail view. Clicking a project dispatches `OPEN { appId: "preview", payload: { projectId } }`, which opens (or refreshes) the [PreviewApp](#previewapp-previewapptsx) window.
+Two-pane layout: a sidebar of saved filters on the left, a project grid on the right. Finder is a pure list — it does not host any project detail view. Clicking a project dispatches `OPEN { appId: "preview", payload: { projectId }, source: "finder" }`, which opens (or refreshes) the [PreviewApp](#previewapp-previewapptsx) window.
 
 ### State
 
@@ -92,7 +92,9 @@ Sidebar background: `bg-surface-secondary px-2 py-3 text-sm`. Outer grid: `grid-
 - `<p>` summary (`text-xs text-foreground/70`, line-clamp-2).
 - Up to 4 tag chips (`rounded-full bg-default px-2 py-0.5 text-[10px]`).
 
-Click → `dispatch({ type: "OPEN", appId: "preview", payload: { projectId: p.id } })` via `useWindowsDispatch()`.
+Click → `dispatch({ type: "OPEN", appId: "preview", payload: { projectId: p.id }, source: "finder" })` via `useWindowsDispatch()`. The window store turns that into the `app_open` and `project_view` analytics events.
+
+Sidebar picks go through `selectFilter()`, which sends `finder_filter` (`filter_tag`: the tag, or `all`) and ignores a click on the filter that is already active.
 
 ---
 
@@ -164,6 +166,13 @@ All buttons get `aria-current` reflecting selection.
 
 When the sidebar is collapsed, screenshot navigation still works via `←` / `→` keys (handled by PreviewApp). Re-opening the sidebar to switch back to Info is one click on the toolbar toggle.
 
+### Analytics
+
+- Every switch to a screenshot goes through `showScreenshot(index, source)`, which sends `screenshot_view` (1-based `screenshot_index`, `opened_from`: `case_study` for a CaseStudy thumb, `sidebar` for a sidebar thumb, `viewer` for arrow keys and MobileImageViewer's swipe/filmstrip) and ignores the screenshot already shown.
+- `useCaseStudyScrollDepth(project.id)` returns a callback ref (React 19 ref cleanup) that both case-study scroll containers (desktop and mobile) attach. It sends `case_study_scroll` at 25/50/75/100 % of the container's scroll range, each milestone once per `PreviewContent` mount, so flipping to a screenshot and back doesn't repeat them.
+
+See [analytics-events.md](analytics-events.md#screenshot_view).
+
 ### CaseStudy ([preview/CaseStudy.tsx](../src/components/apps/preview/CaseStudy.tsx))
 
 Long-form scroll inside `mx-auto max-w-2xl px-8 pt-6 pb-12`. Props: `{ project: Project; onScreenshotClick?: (index: number) => void }`. Rendered top to bottom:
@@ -177,6 +186,8 @@ Long-form scroll inside `mx-auto max-w-2xl px-8 pt-6 pb-12`. Props: `{ project: 
 7. **Engineering highlights** (only when `highlights` is non-empty) — `Section` + numbered `<HighlightCard>`s.
 8. **Design** (only when `designNotes`) — `Section` + `<Prose>`.
 9. **What I learned** (only when `learnings` is non-empty) — `Section` + `<ul>` of `lead` (bold) + inline-formatted `body`.
+
+The Visit and View source anchors call `trackOutboundClick(url, "project_link" | "project_source", project.id)` on click.
 
 Inline formatting (`renderInline`) supports `` `code` ``, `**bold**`, and `*em*` markers. Multi-paragraph prose splits on `\n\n` via the `<Prose>` helper.
 
@@ -283,6 +294,8 @@ Sections, top to bottom:
 3. **Skills** — heading + flex-wrap of pill-shaped `<span>` tags per `ABOUT.skills[i]` (`inline-flex shrink-0 items-center gap-0.5 rounded-2xl bg-default px-1 py-0 text-xs leading-5 font-medium`).
 4. **Find me** — heading + flex-wrap of social links. Each link is an `<a>` with `target="_blank" rel="noopener noreferrer"`, rendering `<BrandIcon icon={BRANDS[s.brand]} size={14} />` and `s.label`.
 
+Each social link calls `trackOutboundClick(s.href, "about_social")` on click.
+
 `BRANDS` is a local mapping from the `brand` literal to a `simple-icons` constant: `github → siGithub`. The `Social.brand` union and the `BRANDS` map must be kept in sync.
 
 Source content: `ABOUT` and `SOCIALS` from [portfolio-data.ts](../src/lib/portfolio-data.ts).
@@ -319,6 +332,8 @@ A local `FieldRow` helper renders rows 1–2: `flex items-center gap-5 border-b 
 Inputs are native `<input>` / `<textarea>` so borders/backgrounds stay flush against the row hairlines, with the pill-shaped Send `<button>` keeping its shape, gradient, and disabled treatment fully token-driven. All fields carry `aria-label`s.
 
 Source content: `ABOUT.name` from [portfolio-data.ts](../src/lib/portfolio-data.ts). The destination email is *not* shown in the UI — it lives in the server-only `CONTACT_EMAIL` env var.
+
+Analytics: every field's `onChange` goes through `edit(setter)`, which sends `contact_form_start` on the first edit of a new message (`startedRef`, re-armed after a successful send). The success branch sends `contact_form_submit` with the subject and message lengths; each error branch sends `contact_form_error` with `error_type` `rate_limit`, `validation`, `network` (the `fetch` threw) or `server` (anything else). Field contents are never sent. See [analytics-events.md](analytics-events.md#contact_form_start).
 
 ### Route handler ([src/app/api/contact/route.ts](../src/app/api/contact/route.ts))
 
@@ -381,6 +396,8 @@ The `<input>` handles `ArrowUp` / `ArrowDown` to walk through `history` (most-re
 | `help`          | The static `HELP` array (6 lines).                                                |
 | anything else   | Two lines: `zsh: command not found: ${first word}` then `Type \`help\` to see available commands.` |
 | empty input     | Echoes the empty `"in"` line and produces no output.                              |
+
+Every non-empty command also calls `trackCommand(name, target)`, which sends `terminal_command` with `command` set to the recognised name (`help`, `whoami`, `ls`, `cat`, `clear`) or `unknown`, and, for `ls` / `cat` with a path, `command_target` (`projects`, `about.md` or `other`). What was typed is never sent.
 
 ### Surface behavior
 

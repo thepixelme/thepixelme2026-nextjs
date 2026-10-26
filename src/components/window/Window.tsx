@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from "motion/react";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { useWindowsDispatch } from "@/lib/windows-store";
 import type { WindowState } from "@/types/window";
 import { useDockIconRect } from "./dock-positions";
@@ -22,9 +23,24 @@ export default function Window({ win, children }: Props) {
   const reduceMotion = useReducedMotion();
   const getDockRect = useDockIconRect();
 
-  const handleClose = () => dispatch({ type: "CLOSE", id: win.id });
-  const handleMinimize = () => dispatch({ type: "MINIMIZE", id: win.id });
+  const handleClose = () => {
+    trackEvent({ name: "window_action", action: "close", app_id: win.appId });
+    dispatch({ type: "CLOSE", id: win.id });
+  };
+  const handleMinimize = () => {
+    trackEvent({
+      name: "window_action",
+      action: "minimize",
+      app_id: win.appId,
+    });
+    dispatch({ type: "MINIMIZE", id: win.id });
+  };
   const handleMaximize = () => {
+    trackEvent({
+      name: "window_action",
+      action: win.maximized ? "restore" : "maximize",
+      app_id: win.appId,
+    });
     if (win.maximized) {
       dispatch({ type: "RESTORE", id: win.id });
     } else {

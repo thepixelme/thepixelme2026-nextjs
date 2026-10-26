@@ -12,7 +12,12 @@ import {
 } from "react";
 import { APPS } from "@/components/apps/registry";
 import { trackEvent } from "@/lib/analytics";
-import type { AppId, WindowBounds, WindowState } from "@/types/window";
+import type {
+  AppId,
+  AppOpenSource,
+  WindowBounds,
+  WindowState,
+} from "@/types/window";
 
 interface State {
   windows: WindowState[];
@@ -20,8 +25,15 @@ interface State {
   openCount: number;
 }
 
+// A visitor's open names the surface it came from; a `silent` (programmatic)
+// open has none.
+type OpenAction = { type: "OPEN"; appId: AppId; payload?: unknown } & (
+  | { silent: true }
+  | { silent?: false; source: AppOpenSource }
+);
+
 type Action =
-  | { type: "OPEN"; appId: AppId; payload?: unknown; silent?: boolean }
+  | OpenAction
   | { type: "CLOSE"; id: string }
   | { type: "FOCUS"; id: string }
   | { type: "MOVE"; id: string; x: number; y: number }
@@ -212,7 +224,20 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
     // `silent` opens (e.g. the laptop intro's About window) aren't visitor
     // launches, so they don't count as app_open.
     if (action.type === "OPEN" && !action.silent) {
-      trackEvent({ name: "app_open", app_id: action.appId });
+      trackEvent({
+        name: "app_open",
+        app_id: action.appId,
+        opened_from: action.source,
+      });
+      const projectId = (action.payload as { projectId?: string } | undefined)
+        ?.projectId;
+      if (action.appId === "preview" && projectId) {
+        trackEvent({
+          name: "project_view",
+          project_id: projectId,
+          opened_from: action.source,
+        });
+      }
     }
     rawDispatch(action);
   }, []);

@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef } from "react";
 import { APPS } from "@/components/apps/registry";
+import { trackEvent } from "@/lib/analytics";
 import { useWindowsDispatch } from "@/lib/windows-store";
 import type { WindowState } from "@/types/window";
 
@@ -58,7 +59,14 @@ export default function AppSheet({ win, isActive, stackIndex }: Props) {
         <button
           ref={doneRef}
           type="button"
-          onClick={() => dispatch({ type: "CLOSE", id: win.id })}
+          onClick={() => {
+            trackEvent({
+              name: "window_action",
+              action: "close",
+              app_id: win.appId,
+            });
+            dispatch({ type: "CLOSE", id: win.id });
+          }}
           className="flex h-11 items-center gap-1 px-3 text-sm font-medium text-foreground/85"
         >
           <ChevronLeft size={16} /> Done

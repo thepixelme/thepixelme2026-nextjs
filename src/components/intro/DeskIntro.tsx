@@ -11,6 +11,7 @@ import {
   useTransform,
 } from "motion/react";
 import { type ReactNode, useCallback, useEffect, useRef } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { finishIntro, useIntroPending } from "@/lib/intro";
 import { ABOUT } from "@/lib/portfolio-data";
 import { easeInOut } from "./camera";
@@ -19,6 +20,18 @@ import DeviceFrame from "./DeviceFrame";
 import IntroWalkthrough from "./IntroWalkthrough";
 import LaptopFrame from "./LaptopFrame";
 import SceneBackdrop from "./SceneBackdrop";
+
+type ZoomMethod = "click" | "keyboard";
+
+function enter(method: ZoomMethod | "scroll" | "skip") {
+  if (!finishIntro()) return;
+  trackEvent({
+    name: "intro_complete",
+    method,
+    // Seconds since the page started loading, to one decimal.
+    seconds_to_enter: Math.round(performance.now() / 100) / 10,
+  });
+}
 
 // The device on the desk is a laptop on desktop screens and a phone or
 // tablet on portrait ones. Which one, and where it rests, comes from the
@@ -40,13 +53,18 @@ export default function DeskIntro({ children }: { children: ReactNode }) {
   const headlineY = useTransform(progress, [0, 0.2], [0, -32]);
   const hintOpacity = useTransform(progress, [0, 0.08], [1, 0]);
 
+  // How the visitor got in, for intro_complete: set when a click or key starts
+  // the zoom; a scroll or swipe that reaches the end leaves it null.
+  const zoomMethodRef = useRef<ZoomMethod | null>(null);
+
   useMotionValueEvent(progress, "change", (p) => {
-    if (active && p > 0.995) finishIntro();
+    if (active && p > 0.995) enter(zoomMethodRef.current ?? "scroll");
   });
 
-  const zoomIn = useCallback(() => {
+  const zoomIn = useCallback((method: ZoomMethod) => {
     const el = scrollerRef.current;
     if (!el) return;
+    zoomMethodRef.current = method;
     animate(el.scrollTop, el.scrollHeight - el.clientHeight, {
       duration: 1.2,
       ease: [0.65, 0, 0.35, 1],
@@ -64,13 +82,13 @@ export default function DeskIntro({ children }: { children: ReactNode }) {
         e.key === "Escape" ||
         ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k")
       ) {
-        finishIntro();
+        enter("skip");
         return;
       }
       if (e.target !== document.body) return;
       if (["ArrowDown", "PageDown", "End", " ", "Enter"].includes(e.key)) {
         e.preventDefault();
-        zoomIn();
+        zoomIn("keyboard");
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -145,13 +163,13 @@ export default function DeskIntro({ children }: { children: ReactNode }) {
                   <button
                     type="button"
                     aria-label="Enter desktop"
-                    onClick={zoomIn}
+                    onClick={() => zoomIn("click")}
                     className={`${enterClass} intro-device:hidden`}
                   />
                   <button
                     type="button"
                     aria-label="Open the home screen"
-                    onClick={zoomIn}
+                    onClick={() => zoomIn("click")}
                     className={`${enterClass} hidden intro-device:block`}
                   />
                 </>

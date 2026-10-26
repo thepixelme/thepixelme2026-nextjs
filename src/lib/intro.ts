@@ -46,8 +46,10 @@ export function useIntroPending(): boolean {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
-export function finishIntro() {
-  if (finished) return;
+/** Returns true only for the call that actually finished the intro. */
+export function finishIntro(): boolean {
+  if (finished) return false;
   finished = true;
   for (const listener of listeners) listener();
+  return true;
 }

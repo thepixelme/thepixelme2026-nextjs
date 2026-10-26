@@ -1,6 +1,6 @@
 # Analytics
 
-Google Analytics 4, mounted via [`@next/third-parties/google`](https://nextjs.org/docs/app/guides/third-party-libraries#google-analytics). Consent-gated, env-gated, and event-typed.
+Google Analytics 4, mounted via [`@next/third-parties/google`](https://nextjs.org/docs/app/guides/third-party-libraries#google-analytics). Consent-gated, env-gated, and event-typed. For the events themselves and how to read them in GA, see [analytics-events.md](analytics-events.md).
 
 ## Env var
 
@@ -45,21 +45,35 @@ To reset for testing: open DevTools → Application → Cookies → delete the `
 
 ## Event catalog
 
-All events go through `trackEvent()` from [src/lib/analytics.ts](../src/lib/analytics.ts), which sends via `sendGAEvent` and short-circuits if consent isn't `"granted"` or the env var is unset. The event union is a TypeScript discriminated union — adding or renaming an event in `analytics.ts` rejects mistyped callsites at compile time.
+The full list of events and parameters, what each one means, and how to set up and read them in the GA console, is in **[docs/analytics-events.md](analytics-events.md)**. Keep it in sync with the `GAEvent` union.
 
-| Event | Params | Fired from |
-|---|---|---|
-| `contact_form_submit` | `subject_length: number` | [ContactApp.tsx:80-87](../src/components/apps/ContactApp.tsx), inside the success branch (`payload.ok === true`). Failed submissions and validation errors do not fire. |
-| `app_open` | `app_id: AppId` | The `useCallback` dispatch wrapper in `WindowsProvider` ([src/lib/windows-store.ts:205-220](../src/lib/windows-store.ts)). Captures every `OPEN` action — Dock, MenuBar, Spotlight, Finder, mobile — through one chokepoint. `OPEN` actions with `silent: true` (the About window the laptop intro opens by itself) are skipped. The reducer stays pure. |
-| `spotlight_select` | `app_id: AppId`, `query_length: number` | The `launch()` function in [Spotlight.tsx](../src/components/desktop/Spotlight.tsx), hit by both Enter-key and click paths. `query_length` is sent instead of the raw query to avoid PII. |
-| `outbound_click` | `href: string`, `surface: "about_social" \| "project_link" \| "project_source"` | `onClick` on the three `target="_blank"` anchors: [AboutApp.tsx](../src/components/apps/AboutApp.tsx) social links, [CaseStudy.tsx](../src/components/apps/preview/CaseStudy.tsx) Visit / Source buttons. |
+## Sending events
 
-Page views are handled automatically by `<GoogleAnalytics>` (no custom code).
+All events go through `trackEvent()` from [src/lib/analytics.ts](../src/lib/analytics.ts). The event union `GAEvent` is a TypeScript discriminated union, so adding or renaming an event or parameter rejects mistyped callsites at compile time.
+
+`trackEvent()` short-circuits unless the `ga-consent` cookie is `"granted"` and `NEXT_PUBLIC_GA_ID` is set. Otherwise it:
+
+1. Adds `shell: "desktop" | "mobile"` to every event, from `MOBILE_MEDIA_QUERY` (the same split as `useIsMobile()`), and drops params whose value is `undefined`.
+2. Calls `window.gtag("event", name, params)` when gtag exists.
+3. Otherwise queues the event (up to 50). gtag only exists once `<GoogleAnalytics>`'s inline init script has run, and `<GoogleAnalytics>` mounts inside `AnalyticsConsent`, which streams in under `<Suspense>` after the desktop has hydrated (and only after Accept on a first visit). `AnalyticsConsent` calls `flushPendingEvents()` in an effect keyed on `analyticsEnabled`; because `<GoogleAnalytics>` is its child, the child's `next/script` effect has already injected the init script (inline scripts run synchronously on insert), so queued events land in `dataLayer` after `js` and `config`. `sendGAEvent` from `@next/third-parties` is not used: it drops events with a console warning when gtag hasn't initialised.
+
+Helpers:
+
+- `trackOutboundClick(url, surface, projectId?)` — sends `outbound_click` with `link_domain` parsed from the URL.
+- `flushPendingEvents()` — sends the queue; a no-op until gtag exists.
+- Types `OutboundSurface` and `TerminalCommand` are exported for callsites that build params.
+
+The window store's `OPEN` action requires a `source` (`AppOpenSource` in [src/types/window.ts](../src/types/window.ts)) unless it is `silent`, so every new launch surface has to say where it is; the dispatch wrapper sends it as `opened_from` on `app_open` and `project_view` (see [window-manager.md](window-manager.md#hooks-exported)).
+
+In development builds (`NODE_ENV === "development"`), `<GoogleAnalytics debugMode>` adds `debug_mode: true` to the `config` call, so dev hits show in GA's DebugView and can be excluded with a Developer traffic data filter. Production builds don't set it.
+
+Page views are handled automatically by `<GoogleAnalytics>` (no custom code). The URL never changes, so there is one `page_view` per page load.
 
 ## Adding a new event
 
-1. Add a new variant to the `GAEvent` union in [src/lib/analytics.ts](../src/lib/analytics.ts).
-2. Call `trackEvent({ name: "your_event", ... })` from the callsite.
-3. Document it in the event-catalog table above.
+1. Add a new variant to the `GAEvent` union in [src/lib/analytics.ts](../src/lib/analytics.ts). Check the name against GA's limits: event and parameter names up to 40 characters, none starting with `_`, `ga_`, `google_`, `firebase_` or `gtag.`; string values up to 100 characters; at most 25 parameters per event.
+2. Don't name a parameter `source`, `medium`, `campaign`, `term` or `content`: GA stores the session's traffic source under those keys on every event. Reuse a built-in parameter name where one fits (`method`, `percent_scrolled`, `link_url`, `link_domain`) so it lands in GA's existing dimension.
+3. Call `trackEvent({ name: "your_event", ... })` from the callsite.
+4. Document it in [docs/analytics-events.md](analytics-events.md): the at-a-glance table, the custom-dimension table for any new parameter, and an event reference entry.
 
 Avoid sending raw user input as event params — prefer normalized signals (lengths, enums, counts).

@@ -14,6 +14,14 @@ String literal union of the five registered apps:
 "finder" | "preview" | "about" | "contact" | "terminal"
 ```
 
+### `AppOpenSource`
+
+The surface a visitor opened an app from. Required on every non-`silent` `OPEN` action, and sent to GA as `opened_from` (see [analytics-events.md](analytics-events.md#app_open)):
+
+```
+"dock" | "menu_bar" | "spotlight" | "finder" | "home_screen" | "mobile_dock" | "status_bar"
+```
+
 ### `WindowBounds`
 
 `{ x: number; y: number; w: number; h: number }` — pixels, top-left origin in viewport coordinates.
@@ -62,7 +70,7 @@ Constants: `BASE_Z = 10`, `CASCADE = 24` (the per-window cascade offset, in px).
 
 | Action                                                | Effect                                                                                                                                                                                                                          |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `OPEN { appId, payload?, silent? }`                   | `silent: true` marks a programmatic open (the laptop intro's About window) that should not fire the `app_open` analytics event; it does not change the reducer's behaviour. If a window with that `appId` already exists, bumps it to `topZ + 1`, clears `minimized`, and (if `payload` is supplied) replaces its `initialPayload` so the app re-renders with the new content. Acts as focus/restore otherwise. If no existing window, creates a new `WindowState` centered in the viewport with a `(openCount * CASCADE)` offset, capped to viewport. `topZ` and `openCount` increment. |
+| `OPEN { appId, payload?, source }` or `OPEN { appId, payload?, silent: true }` | A visitor's open names its `source` (`AppOpenSource`; the type requires it). `silent: true` marks a programmatic open (the laptop intro's About window) that takes no `source` and fires no analytics; neither field changes the reducer's behaviour. If a window with that `appId` already exists, bumps it to `topZ + 1`, clears `minimized`, and (if `payload` is supplied) replaces its `initialPayload` so the app re-renders with the new content. Acts as focus/restore otherwise. If no existing window, creates a new `WindowState` centered in the viewport with a `(openCount * CASCADE)` offset, capped to viewport. `topZ` and `openCount` increment. |
 | `CLOSE { id }`                                        | Removes the window from the array.                                                                                                                                                                                              |
 | `FOCUS { id }`                                        | If the window isn't already at `topZ`, bumps it to `topZ + 1` and clears `minimized`. No-op otherwise.                                                                                                                          |
 | `MOVE { id, x, y }`                                   | Sets `x`, `y` on the matching window.                                                                                                                                                                                           |
@@ -82,7 +90,7 @@ There is no separate "minimize-to-dock-with-animation" action and no `MINIMIZE_T
 
 The state value is memoized with `useMemo(() => state, [state])`, which is effectively a pass-through but keeps a stable identity check pattern in place.
 
-The dispatch exposed by `useWindowsDispatch()` is a `useCallback` wrapper around `useReducer`'s raw dispatch. The wrapper fires the consent-gated `app_open` analytics event ([src/lib/analytics.ts](../src/lib/analytics.ts)) on `OPEN` actions (except `silent` ones) before delegating, so every launch surface (Dock, MenuBar, Spotlight, Finder, mobile) is captured through one chokepoint. `reducer()` itself remains pure — no side effects inside the reducer.
+The dispatch exposed by `useWindowsDispatch()` is a `useCallback` wrapper around `useReducer`'s raw dispatch. The wrapper fires the consent-gated `app_open` analytics event ([src/lib/analytics.ts](../src/lib/analytics.ts)) on `OPEN` actions (except `silent` ones), with the action's `source` as `opened_from`, before delegating, so every launch surface (Dock, MenuBar, Spotlight, Finder, mobile) is captured through one chokepoint. An `OPEN` of `preview` whose payload has a `projectId` also fires `project_view`. `reducer()` itself remains pure — no side effects inside the reducer.
 
 ### Initial-position math (OPEN)
 
@@ -124,6 +132,7 @@ Behavior:
 - Pointer-down anywhere on the window dispatches `FOCUS`. `useWindowDrag` and `useWindowResize` also dispatch `FOCUS` on their own pointer-down so a corner-drag also focuses.
 - Double-click on the titlebar toggles maximize/restore.
 - `handleMaximize` reads live `window.innerWidth/innerHeight` to construct the MAXIMIZE viewport payload.
+- `handleClose`, `handleMinimize` and `handleMaximize` each send a `window_action` analytics event (`close`, `minimize`, `maximize` or `restore`) before dispatching.
 - Resize handles are not rendered when `win.maximized` is true.
 
 Animation (see [STYLEGUIDE.md §6](../STYLEGUIDE.md)):

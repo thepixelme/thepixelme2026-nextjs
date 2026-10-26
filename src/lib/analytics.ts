@@ -1,10 +1,11 @@
-import { sendGAEvent } from "@next/third-parties/google";
 import {
   type ConsentValue,
   GA_CONSENT_COOKIE,
   parseConsent,
 } from "@/lib/analytics-consent";
-import type { AppId } from "@/types/window";
+import type { ProjectTag } from "@/lib/projects";
+import { MOBILE_MEDIA_QUERY } from "@/lib/useIsMobile";
+import type { AppId, AppOpenSource } from "@/types/window";
 
 export type { ConsentValue };
 export { GA_CONSENT_COOKIE, parseConsent };
@@ -36,20 +37,129 @@ export function writeConsent(value: ConsentValue): boolean {
   }
 }
 
+export type OutboundSurface =
+  | "about_social"
+  | "project_link"
+  | "project_source";
+
+export type TerminalCommand =
+  | "help"
+  | "whoami"
+  | "ls"
+  | "cat"
+  | "clear"
+  | "unknown";
+
+// Every variant is documented in docs/analytics-events.md — keep the two in
+// sync. `link_url`, `link_domain`, `method` and `percent_scrolled` reuse GA4's
+// built-in dimensions; every other param must be registered as a custom
+// dimension in GA before it shows up in reports.
 type GAEvent =
-  | { name: "contact_form_submit"; subject_length: number }
-  | { name: "app_open"; app_id: AppId }
+  | {
+      name: "intro_complete";
+      method: "scroll" | "click" | "keyboard" | "skip";
+      seconds_to_enter: number;
+    }
+  | { name: "app_open"; app_id: AppId; opened_from: AppOpenSource }
+  | {
+      name: "window_action";
+      app_id: AppId;
+      action: "close" | "minimize" | "maximize" | "restore";
+    }
+  | { name: "spotlight_open"; method: "shortcut" | "click" }
   | { name: "spotlight_select"; app_id: AppId; query_length: number }
+  | { name: "project_view"; project_id: string; opened_from: AppOpenSource }
+  | { name: "finder_filter"; filter_tag: ProjectTag | "all" }
+  | {
+      name: "screenshot_view";
+      project_id: string;
+      screenshot_index: number;
+      opened_from: "case_study" | "sidebar" | "viewer";
+    }
+  | {
+      name: "case_study_scroll";
+      project_id: string;
+      percent_scrolled: 25 | 50 | 75 | 100;
+    }
   | {
       name: "outbound_click";
-      href: string;
-      surface: "about_social" | "project_link" | "project_source";
+      link_url: string;
+      link_domain: string;
+      surface: OutboundSurface;
+      project_id?: string;
+    }
+  | { name: "contact_form_start" }
+  | {
+      name: "contact_form_submit";
+      subject_length: number;
+      message_length: number;
+    }
+  | {
+      name: "contact_form_error";
+      error_type: "rate_limit" | "validation" | "server" | "network";
+    }
+  | {
+      name: "terminal_command";
+      command: TerminalCommand;
+      command_target?: "projects" | "about.md" | "other";
     };
+
+type EventParams = Record<string, string | number>;
+type Gtag = (command: "event", name: string, params: EventParams) => void;
+
+// Events can fire before gtag's init script has run: <GoogleAnalytics> mounts
+// inside AnalyticsConsent, which streams in under Suspense after the desktop
+// hydrates. Those wait here until AnalyticsConsent calls flushPendingEvents().
+const MAX_PENDING_EVENTS = 50;
+let pending: [string, EventParams][] = [];
+
+function getGtag(): Gtag | undefined {
+  const gtag = (window as { gtag?: unknown }).gtag;
+  return typeof gtag === "function" ? (gtag as Gtag) : undefined;
+}
 
 export function trackEvent(event: GAEvent) {
   if (typeof window === "undefined") return;
   if (readConsent() !== "granted") return;
   if (!process.env.NEXT_PUBLIC_GA_ID) return;
-  const { name, ...params } = event;
-  sendGAEvent("event", name, params);
+  const { name, ...rest } = event;
+  const params: EventParams = {
+    // Which shell the visitor was looking at — the same split as useIsMobile().
+    shell: window.matchMedia(MOBILE_MEDIA_QUERY).matches ? "mobile" : "desktop",
+  };
+  for (const [key, value] of Object.entries(rest)) {
+    if (value !== undefined) params[key] = value;
+  }
+  const gtag = getGtag();
+  if (gtag) gtag("event", name, params);
+  else if (pending.length < MAX_PENDING_EVENTS) pending.push([name, params]);
+}
+
+/** Sends events queued before gtag existed. No-op until it does. */
+export function flushPendingEvents() {
+  const gtag = getGtag();
+  if (!gtag) return;
+  for (const [name, params] of pending) gtag("event", name, params);
+  pending = [];
+}
+
+/** `outbound_click`, with `link_domain` derived from the URL. */
+export function trackOutboundClick(
+  url: string,
+  surface: OutboundSurface,
+  projectId?: string,
+) {
+  let domain = "";
+  try {
+    domain = new URL(url).hostname;
+  } catch {
+    // Relative or malformed URL — send the event without a domain.
+  }
+  trackEvent({
+    name: "outbound_click",
+    link_url: url,
+    link_domain: domain,
+    surface,
+    project_id: projectId,
+  });
 }

@@ -67,7 +67,7 @@ export default function Dock() {
               bounceDelay={hint ? i * BOUNCE_STAGGER_S : undefined}
               onClick={() => {
                 setHint(false);
-                dispatch({ type: "OPEN", appId: app.id });
+                dispatch({ type: "OPEN", appId: app.id, source: "dock" });
               }}
             />
           );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { type TerminalCommand, trackEvent } from "@/lib/analytics";
 import { ABOUT } from "@/lib/portfolio-data";
 import { PROJECTS } from "@/lib/projects";
 
@@ -28,6 +29,31 @@ const HOME_LISTING = "about.md  projects/";
 
 // Pad project ids to the longest one so `ls projects` lines up in columns.
 const ID_WIDTH = Math.max(...PROJECTS.map((p) => p.id.length)) + 2;
+
+const KNOWN_COMMANDS: readonly TerminalCommand[] = [
+  "help",
+  "whoami",
+  "ls",
+  "cat",
+  "clear",
+];
+
+// Sends only the recognised command and path, never the raw input — a
+// visitor can type anything into a shell.
+function trackCommand(name: string, target: string | undefined) {
+  const command = KNOWN_COMMANDS.find((c) => c === name) ?? "unknown";
+  const takesPath = command === "ls" || command === "cat";
+  trackEvent({
+    name: "terminal_command",
+    command,
+    command_target:
+      takesPath && target
+        ? target === "projects" || target === "about.md"
+          ? target
+          : "other"
+        : undefined,
+  });
+}
 
 export default function TerminalApp() {
   const [lines, setLines] = useState<Line[]>([]);
@@ -69,6 +95,7 @@ export default function TerminalApp() {
     const [name, ...args] = cmd.split(/\s+/);
     // `projects/` and `projects` name the same directory.
     const target = args[0]?.replace(/\/$/, "");
+    trackCommand(name, target);
     const next: string[] = [];
     if (name === "help") next.push(...HELP);
     else if (name === "whoami") next.push(`${ABOUT.handle} — ${ABOUT.title}`);

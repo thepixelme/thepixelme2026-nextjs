@@ -3,10 +3,13 @@
 import { Star, Tag } from "lucide-react";
 import { useMemo, useState } from "react";
 import ProjectThumbnail from "@/components/ProjectThumbnail";
+import { trackEvent } from "@/lib/analytics";
 import { PROJECT_TAGS, PROJECTS, type ProjectTag } from "@/lib/projects";
 import { useWindowsDispatch } from "@/lib/windows-store";
 
 type Filter = { kind: "all" } | { kind: "tag"; tag: ProjectTag };
+
+const filterKey = (f: Filter) => (f.kind === "all" ? "all" : f.tag);
 
 export default function FinderApp() {
   const [filter, setFilter] = useState<Filter>({ kind: "all" });
@@ -17,6 +20,12 @@ export default function FinderApp() {
     return PROJECTS.filter((p) => p.tags.includes(filter.tag));
   }, [filter]);
 
+  const selectFilter = (next: Filter) => {
+    if (filterKey(next) === filterKey(filter)) return;
+    trackEvent({ name: "finder_filter", filter_tag: filterKey(next) });
+    setFilter(next);
+  };
+
   return (
     <div className="grid h-full grid-cols-1 grid-rows-[auto_1fr] divide-y divide-separator lg:grid-cols-[200px_1fr] lg:grid-rows-1 lg:divide-x lg:divide-y-0">
       <aside className="flex shrink-0 gap-2 overflow-x-auto bg-surface-secondary px-3 py-2 text-sm lg:block lg:overflow-auto lg:px-2 lg:py-3">
@@ -25,7 +34,7 @@ export default function FinderApp() {
             icon={<Star size={14} />}
             label="All Projects"
             active={filter.kind === "all"}
-            onClick={() => setFilter({ kind: "all" })}
+            onClick={() => selectFilter({ kind: "all" })}
           />
         </SidebarSection>
         <SidebarSection label="Tags">
@@ -35,7 +44,7 @@ export default function FinderApp() {
               icon={<Tag size={14} />}
               label={t}
               active={filter.kind === "tag" && filter.tag === t}
-              onClick={() => setFilter({ kind: "tag", tag: t })}
+              onClick={() => selectFilter({ kind: "tag", tag: t })}
             />
           ))}
         </SidebarSection>
@@ -52,6 +61,7 @@ export default function FinderApp() {
                   type: "OPEN",
                   appId: "preview",
                   payload: { projectId: p.id },
+                  source: "finder",
                 })
               }
               className="flex flex-col items-stretch rounded-lg border border-field-border bg-surface p-4 text-left transition-colors hover:bg-default"

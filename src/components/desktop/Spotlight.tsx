@@ -25,13 +25,14 @@ export default function Spotlight({ open, onOpenChange, mobile }: Props) {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
+        if (!open) trackEvent({ name: "spotlight_open", method: "shortcut" });
         onOpenChange(true);
       }
       if (e.key === "Escape") onOpenChange(false);
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [onOpenChange]);
+  }, [open, onOpenChange]);
 
   useEffect(() => {
     if (open) {
@@ -66,7 +67,7 @@ export default function Spotlight({ open, onOpenChange, mobile }: Props) {
       app_id: id,
       query_length: query.trim().length,
     });
-    dispatch({ type: "OPEN", appId: id });
+    dispatch({ type: "OPEN", appId: id, source: "spotlight" });
     onOpenChange(false);
   };
 

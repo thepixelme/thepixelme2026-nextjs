@@ -61,7 +61,9 @@ export default function MobileDock({ hidden }: Props) {
               icon={app.icon}
               label={app.title}
               open={isOpen}
-              onClick={() => dispatch({ type: "OPEN", appId: app.id })}
+              onClick={() =>
+                dispatch({ type: "OPEN", appId: app.id, source: "mobile_dock" })
+              }
               compact
             />
           );

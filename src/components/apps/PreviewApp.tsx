@@ -1,7 +1,8 @@
 "use client";
 
 import { Eye, Info, PanelLeft } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { PROJECTS } from "@/lib/projects";
 import { useIsMobile } from "@/lib/useIsMobile";
 import { useWindows } from "@/lib/windows-store";
@@ -10,6 +11,43 @@ import { ImageView } from "./preview/ImageViewer";
 import { MobileImageViewer } from "./preview/MobileImageViewer";
 
 type View = "info" | number;
+
+// Where a screenshot was opened from: a case-study thumb, a sidebar thumb, or
+// moving through the viewer (arrow keys, swipe, filmstrip).
+type ScreenshotSource = "case_study" | "sidebar" | "viewer";
+
+const SCROLL_MILESTONES = [25, 50, 75, 100] as const;
+
+// Callback ref for the case study's scroll container. Sends case_study_scroll
+// once per milestone for this project; milestones already reached stay
+// reached when the visitor flips to a screenshot and back.
+function useCaseStudyScrollDepth(projectId: string) {
+  const reached = useRef(new Set<number>());
+  return useCallback(
+    (el: HTMLDivElement | null) => {
+      if (!el) return;
+      const onScroll = () => {
+        const max = el.scrollHeight - el.clientHeight;
+        if (max <= 0) return;
+        const percent = (el.scrollTop / max) * 100;
+        for (const milestone of SCROLL_MILESTONES) {
+          // 1% slack so a sub-pixel scrollTop still counts as the bottom.
+          if (percent < milestone - 1 || reached.current.has(milestone))
+            continue;
+          reached.current.add(milestone);
+          trackEvent({
+            name: "case_study_scroll",
+            project_id: projectId,
+            percent_scrolled: milestone,
+          });
+        }
+      };
+      el.addEventListener("scroll", onScroll, { passive: true });
+      return () => el.removeEventListener("scroll", onScroll);
+    },
+    [projectId],
+  );
+}
 
 export default function PreviewApp({ windowId }: { windowId: string }) {
   const { windows } = useWindows();
@@ -46,7 +84,20 @@ function PreviewContent({
     if (typeof window === "undefined") return true;
     return window.innerWidth >= 1024;
   });
+  const caseStudyScrollRef = useCaseStudyScrollDepth(project.id);
 
+  const showScreenshot = (index: number, source: ScreenshotSource) => {
+    if (index === view) return;
+    trackEvent({
+      name: "screenshot_view",
+      project_id: project.id,
+      screenshot_index: index + 1,
+      opened_from: source,
+    });
+    setView(index);
+  };
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: showScreenshot only reads `view` and `project.id`, both covered (the project is fixed for this keyed component).
   useEffect(() => {
     if (screenshots.length === 0) return;
     const onKey = (e: KeyboardEvent) => {
@@ -61,10 +112,10 @@ function PreviewContent({
       if (typeof view !== "number") return;
       if (e.key === "ArrowRight" && view < screenshots.length - 1) {
         e.preventDefault();
-        setView(view + 1);
+        showScreenshot(view + 1, "viewer");
       } else if (e.key === "ArrowLeft" && view > 0) {
         e.preventDefault();
-        setView(view - 1);
+        showScreenshot(view - 1, "viewer");
       }
     };
     window.addEventListener("keydown", onKey);
@@ -74,8 +125,11 @@ function PreviewContent({
   if (isMobile === true) {
     if (view === "info") {
       return (
-        <div className="h-full overflow-y-auto">
-          <CaseStudy project={project} onScreenshotClick={(i) => setView(i)} />
+        <div ref={caseStudyScrollRef} className="h-full overflow-y-auto">
+          <CaseStudy
+            project={project}
+            onScreenshotClick={(i) => showScreenshot(i, "case_study")}
+          />
         </div>
       );
     }
@@ -85,7 +139,7 @@ function PreviewContent({
         index={view}
         isPortrait={isPortrait}
         onClose={() => setView("info")}
-        onIndexChange={(i) => setView(i)}
+        onIndexChange={(i) => showScreenshot(i, "viewer")}
       />
     );
   }
@@ -143,7 +197,7 @@ function PreviewContent({
                 <button
                   key={s.src}
                   type="button"
-                  onClick={() => setView(i)}
+                  onClick={() => showScreenshot(i, "sidebar")}
                   aria-label={`Show ${s.alt}`}
                   aria-current={view === i}
                   className={`block ${isPortrait ? "aspect-9/19 w-24" : "aspect-video w-full"} overflow-hidden rounded-md border-2 transition-colors ${
@@ -165,10 +219,10 @@ function PreviewContent({
         )}
 
         {view === "info" ? (
-          <div className="overflow-y-auto">
+          <div ref={caseStudyScrollRef} className="overflow-y-auto">
             <CaseStudy
               project={project}
-              onScreenshotClick={(i) => setView(i)}
+              onScreenshotClick={(i) => showScreenshot(i, "case_study")}
             />
           </div>
         ) : (

@@ -3,6 +3,16 @@ import type { ComponentType } from "react";
 
 export type AppId = "finder" | "preview" | "about" | "contact" | "terminal";
 
+/** The surface a visitor opened an app from; sent as `opened_from` with `app_open` and `project_view`. */
+export type AppOpenSource =
+  | "dock"
+  | "menu_bar"
+  | "spotlight"
+  | "finder"
+  | "home_screen"
+  | "mobile_dock"
+  | "status_bar";
+
 export interface WindowBounds {
   x: number;
   y: number;

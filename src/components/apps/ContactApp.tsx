@@ -42,6 +42,19 @@ export default function ContactApp() {
     };
   }, []);
 
+  // contact_form_start fires on the first edit of each new message; a
+  // successful send re-arms it.
+  const startedRef = useRef(false);
+  const edit =
+    (set: (value: string) => void) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      if (!startedRef.current) {
+        startedRef.current = true;
+        trackEvent({ name: "contact_form_start" });
+      }
+      set(e.target.value);
+    };
+
   const canSend =
     name.trim().length > 0 &&
     email.trim().length > 0 &&
@@ -57,6 +70,7 @@ export default function ContactApp() {
 
     let resOk = false;
     let payload: unknown = null;
+    let networkFailed = false;
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
@@ -75,14 +89,16 @@ export default function ContactApp() {
         // non-JSON body
       }
     } catch {
-      // network failure
+      networkFailed = true;
     }
 
     if (resOk && isContactResponse(payload) && payload.ok === true) {
       trackEvent({
         name: "contact_form_submit",
         subject_length: subject.trim().length,
+        message_length: message.trim().length,
       });
+      startedRef.current = false;
       setStatus("sent");
       setSubject("");
       setMessage("");
@@ -96,6 +112,7 @@ export default function ContactApp() {
       payload.ok === false &&
       payload.error === "rate_limit"
     ) {
+      trackEvent({ name: "contact_form_error", error_type: "rate_limit" });
       setErrorMsg("Too many messages — try again in a few minutes.");
       setStatus("error");
       return;
@@ -106,11 +123,16 @@ export default function ContactApp() {
       payload.ok === false &&
       payload.error === "validation"
     ) {
+      trackEvent({ name: "contact_form_error", error_type: "validation" });
       setErrorMsg("Please check the form fields.");
       setStatus("error");
       return;
     }
 
+    trackEvent({
+      name: "contact_form_error",
+      error_type: networkFailed ? "network" : "server",
+    });
     setErrorMsg("Couldn't send. Please try again.");
     setStatus("error");
   };
@@ -146,7 +168,7 @@ export default function ContactApp() {
       <FieldRow label="From">
         <input
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={edit(setName)}
           placeholder="Your name"
           required
           readOnly={sending}
@@ -162,7 +184,7 @@ export default function ContactApp() {
         </span>
         <input
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={edit(setEmail)}
           type="email"
           placeholder="you@email.com"
           required
@@ -176,7 +198,7 @@ export default function ContactApp() {
       <div className="border-b border-separator px-7 pb-5 pt-4">
         <input
           value={subject}
-          onChange={(e) => setSubject(e.target.value)}
+          onChange={edit(setSubject)}
           placeholder="Subject"
           readOnly={sending}
           className="w-full bg-transparent text-[18px] font-medium tracking-tight outline-none placeholder:font-light placeholder:text-foreground/25"
@@ -186,7 +208,7 @@ export default function ContactApp() {
 
       <textarea
         value={message}
-        onChange={(e) => setMessage(e.target.value)}
+        onChange={edit(setMessage)}
         placeholder="Write your message…"
         required
         readOnly={sending}

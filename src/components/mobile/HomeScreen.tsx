@@ -27,7 +27,7 @@ export default function HomeScreen({ hidden }: Props) {
   const titleId = useId();
   const projectsId = useId();
   const open = (appId: AppId, payload?: unknown) =>
-    dispatch({ type: "OPEN", appId, payload });
+    dispatch({ type: "OPEN", appId, payload, source: "home_screen" });
 
   return (
     <motion.main
